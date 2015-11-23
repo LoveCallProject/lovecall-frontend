@@ -40,7 +40,7 @@
 
   // DOM
   var sourceElement = document.getElementById('music-source');
-  var offsetElement = document.getElementById('offset');
+  // var offsetElement = document.getElementById('offset');
   var measureElement = document.getElementById('measure');
   var beatElement = document.getElementById('beat');
   var beatIndicatorElements = document.querySelectorAll('.beat-indicator');
