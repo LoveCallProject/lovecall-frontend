@@ -19,6 +19,24 @@
 <head>
 	<meta charset="utf-8" />
 	<title>ラブコール</title>
+
+  <style>
+.beat-indicator {
+  display: inline-block;
+  margin: 0.5rem;
+  background-color: #eee;
+  width: 2rem;
+  height: 2rem;
+}
+
+.beat-indicator.active {
+  background-color: #32cd32;
+}
+
+.beat-indicator.active:first-child {
+  background-color: #ff9a00;
+}
+  </style>
 </head>
 <body>
   <audio
@@ -32,6 +50,13 @@
 
   <p id="measure"></p>
   <p id="beat"></p>
+
+  <div>
+    <div class="beat-indicator"></div>
+    <div class="beat-indicator"></div>
+    <div class="beat-indicator"></div>
+    <div class="beat-indicator"></div>
+  </div>
 
 <script src="app.js"></script>
 <!-- vim:set ai et ts=2 sw=2 sts=2 fenc=utf-8: -->

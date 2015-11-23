@@ -25,6 +25,7 @@
   var offsetElement = document.getElementById('offset');
   var measureElement = document.getElementById('measure');
   var beatElement = document.getElementById('beat');
+  var beatIndicatorElements = document.querySelectorAll('.beat-indicator');
 
   // audio
   var audioCtx = new AudioContext();
@@ -83,6 +84,8 @@
 
   timingNode.addEventListener('audioprocess', audioCallback);
 
+  var prevBeatIndicatorIdx = 0;
+
   var frameCallback = function(ts) {
     window.requestAnimationFrame(frameCallback);
 
@@ -97,6 +100,13 @@
 
     if (prevFrameBeat != playbackPosBeat) {
       beatElement.innerHTML = '' + playbackPosBeat;
+
+      // beat indicator
+      var idx = Math.floor(playbackPosBeat / 4);
+      beatIndicatorElements[prevBeatIndicatorIdx].classList.remove('active');
+      beatIndicatorElements[idx].classList.add('active');
+      prevBeatIndicatorIdx = idx;
+
       prevFrameBeat = playbackPosBeat;
     }
   };
