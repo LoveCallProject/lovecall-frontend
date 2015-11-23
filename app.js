@@ -2,7 +2,7 @@
   'use strict';
 
   // rhythm
-  var offsetMs = 812;
+  var offsetMs = 2199;
   var beatMs = 346.820809248555;
   var tempoFactory = function(beatMs, offsetMs) {
     // TODO: 4/4 time signature assumed
