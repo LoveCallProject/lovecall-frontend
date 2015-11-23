@@ -7,13 +7,14 @@
   var tempoFactory = function(beatMs, offsetMs) {
     // TODO: 4/4 time signature assumed
     var measureMs = beatMs * 4;
+    var fourthBeatMs = beatMs / 4;
 
     return function(posMs) {
       var posAfterOffset = posMs - offsetMs;
       var tmp = posAfterOffset / measureMs;
       var measure = Math.floor(tmp);
-      var beat = Math.floor((posAfterOffset - measure * measureMs) / beatMs);
-      return [measure, beat];
+      var fourthBeat = Math.floor((posAfterOffset - measure * measureMs) / fourthBeatMs);
+      return [measure, fourthBeat];
     };
   };
 
