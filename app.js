@@ -26,14 +26,33 @@
   var measureElement = document.getElementById('measure');
   var beatElement = document.getElementById('beat');
 
+  // audio
+  var audioCtx = new AudioContext();
+  var sourceNode = audioCtx.createMediaElementSource(sourceElement);
+  var timingNode = audioCtx.createScriptProcessor();
+
   var isPlaying = false;
+  var ctxLastReferenceMs = 0;
+  var playbackReferenceMs = 0;
   var playbackPosMs = 0;
   var playbackPosMeasure = 0;
   var playbackPosBeat = 0;
+  var prevFrameMeasure = 0;
+  var prevFrameBeat = 0;
 
   var playEventHandlerFactory = function(newState) {
     return function(e) {
       isPlaying = newState;
+
+      if (newState) {
+        ctxLastReferenceMs = audioCtx.currentTime * 1000;
+        playbackReferenceMs = sourceElement.currentTime * 1000;
+        sourceNode.connect(timingNode);
+        timingNode.connect(audioCtx.destination);
+      } else {
+        sourceNode.disconnect(timingNode);
+        timingNode.disconnect(audioCtx.destination);
+      }
     };
   };
 
@@ -41,26 +60,44 @@
   sourceElement.addEventListener('playing', playEventHandlerFactory(true));
   sourceElement.addEventListener('pause', playEventHandlerFactory(false));
 
-  var audioCallback = function(posMs) {
+  var audioCallback = function(e) {
+    var ctxMs = e.playbackTime * 1000;
+    var posMs = playbackReferenceMs + ctxMs - ctxLastReferenceMs;
     var currentBeat = snowhareTempo(posMs);
     var newMeasure = currentBeat[0];
     var newBeat = currentBeat[1];
 
-    if (newMeasure != playbackPosMeasure || newBeat != playbackPosBeat) {
-      measureElement.innerHTML = '' + newMeasure;
-      beatElement.innerHTML = '' + newBeat;
-    }
-
     playbackPosMs = posMs;
     playbackPosMeasure = newMeasure;
     playbackPosBeat = newBeat;
+
+    // just pass through
+    var inBuf = e.inputBuffer;
+    var outBuf = e.outputBuffer;
+    var ch;
+    for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
+      var data = inBuf.getChannelData(ch);
+      outBuf.copyToChannel(data, ch);
+    }
   };
+
+  timingNode.addEventListener('audioprocess', audioCallback);
 
   var frameCallback = function(ts) {
     window.requestAnimationFrame(frameCallback);
 
-    if (isPlaying) {
-      audioCallback(sourceElement.currentTime * 1000);
+    // offsetElement.innerHTML = '' + Math.floor(playbackPosMs)
+    // + ' ' + Math.floor(playbackReferenceMs)
+    // + ' ' + Math.floor(ctxLastReferenceMs);
+
+    if (prevFrameMeasure != playbackPosMeasure) {
+      measureElement.innerHTML = '' + playbackPosMeasure;
+      prevFrameMeasure = playbackPosMeasure;
+    }
+
+    if (prevFrameBeat != playbackPosBeat) {
+      beatElement.innerHTML = '' + playbackPosBeat;
+      prevFrameBeat = playbackPosBeat;
     }
   };
 
