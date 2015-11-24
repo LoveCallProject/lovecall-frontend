@@ -32,13 +32,18 @@ var metronomeFactory = function(tempo, tickCallback) {
   var lastPosMs = -Infinity;
   var remainingBeatMs = nextFourthBeatMs;
   var currentBeat = [0, 0];
+  var callCounter = 0;
+  var resyncCount = 48;
 
   return {
     tick: function(posMs) {
       var deltaMs = posMs - lastPosMs;
       lastPosMs = posMs;
 
-      if (deltaMs > 0 && deltaMs <= currentFourthBeatMs) {
+      // prevent beat drifting over time by falling back to slowpath every ~1 s
+      callCounter += 1;
+
+      if (deltaMs > 0 && deltaMs <= currentFourthBeatMs && callCounter < resyncCount) {
         remainingBeatMs -= deltaMs;
 
         if (remainingBeatMs <= 0) {
@@ -61,7 +66,14 @@ var metronomeFactory = function(tempo, tickCallback) {
 
       currentBeat = tempo.timeToBeat(posMs);
       remainingBeatMs = tempo.beatToTime(currentBeat[0], currentBeat[1] + 1) - posMs;
-      console.warn('metronome: slowpath: position=', posMs, 'delta=', deltaMs, 'currentBeat=', currentBeat, 'remainingBeatMs=', remainingBeatMs);
+      if (callCounter == resyncCount) {
+        // console.debug('metronome: periodic re-sync');
+      } else {
+        console.warn('metronome: slowpath: position=', posMs, 'delta=', deltaMs, 'currentBeat=', currentBeat, 'remainingBeatMs=', remainingBeatMs, 'callCounter=', callCounter);
+      }
+
+      // reset call counter
+      callCounter = 0;
 
       if (tickCallback) {
         tickCallback(currentBeat);
