@@ -15,7 +15,7 @@
   You should have received a copy of the GNU General Public License
   along with LoveCall.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<html lang="en">
+<html lang="en" id="appmount">
 <head>
 	<meta charset="utf-8" />
 	<title>ラブコール</title>
@@ -46,20 +46,25 @@
     <source src="snowhare.mp3" type="audio/mp3" />
   </audio>
 
-  <p id="offset"></p>
+  <div data-ng-controller="BeatTimeController">
+    <p>{{measure}}</p>
+    <p>{{beat}}</p>
+  </div>
 
-  <p id="measure"></p>
-  <p id="beat"></p>
+  <div data-ng-controller="TickBoxController">
+    <div
+      class="beat-indicator"
+      data-ng-repeat="isActive in beatActivities track by $index"
+      data-ng-class="{'active': isActive}"
+      >
+    </div>
+  </div>
 
-  <div>
-    <div class="beat-indicator"></div>
-    <div class="beat-indicator"></div>
-    <div class="beat-indicator"></div>
-    <div class="beat-indicator"></div>
+  <div data-ng-controller="DemoController">
   </div>
 
 <script src="snowhare.js"></script>
-<script src="app.js"></script>
+<script src="build/bundle.js"></script>
 <!-- vim:set ai et ts=2 sw=2 sts=2 fenc=utf-8: -->
 </body>
 </html>
