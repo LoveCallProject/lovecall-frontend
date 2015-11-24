@@ -36,7 +36,7 @@
   // audio
   var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   var sourceNode = audioCtx.createMediaElementSource(sourceElement);
-  var timingNode = audioCtx.createScriptProcessor();
+  var timingNode = audioCtx.createScriptProcessor(1024);
 
   var isPlaying = false;
   var ctxLastReferenceMs = 0;
