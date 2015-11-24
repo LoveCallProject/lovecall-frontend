@@ -3,6 +3,7 @@
 
 var path = require('path');
 var webpack = require('webpack');
+var ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 
 
 module.exports = {
@@ -12,7 +13,10 @@ module.exports = {
   plugins: [
     new webpack.ResolverPlugin(
         new webpack.ResolverPlugin.DirectoryDescriptionFilePlugin("bower.json", ["main"])
-    )
+    ),
+    new ngAnnotatePlugin({
+      add: true
+    })
   ],
 
   entry: "./src/app/main.js",

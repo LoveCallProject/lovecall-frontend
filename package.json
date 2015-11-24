@@ -23,6 +23,7 @@
   "homepage": "https://github.com/LoveCallProject/lovecall-frontend",
   "devDependencies": {
     "angular": "^1.4.8",
+    "ng-annotate-webpack-plugin": "^0.1.2",
     "webpack": "^1.12.9"
   }
 }
