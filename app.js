@@ -29,7 +29,7 @@
   var beatIndicatorElements = document.querySelectorAll('.beat-indicator');
 
   // audio
-  var audioCtx = new AudioContext();
+  var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   var sourceNode = audioCtx.createMediaElementSource(sourceElement);
   var timingNode = audioCtx.createScriptProcessor();
 
