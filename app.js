@@ -2,30 +2,6 @@
 (function(document, window, undefined) {
   'use strict';
 
-  // rhythm
-  var offsetMs = 2199;
-  var beatMs = 346.820809248555;
-  var tempoFactory = function(beatMs, offsetMs) {
-    // TODO: 4/4 time signature assumed
-    var measureMs = beatMs * 4;
-    var fourthBeatMs = beatMs / 4;
-
-    return {
-      timeToBeat: function(posMs) {
-        var posAfterOffset = posMs - offsetMs;
-        var tmp = posAfterOffset / measureMs;
-        var measure = Math.floor(tmp);
-        var fourthBeat = Math.floor((posAfterOffset - measure * measureMs) / fourthBeatMs);
-        return [measure, fourthBeat];
-      },
-      beatToTime: function(measure, fourthBeat) {
-        return offsetMs + measure * measureMs + fourthBeat * fourthBeatMs;
-      }
-    };
-  };
-
-  var snowhareTempo = tempoFactory(beatMs, offsetMs);
-
   // DOM
   var sourceElement = document.getElementById('music-source');
   // var offsetElement = document.getElementById('offset');
@@ -42,10 +18,6 @@
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
   var playbackPosMs = 0;
-  var playbackPosMeasure = 0;
-  var playbackPosBeat = 0;
-  var prevFrameMeasure = 0;
-  var prevFrameBeat = 0;
 
   var playEventHandlerFactory = function(newState) {
     return function(e) {
@@ -67,37 +39,34 @@
   sourceElement.addEventListener('playing', playEventHandlerFactory(true));
   sourceElement.addEventListener('pause', playEventHandlerFactory(false));
 
-  var audioCallback = function(e) {
-    var ctxMs = e.playbackTime * 1000;
-    var posMs = playbackReferenceMs + ctxMs - ctxLastReferenceMs;
-    var currentBeat = snowhareTempo.timeToBeat(posMs);
-    var newMeasure = currentBeat[0];
-    var newBeat = currentBeat[1];
+  var audioCallbackFactory = function(metronome) {
+    return function(e) {
+      var ctxMs = e.playbackTime * 1000;
+      var posMs = playbackReferenceMs + ctxMs - ctxLastReferenceMs;
+      playbackPosMs = posMs;
 
-    playbackPosMs = posMs;
-    playbackPosMeasure = newMeasure;
-    playbackPosBeat = newBeat;
+      metronome.tick(posMs);
 
-    // just pass through
-    var inBuf = e.inputBuffer;
-    var outBuf = e.outputBuffer;
-    var ch;
-    for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
-      var data = inBuf.getChannelData(ch);
-      outBuf.copyToChannel(data, ch);
-    }
+      // just pass through
+      var inBuf = e.inputBuffer;
+      var outBuf = e.outputBuffer;
+      var ch;
+      for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
+        var data = inBuf.getChannelData(ch);
+        outBuf.copyToChannel(data, ch);
+      }
+    };
   };
 
-  timingNode.addEventListener('audioprocess', audioCallback);
-
+  // display
+  var playbackPosMeasure = 0;
+  var playbackPosBeat = 0;
+  var prevFrameMeasure = -1;
+  var prevFrameBeat = -1;
   var prevBeatIndicatorIdx = 0;
 
   var frameCallback = function(ts) {
     window.requestAnimationFrame(frameCallback);
-
-    // offsetElement.innerHTML = '' + Math.floor(playbackPosMs)
-    // + ' ' + Math.floor(playbackReferenceMs)
-    // + ' ' + Math.floor(ctxLastReferenceMs);
 
     if (prevFrameMeasure != playbackPosMeasure) {
       measureElement.innerHTML = '' + playbackPosMeasure;
@@ -108,13 +77,85 @@
       beatElement.innerHTML = '' + playbackPosBeat;
 
       // beat indicator
-      var idx = Math.floor(playbackPosBeat / 4);
+      var idx = playbackPosBeat >> 2;
       beatIndicatorElements[prevBeatIndicatorIdx].classList.remove('active');
       beatIndicatorElements[idx].classList.add('active');
       prevBeatIndicatorIdx = idx;
 
       prevFrameBeat = playbackPosBeat;
     }
+  };
+
+  window.requestAnimationFrame(frameCallback);
+
+  // rhythm
+  var tempoFactory = function(beatMs, offsetMs) {
+    // TODO: 4/4 time signature assumed
+    var measureMs = beatMs * 4;
+    var fourthBeatMs = beatMs / 4;
+
+    return {
+      "fourthBeatMs": fourthBeatMs,
+      timeToBeat: function(posMs) {
+        var posAfterOffset = posMs - offsetMs;
+        var tmp = posAfterOffset / measureMs;
+        var measure = Math.floor(tmp);
+        var fourthBeat = Math.floor((posAfterOffset - measure * measureMs) / fourthBeatMs);
+        return [measure, fourthBeat];
+      },
+      beatToTime: function(measure, fourthBeat) {
+        return offsetMs + measure * measureMs + fourthBeat * fourthBeatMs;
+      }
+    };
+  };
+
+  var metronomeFactory = function(tempo, tickCallback) {
+    // TODO: multiple timing sections
+    var currentFourthBeatMs = tempo.fourthBeatMs;
+    var nextFourthBeatMs = tempo.fourthBeatMs;
+
+    // state
+    var lastPosMs = -Infinity;
+    var remainingBeatMs = nextFourthBeatMs;
+    var currentBeat = [0, 0];
+
+    return {
+      tick: function(posMs) {
+        var deltaMs = posMs - lastPosMs;
+        lastPosMs = posMs;
+
+        if (deltaMs > 0 && deltaMs <= currentFourthBeatMs) {
+          remainingBeatMs -= deltaMs;
+
+          if (remainingBeatMs <= 0) {
+            remainingBeatMs += nextFourthBeatMs;
+
+            if (currentBeat[1] < 15) {
+              currentBeat[1] += 1;
+            } else {
+              currentBeat[0] += 1;
+              currentBeat[1] = 0;
+            }
+
+            if (tickCallback) {
+              tickCallback(currentBeat);
+            }
+          }
+
+          return currentBeat;
+        }
+
+        currentBeat = tempo.timeToBeat(posMs);
+        remainingBeatMs = tempo.beatToTime(currentBeat[0], currentBeat[1] + 1) - posMs;
+        console.warn('metronome: slowpath: position=', posMs, 'delta=', deltaMs, 'currentBeat=', currentBeat, 'remainingBeatMs=', remainingBeatMs);
+
+        if (tickCallback) {
+          tickCallback(currentBeat);
+        }
+
+        return currentBeat;
+      }
+    };
   };
 
   var beatAdd = function(one, other) {
@@ -136,6 +177,7 @@
     };
   };
 
+  // parser
   var parseFuFuAction = function(startBeat, params) {
     return [
       [startBeat, "Fu!", null],
@@ -291,21 +333,34 @@
   };
 
   var parseCall = function(data) {
-    var sources = data.metadata.song.sources;
+    var metadata = data.metadata;
+    var songMetadata = metadata.song;
+    var sources = songMetadata.sources;
     var offsetMs = sources[Object.keys(sources)[0]].offset +
-                 data.metadata.song.timing[0][0];
-    var beatMs = 60000 / data.metadata.song.timing[0][1];
+                 songMetadata.timing[0][0];
+    var beatMs = 60000 / songMetadata.timing[0][1];
     var tempo = tempoFactory(beatMs, offsetMs);
 
     var events = parseTimeline(data.timeline, tempo);
 
     // TODO
-    return events;
+    return {
+      'tempo': tempo,
+      'events': events
+    };
   };
 
-  console.log(parseCall(CALL_DATA));
+  // demo
+  var demoCallData = parseCall(CALL_DATA);
 
-  window.requestAnimationFrame(frameCallback);
+  var demoTickCallback = function(beat) {
+    playbackPosMeasure = beat[0];
+    playbackPosBeat = beat[1];
+  };
+
+  var demoMetronome = metronomeFactory(demoCallData.tempo, demoTickCallback);
+
+  timingNode.addEventListener('audioprocess', audioCallbackFactory(demoMetronome));
 })(document, window);
 /* @license-end */
 
