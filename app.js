@@ -10,12 +10,17 @@
     var measureMs = beatMs * 4;
     var fourthBeatMs = beatMs / 4;
 
-    return function(posMs) {
-      var posAfterOffset = posMs - offsetMs;
-      var tmp = posAfterOffset / measureMs;
-      var measure = Math.floor(tmp);
-      var fourthBeat = Math.floor((posAfterOffset - measure * measureMs) / fourthBeatMs);
-      return [measure, fourthBeat];
+    return {
+      timeToBeat: function(posMs) {
+        var posAfterOffset = posMs - offsetMs;
+        var tmp = posAfterOffset / measureMs;
+        var measure = Math.floor(tmp);
+        var fourthBeat = Math.floor((posAfterOffset - measure * measureMs) / fourthBeatMs);
+        return [measure, fourthBeat];
+      },
+      beatToTime: function(measure, fourthBeat) {
+        return offsetMs + measure * measureMs + fourthBeat * fourthBeatMs;
+      }
     };
   };
 
@@ -65,7 +70,7 @@
   var audioCallback = function(e) {
     var ctxMs = e.playbackTime * 1000;
     var posMs = playbackReferenceMs + ctxMs - ctxLastReferenceMs;
-    var currentBeat = snowhareTempo(posMs);
+    var currentBeat = snowhareTempo.timeToBeat(posMs);
     var newMeasure = currentBeat[0];
     var newBeat = currentBeat[1];
 
