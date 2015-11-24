@@ -1,21 +1,4 @@
-/*!
-  This file is part of LoveCall.
-
-  LoveCall is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  LoveCall is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with LoveCall.  If not, see <http://www.gnu.org/licenses/>.
-
-  @preserve
-  */
+/* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
 (function(document, window, undefined) {
   'use strict';
 
@@ -131,6 +114,7 @@
 
   window.requestAnimationFrame(frameCallback);
 })(document, window);
+/* @license-end */
 
 
 // vim:set ai et ts=2 sw=2 sts=2 fenc=utf-8:
