@@ -167,6 +167,10 @@
     return parsePeriodicAction(startBeat, endBeat, "里跳", [0, 4], [0, 8]);
   };
 
+  var parseKHAction = function(startBeat, endBeat, params) {
+    return parsePeriodicAction(startBeat, endBeat, "快挥", [0, 0], [0, 4]);
+  }
+
   var parseAlarmAction = function(startBeat, endBeat, params) {
     return [
       [startBeat, "Hi!", null],
@@ -201,6 +205,14 @@
     return result;
   };
 
+  var parseFollowAction = function(startBeat, endBeat, params) {
+    var content = params[0];
+
+    return [
+      [startBeat, "跟唱", content]
+    ];
+  };
+
   var POINT_ACTION_PARSERS = {
     'fufu': parseFuFuAction
   };
@@ -210,7 +222,9 @@
     '里打': parseLDAction,
     '警报': parseAlarmAction,
     'PPPH': parsePPPHAction,
-    '里跳': parseLTAction
+    '里跳': parseLTAction,
+    '快挥': parseKHAction,
+    '跟唱': parseFollowAction
   };
 
   var parsePointAction = function(actionData) {
