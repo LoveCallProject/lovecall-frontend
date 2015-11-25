@@ -31,6 +31,10 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
   // interface
   var resume = function() {
+    if (isPlaying) {
+      return;
+    }
+
     isPlaying = true;
 
     if (playbackPosMs >= getDuration()) {
@@ -60,6 +64,10 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
 
   var pause = function() {
+    if (!isPlaying) {
+      return;
+    }
+
     isPlaying = false;
 
     $log.info('pause');
