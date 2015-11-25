@@ -15,7 +15,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
   var sourceElement = null;
   var sourceNode = null;
-  var timingNode = audioCtx.createScriptProcessor(1024);
+  var timingNode = audioCtx.createScriptProcessor(2048);
 
   var isPlaying = false;
   var ctxLastReferenceMs = 0;
