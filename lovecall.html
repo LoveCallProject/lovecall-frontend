@@ -26,7 +26,36 @@
     <md-button hide-gt-md aria-label="Menu Button">
       <md-icon md-font-library="material-icons">menu</md-icon>
     </md-button>
+    <h3>LoveCall</h3>
   </md-toolbar>
+
+  <md-sidenav 
+      class="md-sidenav-left md-whiteframe-z2"
+      md-component-id="sidenav"
+      md-is-locked-open="$mdMedia('gt-md')"
+      >
+    <md-toolbar layout="row" layout-align="start center">
+      <md-button>
+        <md-icon md-font-library="material-icons">arrow_back</md-icon>
+      </md-button>
+      <h3>LoveCall</h3>
+    </md-toolbar>
+    <md-list>
+      <md-list-item>
+        <md-icon md-font-library="material-icons">open_in_browser</md-icon>
+        <p>Import</p>
+      </md-list-item>
+      <md-list-item>
+        <md-icon md-font-library="material-icons">feedback</md-icon>
+        <p>Feedback</p>
+      </md-list-item>
+      <md-list-item>
+        <md-icon md-font-library="material-icons">info</md-icon>
+        <p>About</p>
+      </md-list-item>
+    </md-list>
+  </md-sidenav>
+
   <md-content 
       layout-margin layout="column" 
       layout-align="start center"
