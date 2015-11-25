@@ -10,10 +10,9 @@ require('../ui/frame');
 var mod = angular.module('lovecall/engine/audio', []);
 
 mod.factory('AudioEngine', function($window, $log, FrameManager) {
-  var inited = false;
   var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
 
-  var sourceElement = null;
+  var sourceBuffer = null;
   var sourceNode = null;
   var timingNode = audioCtx.createScriptProcessor(2048);
 
@@ -25,46 +24,94 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
   $log = $log.getInstance('AudioEngine');
 
 
-  var playEventHandlerFactory = function(newState) {
-    return function(e) {
-      isPlaying = newState;
-
-      if (newState) {
-        ctxLastReferenceMs = audioCtx.currentTime * 1000;
-        playbackReferenceMs = sourceElement.currentTime * 1000;
-        sourceNode.connect(timingNode);
-        timingNode.connect(audioCtx.destination);
-      } else {
-        sourceNode.disconnect(timingNode);
-        timingNode.disconnect(audioCtx.destination);
-      }
-    };
+  var onEndedCallback = function(e) {
+    pause();
   };
 
 
   // interface
-  var setSourceElement = function(element) {
-    if (inited) {
-      $log.error('already inited!');
+  var resume = function() {
+    isPlaying = true;
+
+    if (playbackPosMs >= getDuration()) {
+      // rewind
+      playbackPosMs = 0;
     }
 
-    $log.debug('setSourceElement: element=', element);
+    ctxLastReferenceMs = audioCtx.currentTime * 1000;
+    playbackReferenceMs = playbackPosMs;
 
-    inited = true;
-    sourceElement = element;
-    sourceNode = audioCtx.createMediaElementSource(element);
-    element.addEventListener('play', playEventHandlerFactory(true));
-    element.addEventListener('playing', playEventHandlerFactory(true));
-    element.addEventListener('pause', playEventHandlerFactory(false));
+    $log.info(
+        'resume: ctxLastReferenceMs=',
+        ctxLastReferenceMs,
+        'playbackPosMs=',
+        playbackPosMs
+        );
+
+    sourceNode = audioCtx.createBufferSource();
+    sourceNode.buffer = sourceBuffer;
+    sourceNode.onended = onEndedCallback;
+
+    sourceNode.connect(timingNode);
+    timingNode.connect(audioCtx.destination);
+
+    sourceNode.start(0, playbackPosMs / 1000);
+  };
+
+
+  var pause = function() {
+    isPlaying = false;
+
+    $log.info('pause');
+
+    sourceNode.stop();
+
+    sourceNode.disconnect(timingNode);
+    timingNode.disconnect(audioCtx.destination);
+  };
+
+
+  var seek = function(newPositionMs) {
+    sourceNode.onended = function(e) {
+      playbackPosMs = newPositionMs;
+      resume();
+    };
+
+    pause();
+  };
+
+
+  var getIsPlaying = function() {
+    return isPlaying;
+  };
+
+  var getDuration = function() {
+    return sourceBuffer.duration * 1000;
+  };
+
+
+  var getPlaybackPosition = function() {
+    return playbackPosMs;
+  };
+
+
+  var setSourceData = function(data) {
+    $log.debug('setSourceData: data=', data);
+
+    // audioCtx.decodeAudioData(data).then(finishSetSourceData);
+    audioCtx.decodeAudioData(data, finishSetSourceData);
+  };
+
+
+  var finishSetSourceData = function(buffer) {
+    $log.debug('finishSetSourceData: buffer=', buffer);
+
+    sourceBuffer = buffer;
+    playbackPosMs = 0;
   };
 
 
   var audioCallbackFactory = function(tempo) {
-    if (!inited) {
-      $log.error('not inited!');
-      return;
-    }
-
     var metronome = tempoMod.metronomeFactory(tempo, FrameManager.tickCallback);
 
     var audioCallback = function(e) {
@@ -97,8 +144,14 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
 
   return {
-    'setSourceElement': setSourceElement,
-    'setTempo': setTempo
+    'getIsPlaying': getIsPlaying,
+    'getDuration': getDuration,
+    'getPlaybackPosition': getPlaybackPosition,
+    'setSourceData': setSourceData,
+    'setTempo': setTempo,
+    'resume': resume,
+    'pause': pause,
+    'seek': seek
   };
 });
 /* @license-end */

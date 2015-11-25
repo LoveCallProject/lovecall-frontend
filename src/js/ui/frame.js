@@ -8,6 +8,7 @@ var mod = angular.module('lovecall/ui/frame', []);
 
 mod.factory('FrameManager', function($rootScope, $window, $log) {
   // states
+  var frameCallbacks = [];
   var playbackPosMeasure = 0;
   var playbackPosStep = 0;
   var prevFrameMeasure = -1;
@@ -42,6 +43,32 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
       $rootScope.$digest();
       prevFrameStep = playbackPosStep;
     }
+
+    var i = 0;
+    for (; i < frameCallbacks.length; i++) {
+      frameCallbacks[i](ts);
+    }
+  };
+
+
+  var addFrameCallback = function(callback) {
+    frameCallbacks.push(callback);
+  };
+
+
+  var removeFrameCallback = function(callback) {
+    var i = 0;
+    var found = false;
+    for (i = 0; i < frameCallbacks.length; i++) {
+      if (frameCallbacks[i] == callback) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      frameCallbacks.splice(i, 1);
+    }
   };
 
 
@@ -57,6 +84,8 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
   }
 
   return {
+    'addFrameCallback': addFrameCallback,
+    'removeFrameCallback': removeFrameCallback,
     'startFrameLoop': startFrameLoop,
     'tickCallback': tickCallback
   };

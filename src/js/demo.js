@@ -5,23 +5,32 @@ require('angular');
 
 require('./engine/audio');
 require('./provider/choreography');
+require('./provider/song');
 require('./ui/frame');
 
 
 var mod = angular.module('lovecall/demo', [
     'lovecall/engine/audio',
     'lovecall/provider/choreography',
+    'lovecall/provider/song',
     'lovecall/ui/frame'
 ]);
 
-mod.controller('DemoController', function($window, AudioEngine, Choreography, FrameManager) {
+mod.controller('DemoController', function($window, AudioEngine, Choreography, Song, FrameManager) {
   // DOM
   var sourceElement = document.getElementById('music-source');
-  AudioEngine.setSourceElement(sourceElement);
 
-  // demo
-  Choreography.load(CALL_DATA);
-  AudioEngine.setTempo(Choreography.getTempo());
+  // test Ajax loading
+  Song.load('susutomo.mp3', function(hash, buffer) {
+    console.log(hash, buffer);
+
+    // demo
+    Choreography.load(CALL_DATA, hash);
+
+    AudioEngine.setSourceData(buffer);
+    AudioEngine.setTempo(Choreography.getTempo());
+  });
+
 
   // frame loop
   FrameManager.startFrameLoop($window);

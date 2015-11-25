@@ -60,12 +60,14 @@
       layout-margin layout="column" 
       layout-align="start center"
       >
-    <audio
-        id="music-source"
-        controls="controls"
+    <section
+        data-ng-controller="TransportController"
         >
-      <source src="susutomo.mp3" type="audio/mp3" />
-    </audio>
+      <md-button data-ng-click="play()">Play</md-button>
+      <md-button data-ng-click="pause()">Pause</md-button>
+      <p>{{isPlaying}}</p>
+      <p>{{playbackPos}}</p>
+    </section>
 
     <div data-ng-controller="StepTimeController">
       <p>{{measure}}</p>

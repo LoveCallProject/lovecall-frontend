@@ -13,8 +13,8 @@ mod.factory('Choreography', function() {
   var parsedData = null;
 
 
-  var load = function(data) {
-    parsedData = parser.parseCall(data);
+  var load = function(data, hash) {
+    parsedData = parser.parseCall(data, hash);
   };
 
 

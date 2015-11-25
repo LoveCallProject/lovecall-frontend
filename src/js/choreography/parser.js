@@ -184,12 +184,14 @@ var parseTimeline = function(timeline, tempo) {
 };
 
 
-var parseCall = function(data) {
+var parseCall = function(data, hash) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
   var sources = songMetadata.sources;
-  var globalOffsetMs = sources[Object.keys(sources)[0]].offset;
-  var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs);
+  var globalOffsetMs = sources[hash].offset;
+
+  // TODO: case of unknown hash
+  var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs ? globalOffsetMs : 0);
 
   var events = parseTimeline(data.timeline, tempo);
 
