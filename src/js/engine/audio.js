@@ -127,7 +127,11 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
       var ch;
       for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
         var data = inBuf.getChannelData(ch);
-        outBuf.copyToChannel(data, ch);
+        if (outBuf.copyToChannel) {
+          outBuf.copyToChannel(data, ch);
+        } else {
+          outBuf.getChannelData(ch).set(data);
+        }
       }
     };
 
