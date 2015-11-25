@@ -20,6 +20,7 @@
     "tests"
   ],
   "dependencies": {
-    "angular-logex": "~0.0.10"
+    "angular-logex": "~0.0.10",
+    "material-design-icons": "~2.1.1"
   }
 }

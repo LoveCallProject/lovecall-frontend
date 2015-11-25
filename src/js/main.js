@@ -7,6 +7,7 @@ require('angular-logex');
 require('./ui/index');
 require('./demo');
 
+require('../sass/index.scss');
 
 var mod = angular.module('lovecall/main', [
     'lovecall/ui/index',

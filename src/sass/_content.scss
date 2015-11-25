@@ -1,0 +1,17 @@
+/* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
+.beat-indicator {
+  display: inline-block;
+  margin: 0.5rem;
+  background-color: #eee;
+  width: 2rem;
+  height: 2rem;
+}
+
+.beat-indicator.active {
+  background-color: #32cd32;
+}
+
+.beat-indicator.active:first-child {
+  background-color: #ff9a00;
+}
+/* @license-end */
