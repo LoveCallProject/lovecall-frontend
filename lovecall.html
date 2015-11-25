@@ -20,48 +20,70 @@
 	<meta charset="utf-8" />
 	<title>ラブコール</title>
 
-  <style>
-.beat-indicator {
-  display: inline-block;
-  margin: 0.5rem;
-  background-color: #eee;
-  width: 2rem;
-  height: 2rem;
-}
-
-.beat-indicator.active {
-  background-color: #32cd32;
-}
-
-.beat-indicator.active:first-child {
-  background-color: #ff9a00;
-}
-  </style>
 </head>
 <body>
-  <audio
-      id="music-source"
-      controls="controls"
-      >
-    <source src="susutomo.mp3" type="audio/mp3" />
-  </audio>
+  <md-toolbar layout="row" layout-align="start center">
+    <md-button hide-gt-md aria-label="Menu Button">
+      <md-icon md-font-library="material-icons">menu</md-icon>
+    </md-button>
+    <h3>LoveCall</h3>
+  </md-toolbar>
 
-  <div data-ng-controller="StepTimeController">
-    <p>{{measure}}</p>
-    <p>{{step}}</p>
-  </div>
-
-  <div data-ng-controller="TickBoxController">
-    <div
-      class="beat-indicator"
-      data-ng-repeat="isActive in beatActivities track by $index"
-      data-ng-class="{'active': isActive}"
+  <md-sidenav 
+      class="md-sidenav-left md-whiteframe-z2"
+      md-component-id="sidenav"
+      md-is-locked-open="$mdMedia('gt-md')"
       >
+    <md-toolbar layout="row" layout-align="start center">
+      <md-button>
+        <md-icon md-font-library="material-icons">arrow_back</md-icon>
+      </md-button>
+      <h3>LoveCall</h3>
+    </md-toolbar>
+    <md-list>
+      <md-list-item>
+        <md-icon md-font-library="material-icons">open_in_browser</md-icon>
+        <p>Import</p>
+      </md-list-item>
+      <md-list-item>
+        <md-icon md-font-library="material-icons">feedback</md-icon>
+        <p>Feedback</p>
+      </md-list-item>
+      <md-list-item>
+        <md-icon md-font-library="material-icons">info</md-icon>
+        <p>About</p>
+      </md-list-item>
+    </md-list>
+  </md-sidenav>
+
+  <md-content 
+      layout-margin layout="column" 
+      layout-align="start center"
+      >
+    <audio
+        id="music-source"
+        controls="controls"
+        >
+      <source src="susutomo.mp3" type="audio/mp3" />
+    </audio>
+
+    <div data-ng-controller="StepTimeController">
+      <p>{{measure}}</p>
+      <p>{{step}}</p>
     </div>
-  </div>
 
-  <div data-ng-controller="DemoController">
-  </div>
+    <div data-ng-controller="TickBoxController">
+      <div
+        class="beat-indicator"
+        data-ng-repeat="isActive in beatActivities track by $index"
+        data-ng-class="{'active': isActive}"
+        >
+      </div>
+    </div>
+
+    <div data-ng-controller="DemoController">
+    </div>
+  </md-content>
 
 <script src="susutomo.js"></script>
 <script src="build/bundle.js"></script>

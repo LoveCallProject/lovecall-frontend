@@ -2,11 +2,16 @@
 'use strict';
 
 require('angular');
+require('angular-animate');
+require('angular-aria');
+require('angular-material');
 require('angular-logex');
 
 require('./ui/index');
 require('./demo');
 
+require('../../node_modules/angular-material/angular-material.css');
+require('../sass/index.scss');
 
 var mod = angular.module('lovecall/main', [
     'lovecall/ui/index',
@@ -25,7 +30,7 @@ mod.config(function(logExProvider) {
   });
 });
 
-angular.bootstrap(angular.element(document.getElementById('appmount')), ['lovecall/main']);
+angular.bootstrap(angular.element(document.getElementById('appmount')), ['lovecall/main', 'ngMaterial']);
 /* @license-end */
 
 // vim:set ai et ts=2 sw=2 sts=2 fenc=utf-8:
