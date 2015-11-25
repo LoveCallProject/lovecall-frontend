@@ -22,29 +22,34 @@
 
 </head>
 <body>
-  <audio
-      id="music-source"
-      controls="controls"
+  <md-content 
+      layout-margin layout="column" 
+      layout-align="start center"
       >
-    <source src="susutomo.mp3" type="audio/mp3" />
-  </audio>
+    <audio
+        id="music-source"
+        controls="controls"
+        >
+      <source src="susutomo.mp3" type="audio/mp3" />
+    </audio>
 
-  <div data-ng-controller="StepTimeController">
-    <p>{{measure}}</p>
-    <p>{{step}}</p>
-  </div>
-
-  <div data-ng-controller="TickBoxController">
-    <div
-      class="beat-indicator"
-      data-ng-repeat="isActive in beatActivities track by $index"
-      data-ng-class="{'active': isActive}"
-      >
+    <div data-ng-controller="StepTimeController">
+      <p>{{measure}}</p>
+      <p>{{step}}</p>
     </div>
-  </div>
 
-  <div data-ng-controller="DemoController">
-  </div>
+    <div data-ng-controller="TickBoxController">
+      <div
+        class="beat-indicator"
+        data-ng-repeat="isActive in beatActivities track by $index"
+        data-ng-class="{'active': isActive}"
+        >
+      </div>
+    </div>
+
+    <div data-ng-controller="DemoController">
+    </div>
+  </md-content>
 
 <script src="susutomo.js"></script>
 <script src="build/bundle.js"></script>
