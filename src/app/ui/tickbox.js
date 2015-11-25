@@ -11,7 +11,7 @@ mod.controller('TickBoxController', function($scope) {
 
   $scope.beatActivities = [true, false, false, false];
 
-  $scope.$on('frame:playbackPosBeat', function(evt, v) {
+  $scope.$on('frame:playbackPosStep', function(evt, v) {
     var newLedIdx = v >> 2;
     $scope.beatActivities[prevLedIdx] = 0;
     $scope.beatActivities[newLedIdx] = 1;

@@ -4,13 +4,13 @@
 require('angular');
 
 require('./frame');
-require('./beattime');
+require('./steptime');
 require('./tickbox');
 
 
 angular.module('lovecall/ui/index', [
     'lovecall/ui/frame',
-    'lovecall/ui/beattime',
+    'lovecall/ui/steptime',
     'lovecall/ui/tickbox'
 ]);
 /* @license-end */

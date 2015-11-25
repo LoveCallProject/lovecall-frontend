@@ -3,22 +3,22 @@
 
 require('angular');
 
-var mod = angular.module('lovecall/ui/beattime', [
+var mod = angular.module('lovecall/ui/steptime', [
 ]);
 
-mod.controller('BeatTimeController', function($scope, $log) {
-  $log = $log.getInstance('BeatTimeController');
+mod.controller('StepTimeController', function($scope, $log) {
+  $log = $log.getInstance('StepTimeController');
 
   // states
   $scope.measure = 0;
-  $scope.beat = 0;
+  $scope.step = 0;
 
   $scope.$on('frame:playbackPosMeasure', function(evt, v) {
     $scope.measure = v;
   });
 
-  $scope.$on('frame:playbackPosBeat', function(evt, v) {
-    $scope.beat = v;
+  $scope.$on('frame:playbackPosStep', function(evt, v) {
+    $scope.step = v;
   });
 
   $log.info('$scope=', $scope);

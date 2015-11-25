@@ -2,83 +2,83 @@
 'use strict';
 
 var tempoMod = require('./tempo');
-var beatAdd = tempoMod.beatAdd;
-var beatCompare = tempoMod.beatCompare;
+var stepAdd = tempoMod.stepAdd;
+var stepCompare = tempoMod.stepCompare;
 
 
 var makeEngineEvent = function(a, tempo) {
   return {
-    "ts": tempo.beatToTime(a[0][0], a[0][1]),
+    "ts": tempo.stepToTime(a[0].m, a[0].s),
     "type": a[1],
     "params": a[2]
   };
 };
 
 
-var parseFuFuAction = function(startBeat, params) {
+var parseFuFuAction = function(startStep, params) {
   return [
-    [startBeat, "Fu!", null],
-    [beatAdd(startBeat, [0, 2]), "Fu!", null]
+    [startStep, "Fu!", null],
+    [stepAdd(startStep, {m: 0, s: 2}), "Fu!", null]
   ];
 };
 
 
-var parsePeriodicAction = function(startBeat, endBeat, type, offset, increment) {
+var parsePeriodicAction = function(startStep, endStep, type, offset, increment) {
   var result = [];
-  var currentBeat = beatAdd(startBeat, offset);
+  var currentStep = stepAdd(startStep, offset);
 
-  while (beatCompare(currentBeat, endBeat) < 0) {
-    result.push([currentBeat, type, null]);
-    currentBeat = beatAdd(currentBeat, increment);
+  while (stepCompare(currentStep, endStep) < 0) {
+    result.push([currentStep, type, null]);
+    currentStep = stepAdd(currentStep, increment);
   }
 
   return result;
 };
 
 
-var parseSJAction = function(startBeat, endBeat, params) {
-  return parsePeriodicAction(startBeat, endBeat, "上举", [0, 0], [0, params[0]]);
+var parseSJAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "上举", {m: 0, s: 0}, {m: 0, s: params[0]});
 };
 
 
-var parseLDAction = function(startBeat, endBeat, params) {
-  return parsePeriodicAction(startBeat, endBeat, "里打", [0, 4], [0, 8]);
+var parseLDAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "里打", {m: 0, s: 4}, {m: 0, s: 8});
 };
 
 
-var parseLTAction = function(startBeat, endBeat, params) {
-  return parsePeriodicAction(startBeat, endBeat, "里跳", [0, 4], [0, 8]);
+var parseLTAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: 4}, {m: 0, s: 8});
 };
 
 
-var parseKHAction = function(startBeat, endBeat, params) {
-  return parsePeriodicAction(startBeat, endBeat, "快挥", [0, 0], [0, 4]);
+var parseKHAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: 4});
 }
 
 
-var parseAlarmAction = function(startBeat, endBeat, params) {
+var parseAlarmAction = function(startStep, endStep, params) {
   return [
-    [startBeat, "Hi!", null],
-    [beatAdd(startBeat, [0, 8]), "Hi!", null],
-    [beatAdd(startBeat, [1, 0]), "Hi!", null],
-    [beatAdd(startBeat, [1, 4]), "Hi!", null],
-    [beatAdd(startBeat, [1, 8]), "Hi!", null],
-    [beatAdd(startBeat, [1, 12]), "Hi!", null]
+    [startStep, "Hi!", null],
+    [stepAdd(startStep, {m: 0, s: 8}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 0}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 4}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 8}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 12}), "Hi!", null]
   ];
 };
 
 
-var parsePPPHAction = function(startBeat, endBeat, params) {
+var parsePPPHAction = function(startStep, endStep, params) {
   var ppphVariant = params[0];
-  var currentBeat = startBeat;
+  var currentStep = startStep;
   var result = [];
 
   switch(ppphVariant) {
     case 'OOOH': {
-      while (beatCompare(currentBeat, endBeat) < 0) {
-        result.push([currentBeat, "Oh~", null]);
-        result.push([beatAdd(currentBeat, [0, 12]), "Hi!", null]);
-        currentBeat = beatAdd(currentBeat, [1, 0]);
+      while (stepCompare(currentStep, endStep) < 0) {
+        result.push([currentStep, "Oh~", null]);
+        result.push([stepAdd(currentStep, {m: 0, s: 12}), "Hi!", null]);
+        currentStep = stepAdd(currentStep, {m: 1, s: 0});
       }
 
       break;
@@ -92,11 +92,11 @@ var parsePPPHAction = function(startBeat, endBeat, params) {
 };
 
 
-var parseFollowAction = function(startBeat, endBeat, params) {
+var parseFollowAction = function(startStep, endStep, params) {
   var content = params[0];
 
   return [
-    [startBeat, "跟唱", content]
+    [startStep, "跟唱", content]
   ];
 };
 
@@ -118,13 +118,13 @@ var LONG_ACTION_PARSERS = {
 
 
 var parsePointAction = function(actionData) {
-  var actionStartBeat = actionData.slice(0, 2);
+  var actionStartStep = actionData.slice(0, 2);
   var actionType = actionData[2];
   var actionParams = actionData.slice(3);
 
   var parseFn = POINT_ACTION_PARSERS[actionType];
   if (parseFn) {
-    return parseFn(actionStartBeat, actionParams);
+    return parseFn(actionStartStep, actionParams);
   }
 
   console.error('unrecognized point action', actionData);
@@ -133,14 +133,14 @@ var parsePointAction = function(actionData) {
 
 
 var parseLongAction = function(actionData) {
-  var actionStartBeat = actionData.slice(0, 2);
-  var actionEndBeat = actionData.slice(2, 4);
+  var actionStartStep = actionData.slice(0, 2);
+  var actionEndStep = actionData.slice(2, 4);
   var actionType = actionData[4];
   var actionParams = actionData.slice(5);
 
   var parseFn = LONG_ACTION_PARSERS[actionType];
   if (parseFn) {
-    return parseFn(actionStartBeat, actionEndBeat, actionParams);
+    return parseFn(actionStartStep, actionEndStep, actionParams);
   }
 
   console.error('unrecognized long action', actionData);
@@ -188,10 +188,8 @@ var parseCall = function(data) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
   var sources = songMetadata.sources;
-  var offsetMs = sources[Object.keys(sources)[0]].offset +
-               songMetadata.timing[0][0];
-  var beatMs = 60000 / songMetadata.timing[0][1];
-  var tempo = tempoMod.tempoFactory(beatMs, offsetMs);
+  var globalOffsetMs = sources[Object.keys(sources)[0]].offset;
+  var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs);
 
   var events = parseTimeline(data.timeline, tempo);
 

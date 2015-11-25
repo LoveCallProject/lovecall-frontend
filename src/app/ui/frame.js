@@ -9,9 +9,9 @@ var mod = angular.module('lovecall/ui/frame', []);
 mod.factory('FrameManager', function($rootScope, $window, $log) {
   // states
   var playbackPosMeasure = 0;
-  var playbackPosBeat = 0;
+  var playbackPosStep = 0;
   var prevFrameMeasure = -1;
-  var prevFrameBeat = -1;
+  var prevFrameStep = -1;
 
   $log = $log.getInstance('FrameManager');
 
@@ -37,10 +37,10 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
       prevFrameMeasure = playbackPosMeasure;
     }
 
-    if (prevFrameBeat != playbackPosBeat) {
-      $rootScope.$broadcast('frame:playbackPosBeat', playbackPosBeat);
+    if (prevFrameStep != playbackPosStep) {
+      $rootScope.$broadcast('frame:playbackPosStep', playbackPosStep);
       $rootScope.$digest();
-      prevFrameBeat = playbackPosBeat;
+      prevFrameStep = playbackPosStep;
     }
   };
 
@@ -52,8 +52,8 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
 
 
   var tickCallback = function(beat) {
-    playbackPosMeasure = beat[0];
-    playbackPosBeat = beat[1];
+    playbackPosMeasure = beat.m;
+    playbackPosStep = beat.s;
   }
 
   return {

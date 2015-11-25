@@ -2,38 +2,94 @@
 'use strict';
 
 
-var tempoFactory = function(beatMs, offsetMs) {
-  // TODO: 4/4 time signature assumed
-  var measureMs = beatMs * 4;
-  var fourthBeatMs = beatMs / 4;
+var tempoFactory = function(timingSpec, globalOffsetMs) {
+  var timingSections = timingSpec.map(function(v) {
+    // [offset, bpm, timeSignNumer, timeSignDenom, startingMeasure]
+    // to
+    // [offsetMs, stepMs, startingMeasure, stepsPerMeasure, stepsPerStep]
+    // where a "step" is an 1/16 note
+    var timeSignNumer = v[2];
+    var timeSignDenom = v[3];
+
+    var beatMs = 60000 / v[1];
+    var stepsPerStep = 16 / timeSignDenom;
+    var stepsPerMeasure = timeSignNumer * stepsPerStep;
+    var stepMs = beatMs / stepsPerStep;
+
+    return [v[0] + globalOffsetMs, stepMs, v[4], stepsPerMeasure, stepsPerStep];
+  });
+
+  console.log('tempo: timingSections=', timingSections);
 
   return {
-    "fourthBeatMs": fourthBeatMs,
-    timeToBeat: function(posMs) {
-      var posAfterOffset = posMs - offsetMs;
-      var tmp = posAfterOffset / measureMs;
-      var measure = Math.floor(tmp);
-      var fourthBeat = Math.floor((posAfterOffset - measure * measureMs) / fourthBeatMs);
-      return [measure, fourthBeat];
+    timingSections: timingSections,
+    timeToStep: function(posMs) {
+      // find out the timing section to use
+      var sectionIdx;
+      var section;
+      if (posMs < timingSections[0][0]) {
+        // just use the first timing section for leading
+        sectionIdx = 0;
+        section = timingSections[0];
+      } else {
+        for (sectionIdx = timingSections.length - 1; sectionIdx >= 0; sectionIdx--) {
+          section = timingSections[sectionIdx];
+          if (section[0] <= posMs) {
+            break;
+          }
+        }
+      }
+
+      var posAfterOffset = posMs - section[0];
+      var stepMs = section[1];
+      var startingMeasure = section[2];
+      var stepsPerMeasure = section[3];
+
+      var totalSteps = (posAfterOffset / stepMs)|0;
+      var measure = (startingMeasure + totalSteps / stepsPerMeasure)|0;
+      var step = (totalSteps % stepsPerMeasure)|0;
+      return {
+        m: (totalSteps < 0 ? measure - 1 : measure)|0,
+        s: (step < 0 ? step + stepsPerMeasure : step)|0,
+        i: sectionIdx
+      };
     },
-    beatToTime: function(measure, fourthBeat) {
-      return offsetMs + measure * measureMs + fourthBeat * fourthBeatMs;
+    stepToTime: function(measure, step) {
+      var sectionIdx = 0;
+      var section = timingSections[timingSections.length - 1];
+
+      for (; sectionIdx < timingSections.length; sectionIdx++) {
+        if (measure < timingSections[sectionIdx][2]) {
+          var prevIdx = sectionIdx - 1;
+          section = timingSections[prevIdx < 0 ? 0 : prevIdx];
+          break;
+        }
+      }
+
+      var measureInSection = measure - section[2];
+      var stepsPerMeasure = section[3];
+      var stepMs = section[1];
+      return section[0] + stepMs * (stepsPerMeasure * measureInSection + step);
     }
   };
 };
 
 
 var metronomeFactory = function(tempo, tickCallback) {
-  // TODO: multiple timing sections
-  var currentFourthBeatMs = tempo.fourthBeatMs;
-  var nextFourthBeatMs = tempo.fourthBeatMs;
+  var timingSections = tempo.timingSections;
+  var currentSectionIdx = 0;
+  var currentStepMs = timingSections[0][1];
+  var currentStepsPerMeasureMinusOne = timingSections[0][3] - 1;
+  var nextSectionMs = timingSections.length < 2 ? Infinity : timingSections[1][0];
 
   // state
   var lastPosMs = -Infinity;
-  var remainingBeatMs = nextFourthBeatMs;
-  var currentBeat = [0, 0];
+  var remainingStepMs = currentStepMs;
+  var currentStep = {m: 0, s: 0, i: 0};
   var callCounter = 0;
   var resyncCount = 48;
+
+  console.log('metronome: initializing with tempo', tempo);
 
   return {
     tick: function(posMs) {
@@ -43,66 +99,95 @@ var metronomeFactory = function(tempo, tickCallback) {
       // prevent beat drifting over time by falling back to slowpath every ~1 s
       callCounter += 1;
 
-      if (deltaMs > 0 && deltaMs <= currentFourthBeatMs && callCounter < resyncCount) {
-        remainingBeatMs -= deltaMs;
+      if (
+          deltaMs > 0 &&
+          deltaMs <= currentStepMs &&
+          posMs < nextSectionMs &&  // re-sync on every timing section change
+          callCounter < resyncCount
+          ) {
+        remainingStepMs -= deltaMs;
 
-        if (remainingBeatMs <= 0) {
-          remainingBeatMs += nextFourthBeatMs;
+        if (remainingStepMs <= 0) {
+          // we won't be crossing timing sections in fastpath so this is safe
+          remainingStepMs += currentStepMs;
 
-          if (currentBeat[1] < 15) {
-            currentBeat[1] += 1;
+          if (currentStep.s < currentStepsPerMeasureMinusOne) {
+            currentStep.s += 1;
           } else {
-            currentBeat[0] += 1;
-            currentBeat[1] = 0;
+            currentStep.m += 1;
+            currentStep.s = 0;
           }
 
           if (tickCallback) {
-            tickCallback(currentBeat);
+            tickCallback(currentStep);
           }
         }
 
-        return currentBeat;
+        return currentStep;
       }
 
-      currentBeat = tempo.timeToBeat(posMs);
-      remainingBeatMs = tempo.beatToTime(currentBeat[0], currentBeat[1] + 1) - posMs;
-      if (callCounter == resyncCount) {
-        // console.debug('metronome: periodic re-sync');
+      currentStep = tempo.timeToStep(posMs);
+      currentSectionIdx = currentStep.i;
+      currentStepMs = timingSections[currentSectionIdx][1];
+      currentStepsPerMeasureMinusOne = timingSections[currentSectionIdx][3] - 1;
+      remainingStepMs = tempo.stepToTime(currentStep.m, currentStep.s + 1) - posMs;
+      nextSectionMs = (
+          (currentSectionIdx == timingSections.length - 1) ?
+          Infinity :
+          timingSections[currentSectionIdx + 1][0]
+          );
+      if (callCounter == resyncCount || posMs >= nextSectionMs) {
+        console.log('metronome: periodic re-sync: nextSectionMs=', nextSectionMs);
       } else {
-        console.warn('metronome: slowpath: position=', posMs, 'delta=', deltaMs, 'currentBeat=', currentBeat, 'remainingBeatMs=', remainingBeatMs, 'callCounter=', callCounter);
+        console.log(
+            'metronome: slowpath: position=', posMs,
+            'delta=', deltaMs,
+            'currentSectionIdx=', currentSectionIdx,
+            'currentStep=', currentStep,
+            'remainingStepMs=', remainingStepMs,
+            'nextSectionMs=', nextSectionMs,
+            'callCounter=', callCounter
+            );
       }
 
       // reset call counter
       callCounter = 0;
 
       if (tickCallback) {
-        tickCallback(currentBeat);
+        tickCallback(currentStep);
       }
 
-      return currentBeat;
+      return currentStep;
     }
   };
 };
 
 
-var beatAdd = function(one, other) {
-  var newMeasure = one[0] + other[0];
-  var newBeat = one[1] + other[1];
-  newMeasure += Math.floor(newBeat / 16);
-  return [newMeasure, newBeat % 16];
+var stepAdd = function(one, other, stepsPerMeasure) {
+  stepsPerMeasure || (stepsPerMeasure = 16);
+
+  var newMeasure = one.m + other.m;
+  var newStep = one.s + other.s;
+  newMeasure += Math.floor(newStep / stepsPerMeasure);
+  return {
+    m: newMeasure,
+    s: newStep % stepsPerMeasure
+  };
 };
 
 
-var beatCompare = function(one, other) {
-  return (one[0] * 16 + one[1]) - (other[0] * 16 + other[1]);
+var stepCompare = function(one, other, stepsPerMeasure) {
+  stepsPerMeasure || (stepsPerMeasure = 16);
+
+  return (one.m * stepsPerMeasure + one.s) - (other.m * stepsPerMeasure + other.s);
 };
 
 
 module.exports = {
   'tempoFactory': tempoFactory,
   'metronomeFactory': metronomeFactory,
-  'beatAdd': beatAdd,
-  'beatCompare': beatCompare
+  'stepAdd': stepAdd,
+  'stepCompare': stepCompare
 };
 /* @license-end */
 
