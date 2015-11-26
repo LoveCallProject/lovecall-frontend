@@ -7,7 +7,9 @@ var metronomeMod = require('../choreography/metronome');
 require('../ui/frame');
 
 
-var mod = angular.module('lovecall/engine/audio', []);
+var mod = angular.module('lovecall/engine/audio', [
+    'lovecall/ui/frame'
+]);
 
 mod.factory('AudioEngine', function($window, $log, FrameManager) {
   var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
