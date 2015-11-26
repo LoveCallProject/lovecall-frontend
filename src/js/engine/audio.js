@@ -2,7 +2,7 @@
 'use strict';
 
 require('angular');
-var tempoMod = require('../choreography/tempo');
+var metronomeMod = require('../choreography/metronome');
 
 require('../ui/frame');
 
@@ -20,7 +20,8 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
   var playbackPosMs = 0;
-  
+
+  var $metronomeLog = $log.getInstance('Metronome');
   $log = $log.getInstance('AudioEngine');
 
 
@@ -120,7 +121,12 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
 
   var audioCallbackFactory = function(tempo) {
-    var metronome = tempoMod.metronomeFactory(tempo, FrameManager.tickCallback);
+    var metronome = metronomeMod.metronomeFactory(
+        tempo,
+        FrameManager.tickCallback,
+        $metronomeLog,
+        false
+        );
 
     var audioCallback = function(e) {
       var ctxMs = e.playbackTime * 1000;
