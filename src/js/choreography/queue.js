@@ -121,12 +121,33 @@ var queueEngineFactory = function(engineEventList, eventCallback, logProvider, v
     // slowpath is requested
     var prevEvent = fast ? null : doUpdateSlowpath(posMs);
 
-    var lookaheadEvents = gatherLookaheadEvents(posMs);
+
+    // this would for sure kill the audio performance, don't print even in
+    // case of verbose logging.
+    /*
+    if (verboseLog) {
+      logProvider.debug(
+          'update: posMs',
+          posMs,
+          'fast',
+          fast,
+          'nextEventMs',
+          nextEventMs,
+          'nextEventIdx',
+          nextEventIdx
+          );
+    }
+    */
 
     do {
       // fire the callback if one is ready, but always fire in case of slowpath
       if (posMs >= nextEventMs || !fast) {
-        eventCallback(events[nextEventIdx], lookaheadEvents, prevEvent);
+        var lookaheadEvents = gatherLookaheadEvents(posMs);
+        if (verboseLog) {
+          logProvider.debug('update: lookaheadEvents=', lookaheadEvents);
+        }
+
+        eventCallback(events[eventTimeline[nextEventIdx]], lookaheadEvents, prevEvent);
 
         if (prevEvent) {
           // only fire prevEvent once
