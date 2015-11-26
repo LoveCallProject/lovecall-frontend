@@ -122,7 +122,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
   };
 
 
-  var audioCallbackFactory = function(tempo) {
+  var audioCallbackFactory = function(tempo, queueEngine) {
     var metronome = metronomeMod.metronomeFactory(
         tempo,
         FrameManager.tickCallback,
@@ -135,6 +135,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
       var posMs = playbackReferenceMs + ctxMs - ctxLastReferenceMs;
       playbackPosMs = posMs;
 
+      queueEngine.update(posMs, true);
       metronome.tick(posMs);
 
       // just pass through
@@ -155,10 +156,10 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
   };
 
 
-  var setTempo = function(tempo) {
-    $log.debug('setTempo: tempo=', tempo);
+  var initEvents = function(tempo, queueEngine) {
+    $log.debug('initEvents: tempo=', tempo, 'queueEngine=', queueEngine);
 
-    var audioCallback = audioCallbackFactory(tempo);
+    var audioCallback = audioCallbackFactory(tempo, queueEngine);
     timingNode.onaudioprocess = audioCallback;
   };
 
@@ -168,7 +169,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
     'getDuration': getDuration,
     'getPlaybackPosition': getPlaybackPosition,
     'setSourceData': setSourceData,
-    'setTempo': setTempo,
+    'initEvents': initEvents,
     'resume': resume,
     'pause': pause,
     'seek': seek

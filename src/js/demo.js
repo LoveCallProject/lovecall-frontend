@@ -25,7 +25,7 @@ mod.controller('DemoController', function($window, AudioEngine, Choreography, So
     Choreography.load(CALL_DATA, hash);
 
     AudioEngine.setSourceData(buffer);
-    AudioEngine.setTempo(Choreography.getTempo());
+    AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
   });
 
 
