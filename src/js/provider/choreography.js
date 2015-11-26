@@ -27,6 +27,9 @@ mod.factory('Choreography', function($log) {
         'prevEvents=',
         prevEvents
         );
+    nextEvents.map(function(v) {
+      $log.debug('queue event:', v);
+    });
   }
 
   var load = function(data, hash) {

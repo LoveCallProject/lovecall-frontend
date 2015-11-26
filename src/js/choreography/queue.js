@@ -73,7 +73,14 @@ var queueEngineFactory = function(engineEventList, eventCallback, logProvider, v
     var lookaheadWindowEndIdx = eventIdxByTime(posMs + lookaheadWindowMs);
     var keys = _.slice(eventTimeline, nextEventIdx + 1, lookaheadWindowEndIdx);
 
-    return _(events).pick(keys).flatten().value();
+    // it seems _.pick() only supports list of strings as "indexes"...
+    // return _(events).pick(keys).flatten().value();
+    return _(keys)
+      .map(function(elem) {
+        return events[elem];
+      })
+      .flatten()
+      .value();
   };
 
 
@@ -114,12 +121,33 @@ var queueEngineFactory = function(engineEventList, eventCallback, logProvider, v
     // slowpath is requested
     var prevEvent = fast ? null : doUpdateSlowpath(posMs);
 
-    var lookaheadEvents = gatherLookaheadEvents(posMs);
+
+    // this would for sure kill the audio performance, don't print even in
+    // case of verbose logging.
+    /*
+    if (verboseLog) {
+      logProvider.debug(
+          'update: posMs',
+          posMs,
+          'fast',
+          fast,
+          'nextEventMs',
+          nextEventMs,
+          'nextEventIdx',
+          nextEventIdx
+          );
+    }
+    */
 
     do {
       // fire the callback if one is ready, but always fire in case of slowpath
       if (posMs >= nextEventMs || !fast) {
-        eventCallback(events[nextEventIdx], lookaheadEvents, prevEvent);
+        var lookaheadEvents = gatherLookaheadEvents(posMs);
+        if (verboseLog) {
+          logProvider.debug('update: lookaheadEvents=', lookaheadEvents);
+        }
+
+        eventCallback(events[eventTimeline[nextEventIdx]], lookaheadEvents, prevEvent);
 
         if (prevEvent) {
           // only fire prevEvent once
