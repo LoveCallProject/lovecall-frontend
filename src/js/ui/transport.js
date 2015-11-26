@@ -12,13 +12,37 @@ var mod = angular.module('lovecall/ui/transport', [
     'lovecall/ui/frame'
 ]);
 
+mod.directive('dragAble', function() {
+  return {
+    restrict: 'A',
+    link: function(scope, el, attrs, controller) {
+      angular.element(el).attr("draggable", "true");
+
+      el.bind("dragstart", function(e) {
+        e.target.style.opacity = .8;
+        console.log('dragstart');
+        //TODO
+      });
+
+      el.bind("dragend", function(e) {
+        console.log('dragend');
+        //TODO
+      });
+
+      el.bind("drag", function(e) {
+        console.log('drag');
+        //TODO
+      });
+    }
+  };
+});
+
 mod.controller('TransportController', function($scope, $log, AudioEngine, FrameManager) {
   $log = $log.getInstance('TransportController');
 
   // scope states
   $scope.playbackPos = 0;
   $scope.isPlaying = false;
-  $scope.indicatorPos = 0;
 
   // internal states
   var isPlaying = false;
@@ -42,6 +66,15 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
   };
 
 
+  $scope.dropped = function(dragEle, dropEle) {
+    var drag = angular.element(dragEle);
+    var drop = angular.element(dropEle);
+
+    console.log(drag, drop);
+    //TODO
+  };
+
+
   // frame callback
   var transportFrameCallback = function(ts) {
     isPlaying = AudioEngine.getIsPlaying();
@@ -54,8 +87,7 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
     if (prevPlaybackPos != playbackPos) {
       $scope.playbackPos = playbackPos;
-      $scope.indicatorPos = playbackPos / duration * 100 + '%';
-      console.log($scope.indicatorPos);
+      updateTransport(playbackPos / duration);
       $scope.$digest();
     }
 
@@ -63,6 +95,33 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
     prevPlaybackPos = playbackPos;
   };
 
+
+  /* canvas */
+
+  var transportCanvas = document.getElementById('transport');
+  var transportCtx = transportCanvas.getContext('2d');
+
+  console.log(transportCanvas.height);
+  var updateTransport = function(pos) {
+    transportCtx.fillStyle = "grey";
+    transportCtx.fillRect(
+        0,
+        0,
+        transportCanvas.width,
+        transportCanvas.height
+        );
+
+    transportCtx.fillStyle = "red";
+    transportCtx.beginPath();
+    transportCtx.arc(
+        pos * transportCanvas.width,
+        transportCanvas.height / 2,
+        transportCanvas.height / 2,
+        0,
+        Math.PI*2
+        );
+    transportCtx.fill();
+  };
 
   FrameManager.addFrameCallback(transportFrameCallback);
 

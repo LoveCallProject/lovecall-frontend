@@ -84,16 +84,9 @@
         >
       <md-button data-ng-click="play()">Play</md-button>
       <md-button data-ng-click="pause()">Pause</md-button>
-      <div class="transport">
-        <div class="transport-slider"></div>
-        <div 
-            class="transport-indicator"
-            ng-style="{ 'left': indicatorPos }"
-            >
-        </div>
+      <canvas id="transport" height="16" width="352">
+      </canvas>
       </div>
-      <p>{{isPlaying}}</p>
-      <p>{{playbackPos}}</p>
     </section>
 
     <div data-ng-controller="StepTimeController">
