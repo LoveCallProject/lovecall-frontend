@@ -18,7 +18,7 @@ var mod = angular.module('lovecall/demo', [
 
 mod.controller('DemoController', function($window, AudioEngine, Choreography, Song, FrameManager) {
   // test Ajax loading
-  Song.load('susutomo.mp3', function(hash, buffer) {
+  Song.load('snowhare.mp3', function(hash, buffer) {
     console.log(hash, buffer);
 
     // demo
