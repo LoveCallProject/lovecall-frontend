@@ -85,7 +85,8 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
       $scope.$digest();
     }
 
-    if (prevPlaybackPos != playbackPos) {
+    // limit update frequency
+    if (prevPlaybackPos != playbackPos && Math.abs($scope.playbackPos - playbackPos) >= 500) {
       $scope.playbackPos = playbackPos;
       updateTransport(playbackPos / duration);
       $scope.$digest();
