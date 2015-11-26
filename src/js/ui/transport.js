@@ -18,16 +18,21 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
   // scope states
   $scope.playbackPos = 0;
   $scope.isPlaying = false;
+  $scope.indicatorPos = 0;
 
   // internal states
   var isPlaying = false;
   var playbackPos = 0;
   var prevIsPlaying = true;
   var prevPlaybackPos = -1;
+  var duration = AudioEngine.getDuration();
 
 
   // actions
   $scope.play = function() {
+    if (duration === 0) {
+      duration = AudioEngine.getDuration();
+    }
     AudioEngine.resume();
   };
 
@@ -49,6 +54,8 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
     if (prevPlaybackPos != playbackPos) {
       $scope.playbackPos = playbackPos;
+      $scope.indicatorPos = playbackPos / duration * 100 + '%';
+      console.log($scope.indicatorPos);
       $scope.$digest();
     }
 

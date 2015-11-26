@@ -97,7 +97,11 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
   };
 
   var getDuration = function() {
-    return sourceBuffer.duration * 1000;
+    if (sourceBuffer) {
+      return sourceBuffer.duration * 1000;
+    } else {
+      return 0;
+    }
   };
 
 

@@ -1,0 +1,20 @@
+.transport {
+  margin-top:2rem;
+  position: relative;
+  height: 2rem;
+  .transport-slider {
+    width: 22rem;
+    height: 0.8rem;
+    background-color: grey;
+    border-radius: 0.1rem;
+  }
+  .transport-indicator {
+    width: 1rem;
+    height: 1rem;
+    background-color: black;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
