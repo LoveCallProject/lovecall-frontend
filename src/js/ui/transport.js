@@ -12,37 +12,13 @@ var mod = angular.module('lovecall/ui/transport', [
     'lovecall/ui/frame'
 ]);
 
-mod.directive('dragAble', function() {
-  return {
-    restrict: 'A',
-    link: function(scope, el, attrs, controller) {
-      angular.element(el).attr("draggable", "true");
-
-      el.bind("dragstart", function(e) {
-        e.target.style.opacity = .8;
-        console.log('dragstart');
-        //TODO
-      });
-
-      el.bind("dragend", function(e) {
-        console.log('dragend');
-        //TODO
-      });
-
-      el.bind("drag", function(e) {
-        console.log('drag');
-        //TODO
-      });
-    }
-  };
-});
-
 mod.controller('TransportController', function($scope, $log, AudioEngine, FrameManager) {
   $log = $log.getInstance('TransportController');
 
   // scope states
   $scope.playbackPos = 0;
   $scope.isPlaying = false;
+  $scope.playButtonIcon = 'play_arrow';
 
   // internal states
   var isPlaying = false;
@@ -53,25 +29,23 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
 
   // actions
-  $scope.play = function() {
+  var play = function() {
     if (duration === 0) {
       duration = AudioEngine.getDuration();
     }
+    $scope.playButtonIcon = 'pause';
     AudioEngine.resume();
   };
 
 
-  $scope.pause = function() {
+  var pause = function() {
+    $scope.playButtonIcon = 'play_arrow';
     AudioEngine.pause();
   };
 
 
-  $scope.dropped = function(dragEle, dropEle) {
-    var drag = angular.element(dragEle);
-    var drop = angular.element(dropEle);
-
-    console.log(drag, drop);
-    //TODO
+  $scope.togglePlay = function() {
+    (isPlaying ? pause : play)();
   };
 
 
@@ -99,32 +73,30 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
   /* canvas */
 
-  var transportCanvas = document.getElementById('transport');
+  var transportCanvas = document.getElementById('transport__canvas');
   var transportCtx = transportCanvas.getContext('2d');
+  var prevTransportPos = 0;
 
-  console.log(transportCanvas.height);
   var updateTransport = function(pos) {
+    var canvasRect = transportCanvas.getBoundingClientRect();
+    var w = canvasRect.width;
+    var h = canvasRect.height;
+    transportCanvas.width = w;
+    transportCanvas.height = h;
+
+    var halfH = h / 2;
+
     transportCtx.fillStyle = "grey";
-    transportCtx.fillRect(
-        0,
-        0,
-        transportCanvas.width,
-        transportCanvas.height
-        );
+    transportCtx.fillRect(0, 0, w, h);
 
     transportCtx.fillStyle = "red";
     transportCtx.beginPath();
-    transportCtx.arc(
-        pos * transportCanvas.width,
-        transportCanvas.height / 2,
-        transportCanvas.height / 2,
-        0,
-        Math.PI*2
-        );
+    transportCtx.arc(pos * w, halfH, halfH, 0, 2 * Math.PI);
     transportCtx.fill();
   };
 
   FrameManager.addFrameCallback(transportFrameCallback);
+  updateTransport(0.0);
 
   $log.debug('$scope=', $scope);
 });

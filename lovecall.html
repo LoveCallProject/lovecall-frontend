@@ -35,7 +35,8 @@
       <h3>LoveCall</h3>
     </md-toolbar>
 
-    <md-sidenav 
+    <md-sidenav
+        id="sidenav"
         class="md-sidenav-left md-whiteframe-z2"
         md-component-id="sidenav"
         md-is-locked-open="$mdMedia('gt-md')"
@@ -76,17 +77,23 @@
   </section>
 
   <md-content 
+      class="content-container"
+      data-ng-controller="ContainerController"
+      data-ng-class="{'sidenav-locked-open': $mdMedia('gt-md')}"
       layout-margin layout="column" 
       layout-align="start center"
       >
     <section
+        id="transport"
         data-ng-controller="TransportController"
         >
-      <md-button data-ng-click="play()">Play</md-button>
-      <md-button data-ng-click="pause()">Pause</md-button>
-      <canvas id="transport" height="16" width="352">
-      </canvas>
+      <div class="transport__canvas-container">
+        <canvas id="transport__canvas">
+        </canvas>
       </div>
+      <md-button class="transport__play" data-ng-click="togglePlay()">
+        <md-icon class="inline" data-md-font-library="material-icons">{{playButtonIcon}}</md-icon>
+      </md-button>
     </section>
 
     <div data-ng-controller="StepTimeController">

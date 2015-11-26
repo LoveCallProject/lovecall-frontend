@@ -1,3 +1,10 @@
+.content-container {
+  &.sidenav-locked-open {
+    $md-sidenav-locked-open-width: 304px;
+    padding-left: $md-sidenav-locked-open-width;
+  }
+}
+
 .beat-indicator {
   display: inline-block;
   margin: 0.5rem;

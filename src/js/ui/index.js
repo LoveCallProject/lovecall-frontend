@@ -3,19 +3,21 @@
 
 require('angular');
 
+require('./container');
 require('./frame');
+require('./navigation');
 require('./steptime');
 require('./tickbox');
 require('./transport');
-require('./navigation.js');
 
 
 angular.module('lovecall/ui/index', [
+    'lovecall/ui/container',
     'lovecall/ui/frame',
+    'lovecall/ui/navigation',
     'lovecall/ui/steptime',
     'lovecall/ui/tickbox',
-    'lovecall/ui/transport',
-    'lovecall/ui/navigation'
+    'lovecall/ui/transport'
 ]);
 /* @license-end */
 

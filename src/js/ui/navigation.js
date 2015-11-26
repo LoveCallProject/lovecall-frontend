@@ -6,7 +6,7 @@ require('angular-material');
 
 var mod = angular.module('lovecall/ui/navigation', ['ngMaterial']);
 
-mod.controller('NavigationController', function($scope, $mdSidenav) {
+mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia) {
   $scope.showSide = function() {
     $mdSidenav('sidenav').open();
   };
@@ -14,4 +14,6 @@ mod.controller('NavigationController', function($scope, $mdSidenav) {
   $scope.closeSide = function() {
     $mdSidenav('sidenav').close();
   };
+
+	$scope.$mdMedia = $mdMedia;
 });
