@@ -118,7 +118,7 @@ var LONG_ACTION_PARSERS = {
 
 
 var parsePointAction = function(actionData) {
-  var actionStartStep = actionData.slice(0, 2);
+  var actionStartStep = {m: actionData[0], s: actionData[1]};
   var actionType = actionData[2];
   var actionParams = actionData.slice(3);
 
@@ -133,8 +133,8 @@ var parsePointAction = function(actionData) {
 
 
 var parseLongAction = function(actionData) {
-  var actionStartStep = actionData.slice(0, 2);
-  var actionEndStep = actionData.slice(2, 4);
+  var actionStartStep = {m: actionData[0], s: actionData[1]};
+  var actionEndStep = {m: actionData[2], s: actionData[3]};
   var actionType = actionData[4];
   var actionParams = actionData.slice(5);
 
