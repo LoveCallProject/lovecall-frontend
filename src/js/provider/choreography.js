@@ -4,17 +4,39 @@
 require('angular');
 
 var parser = require('../choreography/parser');
+var queue = require('../choreography/queue');
 
 
 var mod = angular.module('lovecall/provider/choreography', [
 ]);
 
-mod.factory('Choreography', function() {
-  var parsedData = null;
+mod.factory('Choreography', function($log) {
+  var $queueEngineLog = $log.getInstance('QueueEngine');
+  $log = $log.getInstance('Choreography');
 
+  var parsedData = null;
+  var queueEngine = null;
+
+
+  var queueEventCallback = function(nextEvents, lookaheadEvents, prevEvents) {
+    $log.debug(
+        'queue event: nextEvents=',
+        nextEvents,
+        'lookaheadEvents=',
+        lookaheadEvents,
+        'prevEvents=',
+        prevEvents
+        );
+  }
 
   var load = function(data, hash) {
     parsedData = parser.parseCall(data, hash);
+    queueEngine = queue.queueEngineFactory(
+        parsedData.events,
+        queueEventCallback,
+        $queueEngineLog,
+        true
+        );
   };
 
 
@@ -25,13 +47,19 @@ mod.factory('Choreography', function() {
 
   var getEvents = function() {
     return parsedData.events;
-  }
+  };
+
+
+  var getQueueEngine = function() {
+    return queueEngine;
+  };
 
 
   return {
     'load': load,
     'getTempo': getTempo,
-    'getEvents': getEvents
+    'getEvents': getEvents,
+    'getQueueEngine': getQueueEngine
   };
 });
 /* @license-end */
