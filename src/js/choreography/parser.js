@@ -1,6 +1,8 @@
 /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
 'use strict';
 
+var _ = require('lodash');
+
 var tempoMod = require('./tempo');
 var stepAdd = tempoMod.stepAdd;
 var stepCompare = tempoMod.stepCompare;
@@ -164,22 +166,20 @@ var parseTimelineAction = function(action) {
 
 
 var parseTimeline = function(timeline, tempo) {
-  var events = timeline.map(function(v) {
-    return parseTimelineAction(v, tempo);
-  });
-
-  var result = events.reduce(function(acc, elem) {
-    var i = 0;
-    for (; i < elem.length; i++) {
-      acc.push(makeEngineEvent(elem[i], tempo));
-    }
-
-    return acc;
-  }, []);
+  var result = _(timeline)
+    .map(function(v) {
+      return parseTimelineAction(v);
+    })
+    .flatten()
+    .map(function(elem) {
+      return makeEngineEvent(elem, tempo);
+    })
+    .value();
 
   result.sort(function(a, b) {
     return a.ts - b.ts;
   });
+
   return result;
 };
 
