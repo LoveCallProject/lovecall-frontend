@@ -73,7 +73,14 @@ var queueEngineFactory = function(engineEventList, eventCallback, logProvider, v
     var lookaheadWindowEndIdx = eventIdxByTime(posMs + lookaheadWindowMs);
     var keys = _.slice(eventTimeline, nextEventIdx + 1, lookaheadWindowEndIdx);
 
-    return _(events).pick(keys).flatten().value();
+    // it seems _.pick() only supports list of strings as "indexes"...
+    // return _(events).pick(keys).flatten().value();
+    return _(keys)
+      .map(function(elem) {
+        return events[elem];
+      })
+      .flatten()
+      .value();
   };
 
 
