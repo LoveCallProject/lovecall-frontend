@@ -1,5 +1,7 @@
 # for obvious copyright reasons
 *.mp3
+*.ogg
+*.wav
 
 # build intermediates
 /build
