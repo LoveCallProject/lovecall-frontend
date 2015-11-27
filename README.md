@@ -24,5 +24,5 @@ bower install
 webpack   # -p for production build
 
 # to fire up the dev server
-webpack-ddev-server --inline --compress --content-base=public/
+webpack-dev-server --inline --compress --content-base=public/
 ```
