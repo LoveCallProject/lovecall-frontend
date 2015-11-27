@@ -15,8 +15,8 @@ TODO
 npm install -g bower webpack webpack-dev-server
 
 # install local deps
-# material-design-icons is *large*, please be patient and/or have enough free
-# space on disk
+# material-design-icons is *large*, please be patient and make sure to have
+# enough free space
 npm install
 bower install
 
