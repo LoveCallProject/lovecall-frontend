@@ -25,14 +25,11 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
   var playbackPos = 0;
   var prevIsPlaying = true;
   var prevPlaybackPos = -1;
-  var duration = AudioEngine.getDuration();
+  var duration = 0;
 
 
   // actions
   var play = function() {
-    if (duration === 0) {
-      duration = AudioEngine.getDuration();
-    }
     $scope.playButtonIcon = 'pause';
     AudioEngine.resume();
   };
@@ -47,6 +44,14 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
   $scope.togglePlay = function() {
     (isPlaying ? pause : play)();
   };
+
+
+  $scope.$on('audio:loaded', function(e) {
+    duration = AudioEngine.getDuration();
+
+    pause();
+    playbackPos = 0;
+  });
 
 
   $scope.$on('transport:seek', function(e, position, duration) {
