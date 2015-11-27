@@ -4,7 +4,7 @@
 require('angular');
 
 var parser = require('../choreography/parser');
-var queue = require('../choreography/queue');
+var queue = require('../engine/queue');
 
 
 var mod = angular.module('lovecall/provider/choreography', [
