@@ -77,10 +77,13 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       $scope.$digest();
     }
 
+    // chromium thinks i'm causing jank by delibrately limiting the refresh
+    // rate... so here's the full 60fps someone wanted
+    updateTransport(playbackPos, duration);
+
     // limit update frequency
     if (prevPlaybackPos != playbackPos && Math.abs($scope.playbackPos - playbackPos) >= 500) {
       $scope.playbackPos = playbackPos;
-      updateTransport(playbackPos, duration);
       $scope.$digest();
     }
 
