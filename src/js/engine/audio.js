@@ -28,6 +28,8 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
 
   var onEndedCallback = function(e) {
+    $log.debug('onEndedCallback');
+
     pause();
   };
 
@@ -39,7 +41,11 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
     }
 
     isPlaying = true;
+    return doResume();
+  };
 
+
+  var doResume = function() {
     if (playbackPosMs >= getDuration()) {
       // rewind
       playbackPosMs = 0;
@@ -72,7 +78,11 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
     }
 
     isPlaying = false;
+    return doPause();
+  };
 
+
+  var doPause = function() {
     $log.info('pause');
 
     sourceNode.stop();
@@ -82,13 +92,16 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
   };
 
 
-  var seek = function(newPositionMs) {
-    sourceNode.onended = function(e) {
-      playbackPosMs = newPositionMs;
-      resume();
-    };
+  var doSeek = function(newPositionMs) {
+    $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
+    playbackPosMs = newPositionMs;
+    isPlaying && doResume();
+  };
 
-    pause();
+
+  var seek = function(newPositionMs) {
+    isPlaying && doPause();
+    return doSeek(newPositionMs);
   };
 
 
