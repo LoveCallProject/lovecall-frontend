@@ -49,6 +49,19 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
   };
 
 
+  $scope.$on('transport:seek', function(e, position, duration) {
+    if (duration <= 0) {
+      $log.warn('discarding bogus seek with duration == 0');
+      return;
+    }
+
+    var newPlaybackPos = (position * duration)|0;
+    $log.info('seek: newPlaybackPos=', newPlaybackPos);
+
+    AudioEngine.seek(newPlaybackPos);
+  });
+
+
   // frame callback
   var transportFrameCallback = function(ts) {
     isPlaying = AudioEngine.getIsPlaying();
@@ -76,9 +89,22 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
   var prevTransportPos = 0;
 
   var transportCanvasStateFactory = function(elem) {
+    // parameters
+    var marginL = 16;
+    var marginR = 16;
+    var sliderLineWidth = 4;
+    var sliderHitTestDistance = 8;
+    var indicatorRadius = 6;
+    var indicatorRadiusHovered = 8;
+    var indicatorRadiusActive = 6;
+    var indicatorHoverCircleRadius = 16;
+
     // ui states
     var position = 0;
     var durationMs = 0;
+    var indicatorHovered = true;
+    var indicatorActive = false;
+    var positionBeforeIndicatorActive = 0;
 
     // draw states
     var ctx = elem.getContext('2d');
@@ -88,27 +114,27 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
     var pointerX = 0;
     var pointerY = 0;
+    var pointerDownX = 0;
+    var pointerDownY = 0;
 
+    var sliderX1 = marginL;
+    var sliderX2 = 0;
+    var sliderY = 0;
+    var sliderLength = 0;
     var indicatorX = 0;
     var indicatorY = 0;
     var indicatorR = 0;
-    var indicatorHovered = true;
-    var indicatorActive = false;
-
-    // parameters
-    var marginL = 16;
-    var marginR = 16;
-    var sliderLineWidth = 4;
-    var indicatorRadius = 6;
-    var indicatorRadiusHovered = 8;
-    var indicatorRadiusActive = 6;
-    var indicatorHoverCircleRadius = 16;
 
 
-    var update = function(pos, duration) {
-      durationMs = duration;
-      position = duration > 0 ? pos / duration : 0.0;
-      draw();
+    var update = function(pos, duration, skipDraw) {
+      duration != null && (durationMs = duration);
+      updateRawPosition(+(duration > 0 ? pos / duration : 0.0), skipDraw);
+    };
+
+
+    var updateRawPosition = function(pos, skipDraw) {
+      position = +(duration > 0 ? pos : 0.0);
+      skipDraw || draw();
     };
 
 
@@ -131,6 +157,10 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
       ctx.clearRect(0, 0, w, h);
 
       // slider body
+      // sliderX1 = marginL;
+      sliderX2 = (w - marginR)|0;
+      sliderY = halfH;
+      sliderLength = (sliderX2 - sliderX1)|0;
       {
         ctx.save();
         ctx.lineCap = 'round';
@@ -144,7 +174,6 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
       }
 
       // slider indicator
-      var sliderLength = (w - marginL - marginR)|0;
       indicatorX = (marginL + position * sliderLength)|0;
       indicatorY = halfH;
       indicatorR = (
@@ -156,7 +185,7 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
       {
         ctx.save();
 
-        if (indicatorHovered) {
+        if (indicatorHovered || indicatorActive) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.125)";
           ctx.beginPath();
           ctx.arc(indicatorX, indicatorY, indicatorHoverCircleRadius, 0, 2 * Math.PI);
@@ -201,8 +230,40 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
     };
 
 
+    var sliderHitTest = function(x, y) {
+      if (
+          x < sliderX1 - indicatorRadiusHovered ||
+          x > sliderX2 + indicatorRadiusHovered ||
+          y < sliderY - sliderHitTestDistance ||
+          y > sliderY + sliderHitTestDistance
+          ) {
+        return -1;
+      }
+
+      if (x < sliderX1) {
+        // left side of slider indicator positioned at extreme left
+        return 0.0;
+      }
+
+      if (x > sliderX2) {
+        // right side of slider indicator positioned at extreme right
+        return 1.0;
+      }
+
+      var pos = +((x - sliderX1) / sliderLength);
+      return (pos < 0 || pos > 1) ? -1 : pos;
+    };
+
+
     var updatePointer = function(fromDraw) {
       var prev;
+
+      if (indicatorActive) {
+        var sliderHitResult = sliderHitTest(pointerX, pointerY);
+        var newPos = sliderHitResult < 0 ? positionBeforeIndicatorActive : sliderHitResult;
+        updateRawPosition(newPos, fromDraw);
+        return;
+      }
 
       // hit test
       // slider indicator
@@ -221,8 +282,46 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
     };
 
 
+    var onmousedown = function(e) {
+      pointerX = e.offsetX;
+      pointerY = e.offsetY;
+
+      if (!(e.buttons & 0x01)) {
+        // only process left click for now
+        return;
+      }
+
+      var sliderHitResult = sliderHitTest(pointerX, pointerY);
+
+      if (sliderHitResult < 0) {
+        return;
+      }
+
+      indicatorActive = true;
+      positionBeforeIndicatorActive = position;
+      updateRawPosition(sliderHitResult, false);
+    };
+
+
+    var onmouseup = function(e) {
+      if (e.buttons & 0x01) {
+        // left button still down, don't release yet
+        return;
+      }
+
+      if (indicatorActive) {
+        // send seek event
+        $scope.$broadcast('transport:seek', position, duration);
+        indicatorActive = false;
+        draw();
+      }
+    };
+
+
     // bind events
     elem.addEventListener('mousemove', onmousemove);
+    elem.addEventListener('mousedown', onmousedown);
+    elem.addEventListener('mouseup', onmouseup);
 
     return {
       update: update
