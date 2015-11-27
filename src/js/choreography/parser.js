@@ -10,7 +10,7 @@ var stepCompare = tempoMod.stepCompare;
 
 var makeEngineEvent = function(a, tempo) {
   return {
-    "ts": tempo.stepToTime(a[0].m, a[0].s),
+    "ts": tempo.stepToTime(a[0].m, a[0].s)|0,
     "type": a[1],
     "params": a[2]
   };
