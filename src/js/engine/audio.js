@@ -109,6 +109,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
     return isPlaying;
   };
 
+
   var getDuration = function() {
     if (sourceBuffer) {
       return sourceBuffer.duration * 1000|0;
