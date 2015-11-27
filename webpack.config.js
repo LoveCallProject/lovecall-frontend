@@ -8,7 +8,10 @@ var ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 
 module.exports = {
   resolve: {
-    root: [path.join(__dirname, "bower_components")]
+    root: [
+      path.join(__dirname, 'node_modules'),
+      path.join(__dirname, "bower_components")
+    ]
   },
   plugins: [
     new webpack.ResolverPlugin(
