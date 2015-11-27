@@ -11,7 +11,7 @@ var mod = angular.module('lovecall/engine/audio', [
     'lovecall/ui/frame'
 ]);
 
-mod.factory('AudioEngine', function($window, $log, FrameManager) {
+mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
   var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
 
   var sourceBuffer = null;
@@ -137,6 +137,8 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
     sourceBuffer = buffer;
     playbackPosMs = 0;
+
+    $rootScope.$broadcast('audio:loaded');
   };
 
 
