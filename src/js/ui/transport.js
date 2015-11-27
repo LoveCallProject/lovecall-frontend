@@ -12,7 +12,7 @@ var mod = angular.module('lovecall/ui/transport', [
     'lovecall/ui/frame'
 ]);
 
-mod.controller('TransportController', function($scope, $log, AudioEngine, FrameManager) {
+mod.controller('TransportController', function($scope, $window, $log, AudioEngine, FrameManager) {
   $log = $log.getInstance('TransportController');
 
   // scope states
@@ -113,6 +113,9 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
     // draw states
     var ctx = elem.getContext('2d');
+    var inResizeFallout = true;
+    var w = 0;
+    var h = 0;
     var prevW = 0;
     var prevH = 0;
     var halfH = 0;
@@ -144,15 +147,19 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
 
 
     var draw = function() {
-      var canvasRect = elem.getBoundingClientRect();
-      var w = canvasRect.width|0;
-      var h = canvasRect.height|0;
-      if (prevW != w || prevH != h) {
-        elem.width = w;
-        elem.height = h;
-        prevW = w;
-        prevH = h;
-        halfH = (h / 2)|0;
+      if (inResizeFallout) {
+        inResizeFallout = false;
+
+        var canvasRect = elem.getBoundingClientRect();
+        w = canvasRect.width|0;
+        h = canvasRect.height|0;
+        if (prevW != w || prevH != h) {
+          elem.width = w;
+          elem.height = h;
+          prevW = w;
+          prevH = h;
+          halfH = (h / 2)|0;
+        }
       }
 
       updatePointer(true);
@@ -323,10 +330,18 @@ mod.controller('TransportController', function($scope, $log, AudioEngine, FrameM
     };
 
 
+    var onWindowResize = function(e) {
+      $log.debug('window resized, scheduling canvas re-size on next draw');
+      inResizeFallout = true;
+    };
+
+
     // bind events
     elem.addEventListener('mousemove', onmousemove);
     elem.addEventListener('mousedown', onmousedown);
     elem.addEventListener('mouseup', onmouseup);
+
+    $window.addEventListener('resize', onWindowResize);
 
     return {
       update: update
