@@ -19,9 +19,15 @@ module.exports = {
     })
   ],
 
+  devtool: 'cheap-module-eval-source-map',
+  devServer: {
+    contentBase: './build',
+  },
+
   entry: "./src/js/main.js",
   output: {
     path: path.join(__dirname, 'build'),
+    publicPath: '/assets/',
     filename: "bundle.js"
   },
   module: {
