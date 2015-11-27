@@ -98,7 +98,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
   var getDuration = function() {
     if (sourceBuffer) {
-      return sourceBuffer.duration * 1000;
+      return sourceBuffer.duration * 1000|0;
     } else {
       return 0;
     }
@@ -136,7 +136,7 @@ mod.factory('AudioEngine', function($window, $log, FrameManager) {
 
     var audioCallback = function(e) {
       var ctxMs = e.playbackTime * 1000;
-      var posMs = playbackReferenceMs + ctxMs - ctxLastReferenceMs;
+      var posMs = (playbackReferenceMs + ctxMs - ctxLastReferenceMs)|0;
       playbackPosMs = posMs;
 
       queueEngine.update(posMs, true);
