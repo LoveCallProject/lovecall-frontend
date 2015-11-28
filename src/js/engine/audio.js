@@ -16,6 +16,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
 
   var sourceBuffer = null;
   var sourceNode = null;
+  var gainNode = audioCtx.createGain();
   var timingNode = audioCtx.createScriptProcessor(2048);
 
   var isPlaying = false;
@@ -65,7 +66,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     sourceNode.buffer = sourceBuffer;
     sourceNode.onended = onEndedCallback;
 
-    sourceNode.connect(timingNode);
+    sourceNode.connect(gainNode);
+    gainNode.connect(timingNode);
     timingNode.connect(audioCtx.destination);
 
     sourceNode.start(0, playbackPosMs / 1000);
@@ -87,7 +89,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
 
     sourceNode.stop();
 
-    sourceNode.disconnect(timingNode);
+    sourceNode.disconnect(gainNode);
+    gainNode.disconnect(timingNode);
     timingNode.disconnect(audioCtx.destination);
   };
 
@@ -121,6 +124,16 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
 
   var getPlaybackPosition = function() {
     return playbackPosMs;
+  };
+
+
+  var getVolume = function() {
+    return gainNode.gain.value;
+  };
+
+
+  var setVolume = function(volume) {
+    gainNode.gain.value = volume > 1 ? 1 : volume < 0 ? 0 : volume;
   };
 
 
@@ -188,6 +201,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     'getIsPlaying': getIsPlaying,
     'getDuration': getDuration,
     'getPlaybackPosition': getPlaybackPosition,
+    'getVolume': getVolume,
+    'setVolume': setVolume,
     'setSourceData': setSourceData,
     'initEvents': initEvents,
     'resume': resume,
