@@ -87,11 +87,15 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
   var doPause = function() {
     $log.info('pause');
 
-    sourceNode.stop();
+    if (sourceNode) {
+      sourceNode.stop();
 
-    sourceNode.disconnect(gainNode);
-    gainNode.disconnect(timingNode);
-    timingNode.disconnect(audioCtx.destination);
+      sourceNode.disconnect(gainNode);
+      gainNode.disconnect(timingNode);
+      timingNode.disconnect(audioCtx.destination);
+
+      sourceNode = null;
+    }
   };
 
 
