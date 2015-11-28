@@ -94,6 +94,11 @@
       <md-button class="transport__play" data-ng-click="togglePlay()">
         <md-icon class="inline" data-md-font-library="material-icons">{{playButtonIcon}}</md-icon>
       </md-button>
+      <md-slider
+          class="transport__volume"
+          data-ng-model="volumePercentage"
+          >
+      </md-slider>
     </section>
 
     <div data-ng-controller="StepTimeController">

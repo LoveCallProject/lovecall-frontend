@@ -19,6 +19,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   $scope.playbackPos = 0;
   $scope.isPlaying = false;
   $scope.playButtonIcon = 'play_arrow';
+  $scope.volumePercentage = 100;
 
   // internal states
   var isPlaying = false;
@@ -44,6 +45,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   $scope.togglePlay = function() {
     (isPlaying ? pause : play)();
   };
+
+
+  $scope.$watch('volumePercentage', function(to, from) {
+    AudioEngine.setVolume(to / 100);
+  });
 
 
   $scope.$on('audio:loaded', function(e) {
