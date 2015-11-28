@@ -16,6 +16,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   $log = $log.getInstance('TransportController');
 
   // scope states
+  $scope.isLoaded = false;
   $scope.playbackPos = 0;
   $scope.isPlaying = false;
   $scope.playButtonIcon = 'play_arrow';
@@ -52,11 +53,21 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   });
 
 
+  $scope.$on('audio:unloaded', function(e) {
+    duration = 0;
+    pause();
+    playbackPos = 0;
+    $scope.isLoaded = false;
+  });
+
+
   $scope.$on('audio:loaded', function(e) {
     duration = AudioEngine.getDuration();
 
+    $scope.isLoaded = true;
     pause();
     playbackPos = 0;
+    $scope.$digest();
   });
 
 

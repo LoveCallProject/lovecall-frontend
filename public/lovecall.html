@@ -91,8 +91,17 @@
         <canvas id="transport__canvas">
         </canvas>
       </div>
-      <md-button class="transport__play" data-ng-click="togglePlay()">
-        <md-icon class="inline" data-md-font-library="material-icons">{{playButtonIcon}}</md-icon>
+      <md-button
+          class="transport__play md-fab md-primary"
+          data-ng-disabled="!isLoaded"
+          data-ng-click="togglePlay()"
+          >
+        <md-icon
+            class="transport__play__icon inline"
+            data-md-font-library="material-icons"
+            >
+          {{playButtonIcon}}
+        </md-icon>
       </md-button>
       <md-slider
           class="transport__volume"
