@@ -145,6 +145,10 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     $log.debug('setSourceData: data=', data);
 
     // audioCtx.decodeAudioData(data).then(finishSetSourceData);
+    sourceBuffer = null;
+    doPause();
+    playbackPosMs = 0;
+    $rootScope.$broadcast('audio:unloaded');
     audioCtx.decodeAudioData(data, finishSetSourceData);
   };
 
