@@ -125,12 +125,12 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     // parameters
     var marginL = 16;
     var marginR = 16;
-    var sliderLineWidth = 4;
+    var sliderLineWidth = 2;
     var sliderHitTestDistance = 8;
-    var indicatorRadius = 6;
-    var indicatorRadiusHovered = 8;
-    var indicatorRadiusActive = 6;
-    var indicatorHoverCircleRadius = 16;
+    var indicatorRadius = 8;
+    var indicatorRadiusHovered = 10;
+    var indicatorRadiusActive = 12;
+    var indicatorActiveCircleRadius = 24;
 
     var tickBoxWidthRatio = 1 / 8;
     var tickBoxGapRatio = 1 / 2;
@@ -247,7 +247,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       // slider body
       {
         ctx.save();
-        ctx.lineCap = 'round';
         ctx.lineWidth = sliderLineWidth;
         // played parts
         ctx.strokeStyle = '#666666';
@@ -268,10 +267,10 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       {
         ctx.save();
 
-        if (indicatorHovered || indicatorActive) {
+        if (indicatorActive) {
           ctx.fillStyle = "rgba(0, 0, 0, 0.125)";
           ctx.beginPath();
-          ctx.arc(indicatorX, indicatorY, indicatorHoverCircleRadius, 0, 2 * Math.PI);
+          ctx.arc(indicatorX, indicatorY, indicatorActiveCircleRadius, 0, 2 * Math.PI);
           ctx.fill();
         }
 
@@ -317,7 +316,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           y,
           indicatorX,
           indicatorY,
-          indicatorHoverCircleRadius
+          indicatorActiveCircleRadius
           );
       var r = (
           indicatorActive ?
