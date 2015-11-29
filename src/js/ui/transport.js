@@ -228,6 +228,16 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         tickBoxStartY = ((h - tickBoxSize) / 2)|0;
       }
 
+      // dynamic parameters
+      // slider indicator
+      indicatorX = (marginL + position * sliderLength)|0;
+      indicatorR = (
+          indicatorHovered ?
+          indicatorRadiusHovered :
+          indicatorRadius
+          )|0;
+
+      // actual draw
       updatePointer(true);
 
       // ctx.fillStyle = "grey";
@@ -239,22 +249,22 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         ctx.save();
         ctx.lineCap = 'round';
         ctx.lineWidth = sliderLineWidth;
-        ctx.strokeStyle = '#eeeeee';
+        // played parts
+        ctx.strokeStyle = '#666666';
         ctx.beginPath();
         ctx.moveTo(sliderX1, sliderY);
+        ctx.lineTo(indicatorX, sliderY);
+        ctx.stroke();
+        // unplayed parts
+        ctx.strokeStyle = '#eeeeee';
+        ctx.beginPath();
+        ctx.moveTo(indicatorX, sliderY);
         ctx.lineTo(sliderX2, sliderY);
         ctx.stroke();
         ctx.restore();
       }
 
       // slider indicator
-      indicatorX = (marginL + position * sliderLength)|0;
-      indicatorR = (
-          indicatorHovered ?
-          indicatorRadiusHovered :
-          indicatorRadius
-          )|0;
-
       {
         ctx.save();
 
