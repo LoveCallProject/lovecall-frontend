@@ -130,7 +130,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorRadius = 8;
     var indicatorRadiusHovered = 10;
     var indicatorRadiusActive = 12;
-    var indicatorActiveCircleRadius = 24;
+    var indicatorActiveCircleRadius = 18;
 
     var tickBoxWidthRatio = 1 / 8;
     var tickBoxGapRatio = 1 / 2;
