@@ -228,6 +228,10 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         tickBoxStartY = ((h - tickBoxSize) / 2)|0;
       }
 
+      // this must be called before drawing as position may be updated if
+      // indicator is active
+      updatePointer(true);
+
       // dynamic parameters
       // slider indicator
       indicatorX = (marginL + position * sliderLength)|0;
@@ -238,8 +242,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           )|0;
 
       // actual draw
-      updatePointer(true);
-
       // ctx.fillStyle = "grey";
       // ctx.fillRect(0, 0, w, h);
       ctx.clearRect(0, 0, w, h);
