@@ -4,15 +4,17 @@
 require('angular');
 
 require('../engine/audio');
+require('../provider/resize-detector');
 require('./frame');
 
 
 var mod = angular.module('lovecall/ui/transport', [
     'lovecall/engine/audio',
+    'lovecall/provider/resize-detector',
     'lovecall/ui/frame'
 ]);
 
-mod.controller('TransportController', function($scope, $window, $log, AudioEngine, FrameManager) {
+mod.controller('TransportController', function($scope, $window, $log, AudioEngine, FrameManager, ResizeDetector) {
   $log = $log.getInstance('TransportController');
 
   // scope states
@@ -119,7 +121,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
   var prevTransportPos = 0;
 
-  var transportCanvasStateFactory = function(elem) {
+  var transportCanvasStateFactory = function(containerElem) {
     // parameters
     var marginL = 16;
     var marginR = 16;
@@ -145,6 +147,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var currentTick = 0;
 
     // draw states
+    var elem = document.createElement('canvas');
     var ctx = elem.getContext('2d');
     var inResizeFallout = true;
     var w = 0;
@@ -406,8 +409,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
-    var onWindowResize = function(e) {
-      $log.debug('window resized, scheduling canvas re-size on next draw');
+    var onWidgetResize = function(e) {
+      $log.debug('widget resized, scheduling canvas re-size on next draw');
       inResizeFallout = true;
     };
 
@@ -417,7 +420,10 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     elem.addEventListener('mousedown', onmousedown);
     elem.addEventListener('mouseup', onmouseup);
 
-    $window.addEventListener('resize', onWindowResize);
+    ResizeDetector.listenTo(containerElem, onWidgetResize);
+
+    // add canvas to container
+    containerElem.appendChild(elem);
 
     return {
       update: update,
@@ -425,7 +431,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
   };
 
-  var transportState = transportCanvasStateFactory(document.getElementById('transport__canvas'));
+  var transportState = transportCanvasStateFactory(document.querySelectorAll('.transport__canvas-container')[0]);
   var updateTransport = transportState.update;
 
   FrameManager.addFrameCallback(transportFrameCallback);
