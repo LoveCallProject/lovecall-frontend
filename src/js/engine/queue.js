@@ -96,7 +96,7 @@ var queueEngineFactory = function(engineEventList, eventCallback, logProvider, v
 
 
   var doUpdateSlowpath = function(posMs) {
-    recalculateNextEvent();
+    recalculateNextEvent(posMs);
 
     if (verboseLog) {
       logProvider.warn(
