@@ -332,11 +332,37 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       }
 
       if (x < sliderX1) {
+        // not in reach of even slider indicator?
+        if (
+            circleDistanceSquared(
+              x,
+              y,
+              sliderX1,
+              sliderY,
+              indicatorRadiusHovered
+              ) > indicatorRadiusHovered * indicatorRadiusHovered
+            ) {
+          return -1;
+        }
+
         // left side of slider indicator positioned at extreme left
         return 0.0;
       }
 
       if (x > sliderX2) {
+        // ditto
+        if (
+            circleDistanceSquared(
+              x,
+              y,
+              sliderX2,
+              sliderY,
+              indicatorRadiusHovered
+              ) > indicatorRadiusHovered * indicatorRadiusHovered
+            ) {
+          return -1;
+        }
+
         // right side of slider indicator positioned at extreme right
         return 1.0;
       }
