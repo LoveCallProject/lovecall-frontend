@@ -5,16 +5,18 @@ require('angular');
 
 require('../engine/audio');
 require('../provider/resize-detector');
+require('../provider/mouseevent');
 require('./frame');
 
 
 var mod = angular.module('lovecall/ui/transport', [
     'lovecall/engine/audio',
     'lovecall/provider/resize-detector',
+    'lovecall/provider/mouseevent',
     'lovecall/ui/frame'
 ]);
 
-mod.controller('TransportController', function($scope, $window, $log, AudioEngine, FrameManager, ResizeDetector) {
+mod.controller('TransportController', function($scope, $window, $log, AudioEngine, FrameManager, ResizeDetector, MouseEvent) {
   $log = $log.getInstance('TransportController');
 
   // scope states
@@ -150,6 +152,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var elem = document.createElement('canvas');
     var ctx = elem.getContext('2d');
     var inResizeFallout = true;
+    var elemOffsetX = 0;
+    var elemOffsetY = 0;
     var w = 0;
     var h = 0;
     var prevW = 0;
@@ -199,6 +203,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         inResizeFallout = false;
 
         var canvasRect = elem.getBoundingClientRect();
+        elemOffsetX = canvasRect.left + $window.pageXOffset - document.documentElement.clientLeft;
+        elemOffsetY = canvasRect.top + $window.pageYOffset - document.documentElement.clientTop;
         w = canvasRect.width|0;
         h = canvasRect.height|0;
         if (prevW != w || prevH != h) {
@@ -332,54 +338,61 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
-    var sliderHitTest = function(x, y) {
-      if (
-          x < sliderX1 - indicatorRadiusHovered ||
-          x > sliderX2 + indicatorRadiusHovered ||
-          y < sliderY - sliderHitTestDistance ||
-          y > sliderY + sliderHitTestDistance
-          ) {
-        return -1;
-      }
-
-      if (x < sliderX1) {
-        // not in reach of even slider indicator?
+    var sliderHitTest = function(x, y, isActive) {
+      if (!isActive) {
         if (
-            circleDistanceSquared(
-              x,
-              y,
-              sliderX1,
-              sliderY,
-              indicatorRadiusHovered
-              ) > indicatorRadiusHovered * indicatorRadiusHovered
+            x < sliderX1 - indicatorRadiusHovered ||
+            x > sliderX2 + indicatorRadiusHovered ||
+            y < sliderY - sliderHitTestDistance ||
+            y > sliderY + sliderHitTestDistance
             ) {
           return -1;
         }
 
-        // left side of slider indicator positioned at extreme left
-        return 0.0;
-      }
+        if (x < sliderX1) {
+          // not in reach of even slider indicator?
+          if (
+              circleDistanceSquared(
+                x,
+                y,
+                sliderX1,
+                sliderY,
+                indicatorRadiusHovered
+                ) > indicatorRadiusHovered * indicatorRadiusHovered
+              ) {
+            return -1;
+          }
 
-      if (x > sliderX2) {
-        // ditto
-        if (
-            circleDistanceSquared(
-              x,
-              y,
-              sliderX2,
-              sliderY,
-              indicatorRadiusHovered
-              ) > indicatorRadiusHovered * indicatorRadiusHovered
-            ) {
-          return -1;
+          // left side of slider indicator positioned at extreme left
+          return 0.0;
         }
 
-        // right side of slider indicator positioned at extreme right
-        return 1.0;
+        if (x > sliderX2) {
+          // ditto
+          if (
+              circleDistanceSquared(
+                x,
+                y,
+                sliderX2,
+                sliderY,
+                indicatorRadiusHovered
+                ) > indicatorRadiusHovered * indicatorRadiusHovered
+              ) {
+            return -1;
+          }
+
+          // right side of slider indicator positioned at extreme right
+          return 1.0;
+        }
       }
 
       var pos = +((x - sliderX1) / sliderLength);
-      return (pos < 0 || pos > 1) ? -1 : pos;
+
+      if (!isActive) {
+        return +((pos < 0 || pos > 1) ? -1 : pos);
+      }
+
+      return +(pos < 0 ? 0 : pos > 1 ? 1 : pos);
     };
 
 
@@ -387,7 +400,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       var prev;
 
       if (indicatorActive) {
-        var sliderHitResult = sliderHitTest(pointerX, pointerY);
+        var sliderHitResult = sliderHitTest(pointerX, pointerY, true);
         var newPos = sliderHitResult < 0 ? positionBeforeIndicatorActive : sliderHitResult;
         updateRawPosition(newPos, fromDraw);
         return;
@@ -404,22 +417,23 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var onmousemove = function(e) {
-      pointerX = e.offsetX;
-      pointerY = e.offsetY;
+      pointerX = e.pageX - elemOffsetX;
+      pointerY = e.pageY - elemOffsetY;
+      // console.log(elemOffsetX, elemOffsetY, pointerX, pointerY);
       updatePointer(false);
     };
 
 
     var onmousedown = function(e) {
-      pointerX = e.offsetX;
-      pointerY = e.offsetY;
+      pointerX = e.pageX - elemOffsetX;
+      pointerY = e.pageY - elemOffsetY;
 
       if (!(e.buttons & 0x01)) {
         // only process left click for now
         return;
       }
 
-      var sliderHitResult = sliderHitTest(pointerX, pointerY);
+      var sliderHitResult = sliderHitTest(pointerX, pointerY, false);
 
       if (sliderHitResult < 0) {
         return;
@@ -432,6 +446,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var onmouseup = function(e) {
+      pointerX = e.pageX - elemOffsetX;
+      pointerY = e.pageY - elemOffsetY;
+
       if (e.buttons & 0x01) {
         // left button still down, don't release yet
         return;
@@ -453,9 +470,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     // bind events
-    elem.addEventListener('mousemove', onmousemove);
+    MouseEvent.addMouseMoveListener(onmousemove);
     elem.addEventListener('mousedown', onmousedown);
-    elem.addEventListener('mouseup', onmouseup);
+    MouseEvent.addMouseUpListener(onmouseup);
 
     ResizeDetector.listenTo(containerElem, onWidgetResize);
 
