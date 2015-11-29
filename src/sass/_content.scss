@@ -1,6 +1,13 @@
+$md-sidenav-locked-open-width: 304px;
 .content-container {
   &.sidenav-locked-open {
-    $md-sidenav-locked-open-width: 304px;
     padding-left: $md-sidenav-locked-open-width;
   }
+  flex: 1;
+}
+
+.main-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
 }

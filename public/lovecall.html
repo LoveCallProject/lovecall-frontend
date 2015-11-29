@@ -83,33 +83,36 @@
       layout-margin layout="column"
       layout-align="start center"
       >
-    <section
-        id="transport"
-        data-ng-controller="TransportController"
-        >
-      <div class="transport__canvas-container">
-      </div>
-      <md-button
-          class="transport__play md-icon-button md-primary"
-          data-ng-disabled="!isLoaded"
-          data-ng-click="togglePlay()"
+    <div class="main-container">
+      <section
+          id="transport"
+          data-ng-controller="TransportController"
           >
-        <md-icon
-            class="transport__play__icon inline"
-            data-md-font-library="material-icons"
+        <div class="transport__canvas-container">
+        </div>
+        <md-button
+            id="play__button"
+            class="transport__play md-icon-button md-primary"
+            data-ng-disabled="!isLoaded"
+            data-ng-click="togglePlay()"
             >
-          {{playButtonIcon}}
-        </md-icon>
-      </md-button>
-      <md-slider
-          class="transport__volume"
-          data-ng-model="volumePercentage"
-          aria-label="Volume control"
-          >
-      </md-slider>
-    </section>
+          <md-icon
+              class="transport__play__icon inline"
+              data-md-font-library="material-icons"
+              >
+            {{playButtonIcon}}
+          </md-icon>
+        </md-button>
+        <md-slider
+            class="transport__volume"
+            data-ng-model="volumePercentage"
+            aria-label="Volume control"
+            >
+        </md-slider>
+      </section>
 
-    <div data-ng-controller="DemoController">
+      <div data-ng-controller="DemoController">
+      </div>
     </div>
   </md-content>
 
