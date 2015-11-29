@@ -84,6 +84,12 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   });
 
 
+  $scope.$on('frame:playbackPosStep', function(evt, v) {
+    // don't draw immediately as frame callback will take care of that
+    transportState.updateTick(v >> 2, true);
+  });
+
+
   // frame callback
   var transportFrameCallback = function(ts) {
     isPlaying = AudioEngine.getIsPlaying();
@@ -124,12 +130,19 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorRadiusActive = 6;
     var indicatorHoverCircleRadius = 16;
 
+    var tickBoxWidthRatio = 1 / 8;
+    var tickBoxGapRatio = 1 / 2;
+    var tickBoxMarginTB = 8;
+
     // ui states
     var position = 0;
     var durationMs = 0;
     var indicatorHovered = true;
     var indicatorActive = false;
     var positionBeforeIndicatorActive = 0;
+
+    var totalTicks = 4;  // TODO
+    var currentTick = 0;
 
     // draw states
     var ctx = elem.getContext('2d');
@@ -153,6 +166,12 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorY = 0;
     var indicatorR = 0;
 
+    var tickBoxAreaWidth = 0;
+    var tickBoxSize = 0;
+    var tickBoxGapWidth = 0;
+    var tickBoxStartX = 0;
+    var tickBoxStartY = 0;
+
 
     var update = function(pos, duration, skipDraw) {
       duration != null && (durationMs = duration);
@@ -162,6 +181,12 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
     var updateRawPosition = function(pos, skipDraw) {
       position = +(duration > 0 ? pos : 0.0);
+      skipDraw || draw();
+    };
+
+
+    var updateTick = function(tick, skipDraw) {
+      currentTick = tick;
       skipDraw || draw();
     };
 
@@ -180,6 +205,24 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           prevH = h;
           halfH = (h / 2)|0;
         }
+
+        // cache static parameters
+        // slider body
+        // sliderX1 = marginL;
+        sliderLength = ((w - marginL - marginR) * (1 - tickBoxWidthRatio)) |0;
+        sliderX2 = (sliderX1 + sliderLength)|0;
+        sliderY = halfH;
+
+        // slider indicator
+        indicatorY = halfH;
+
+        // tick box
+        tickBoxAreaWidth = (w - marginL - marginR - sliderLength)|0;
+        tickBoxStartX = (marginL + sliderLength + marginR)|0;
+        tickBoxSize = (tickBoxAreaWidth / (totalTicks + (totalTicks - 1) * tickBoxGapRatio))|0;
+        tickBoxSize = tickBoxSize > h ? h : tickBoxSize;
+        tickBoxGapWidth = (tickBoxSize * tickBoxGapRatio)|0;
+        tickBoxStartY = ((h - tickBoxSize) / 2)|0;
       }
 
       updatePointer(true);
@@ -189,25 +232,20 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       ctx.clearRect(0, 0, w, h);
 
       // slider body
-      // sliderX1 = marginL;
-      sliderX2 = (w - marginR)|0;
-      sliderY = halfH;
-      sliderLength = (sliderX2 - sliderX1)|0;
       {
         ctx.save();
         ctx.lineCap = 'round';
         ctx.lineWidth = sliderLineWidth;
         ctx.strokeStyle = '#eeeeee';
         ctx.beginPath();
-        ctx.moveTo(marginL, halfH);
-        ctx.lineTo((w - marginR)|0, halfH);
+        ctx.moveTo(sliderX1, sliderY);
+        ctx.lineTo(sliderX2, sliderY);
         ctx.stroke();
         ctx.restore();
       }
 
       // slider indicator
       indicatorX = (marginL + position * sliderLength)|0;
-      indicatorY = halfH;
       indicatorR = (
           indicatorHovered ?
           indicatorRadiusHovered :
@@ -228,6 +266,24 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         ctx.beginPath();
         ctx.arc(indicatorX, indicatorY, indicatorR, 0, 2 * Math.PI);
         ctx.fill();
+        ctx.restore();
+      }
+
+      // tick box
+      {
+        ctx.save();
+        var i = 0;
+        var curX = tickBoxStartX;
+        for (; i < totalTicks; i++) {
+          if (i == currentTick) {
+            ctx.fillStyle = i == 0 ? '#ff9a00' : '#32cd32';
+          } else {
+            ctx.fillStyle = '#eeeeee';
+          }
+
+          ctx.fillRect(curX, tickBoxStartY, tickBoxSize, tickBoxSize);
+          curX += tickBoxSize + tickBoxGapWidth;
+        };
         ctx.restore();
       }
     };
@@ -364,7 +420,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     $window.addEventListener('resize', onWindowResize);
 
     return {
-      update: update
+      update: update,
+      updateTick: updateTick
     };
   };
 
