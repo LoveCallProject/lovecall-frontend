@@ -24,6 +24,9 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
   var playbackReferenceMs = 0;
   var playbackPosMs = 0;
 
+  var currentMetronome = null;
+  var currentQueueEngine = null;
+
   var $metronomeLog = $log.getInstance('Metronome');
   $log = $log.getInstance('AudioEngine');
 
@@ -102,6 +105,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
   var doSeek = function(newPositionMs) {
     $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
     playbackPosMs = newPositionMs;
+    currentQueueEngine.update(newPositionMs, false);
+    currentMetronome.tick(newPositionMs);
     isPlaying && doResume();
   };
 
@@ -148,6 +153,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     sourceBuffer = null;
     doPause();
     playbackPosMs = 0;
+    currentMetronome = null;
+    currentQueueEngine = null;
     $rootScope.$broadcast('audio:unloaded');
     audioCtx.decodeAudioData(data, finishSetSourceData);
   };
@@ -157,50 +164,46 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     $log.debug('finishSetSourceData: buffer=', buffer);
 
     sourceBuffer = buffer;
-    playbackPosMs = 0;
+    doSeek(0);
 
     $rootScope.$broadcast('audio:loaded');
   };
 
 
-  var audioCallbackFactory = function(tempo, queueEngine) {
-    var metronome = metronomeMod.metronomeFactory(
-        tempo,
-        FrameManager.tickCallback,
-        $metronomeLog,
-        false
-        );
+  var audioCallback = function(e) {
+    var ctxMs = e.playbackTime * 1000;
+    var posMs = (playbackReferenceMs + ctxMs - ctxLastReferenceMs)|0;
+    playbackPosMs = posMs;
 
-    var audioCallback = function(e) {
-      var ctxMs = e.playbackTime * 1000;
-      var posMs = (playbackReferenceMs + ctxMs - ctxLastReferenceMs)|0;
-      playbackPosMs = posMs;
+    currentQueueEngine && currentQueueEngine.update(posMs, true);
+    currentMetronome && currentMetronome.tick(posMs);
 
-      queueEngine.update(posMs, true);
-      metronome.tick(posMs);
-
-      // just pass through
-      var inBuf = e.inputBuffer;
-      var outBuf = e.outputBuffer;
-      var ch;
-      for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
-        var data = inBuf.getChannelData(ch);
-        if (outBuf.copyToChannel) {
-          outBuf.copyToChannel(data, ch);
-        } else {
-          outBuf.getChannelData(ch).set(data);
-        }
+    // just pass through
+    var inBuf = e.inputBuffer;
+    var outBuf = e.outputBuffer;
+    var ch;
+    for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
+      var data = inBuf.getChannelData(ch);
+      if (outBuf.copyToChannel) {
+        outBuf.copyToChannel(data, ch);
+      } else {
+        outBuf.getChannelData(ch).set(data);
       }
-    };
-
-    return audioCallback;
+    }
   };
 
 
   var initEvents = function(tempo, queueEngine) {
     $log.debug('initEvents: tempo=', tempo, 'queueEngine=', queueEngine);
 
-    var audioCallback = audioCallbackFactory(tempo, queueEngine);
+    currentMetronome = metronomeMod.metronomeFactory(
+        tempo,
+        FrameManager.tickCallback,
+        $metronomeLog,
+        false
+        );
+    currentQueueEngine = queueEngine;
+
     timingNode.onaudioprocess = audioCallback;
   };
 
