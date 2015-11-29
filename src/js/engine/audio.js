@@ -164,6 +164,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     $log.debug('finishSetSourceData: buffer=', buffer);
 
     sourceBuffer = buffer;
+
+    // trigger initial state updates for queue engine and metronome
     doSeek(0);
 
     $rootScope.$broadcast('audio:loaded');
