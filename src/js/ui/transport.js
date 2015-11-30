@@ -199,6 +199,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var draw = function() {
+      var isCompleteRedraw = inResizeFallout;
+      var prevIndicatorX = indicatorX;
+
       if (inResizeFallout) {
         inResizeFallout = false;
 
@@ -250,7 +253,17 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       // actual draw
       // ctx.fillStyle = "grey";
       // ctx.fillRect(0, 0, w, h);
-      ctx.clearRect(0, 0, w, h);
+      if (isCompleteRedraw) {
+        ctx.clearRect(0, 0, w, h);
+      } else {
+        // clear the area around previous position of indicator
+        ctx.clearRect(
+            prevIndicatorX - indicatorActiveCircleRadius,
+            0,
+            indicatorActiveCircleRadius * 2,
+            h
+            );
+      }
 
       // slider body
       {
