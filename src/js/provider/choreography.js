@@ -52,6 +52,11 @@ mod.factory('Choreography', function($log) {
   };
 
 
+  var getForm = function() {
+    return parsedData.form;
+  };
+
+
   var getEvents = function() {
     return parsedData.events;
   };
@@ -65,6 +70,7 @@ mod.factory('Choreography', function($log) {
   return {
     'load': load,
     'getTempo': getTempo,
+    'getForm': getForm,
     'getEvents': getEvents,
     'getQueueEngine': getQueueEngine
   };
