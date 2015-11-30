@@ -38,7 +38,7 @@ mod.factory('Choreography', function($log) {
         parsedData.events,
         queueEventCallback,
         $queueEngineLog,
-        true
+        false
         );
   };
 
