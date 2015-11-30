@@ -4,6 +4,7 @@
 require('angular');
 
 require('../engine/audio');
+require('../provider/choreography');
 require('../provider/resize-detector');
 require('../provider/mouseevent');
 require('./frame');
@@ -11,12 +12,13 @@ require('./frame');
 
 var mod = angular.module('lovecall/ui/transport', [
     'lovecall/engine/audio',
+    'lovecall/provider/choreography',
     'lovecall/provider/resize-detector',
     'lovecall/provider/mouseevent',
     'lovecall/ui/frame'
 ]);
 
-mod.controller('TransportController', function($scope, $window, $log, AudioEngine, FrameManager, ResizeDetector, MouseEvent) {
+mod.controller('TransportController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector, MouseEvent) {
   $log = $log.getInstance('TransportController');
 
   // scope states
@@ -61,6 +63,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     duration = 0;
     pause();
     playbackPos = 0;
+    updateTransport(0.0, 0.0);
+    transportState.updateSongForm(null);
     $scope.isLoaded = false;
   });
 
@@ -71,6 +75,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     $scope.isLoaded = true;
     pause();
     playbackPos = 0;
+    updateTransport(0.0, duration);
+    transportState.updateSongForm(Choreography.getForm());
     $scope.$digest();
   });
 
@@ -145,6 +151,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorActive = false;
     var positionBeforeIndicatorActive = 0;
 
+    var songForm = null;
+
     var totalTicks = 4;  // TODO
     var currentTick = 0;
 
@@ -173,6 +181,10 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorY = 0;
     var indicatorR = 0;
 
+    var cachedSongPartPointsX = [];
+    var cachedSongPartGeneration = 0;
+    var prevCachedSongPartGeneration = -1;
+
     var tickBoxAreaWidth = 0;
     var tickBoxSize = 0;
     var tickBoxGapWidth = 0;
@@ -198,9 +210,35 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
+    var updateSongForm = function(form, skipDraw) {
+      songForm = form;
+      refreshSongPartCache();
+      skipDraw || draw();
+    };
+
+
+    var refreshSongPartCache = function() {
+      cachedSongPartPointsX.splice(0, cachedSongPartPointsX.length);
+      if (songForm) {
+        songForm.forEach(function(x) {
+          cachedSongPartPointsX.push((sliderX1 + (x.ts / durationMs) * sliderLength)|0);
+        });
+        cachedSongPartPointsX.sort(function(a, b) {
+          return a - b;
+        });
+      }
+
+      cachedSongPartGeneration += 1;
+    };
+
+
     var draw = function() {
       var isCompleteRedraw = inResizeFallout;
       var prevIndicatorX = indicatorX;
+      var clearRectX;
+      var clearRectY;
+      var clearRectW;
+      var clearRectH;
 
       if (inResizeFallout) {
         inResizeFallout = false;
@@ -228,6 +266,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         // slider indicator
         indicatorY = halfH;
 
+        // song parts
+        refreshSongPartCache();
+
         // tick box
         tickBoxAreaWidth = (w - marginL - marginR - sliderLength)|0;
         tickBoxStartX = (marginL + sliderLength + marginR)|0;
@@ -254,16 +295,18 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       // ctx.fillStyle = "grey";
       // ctx.fillRect(0, 0, w, h);
       if (isCompleteRedraw) {
-        ctx.clearRect(0, 0, w, h);
+        clearRectX = clearRectY = 0;
+        clearRectW = w;
+        clearRectH = h;
       } else {
         // clear the area around previous position of indicator
-        ctx.clearRect(
-            prevIndicatorX - indicatorActiveCircleRadius,
-            0,
-            indicatorActiveCircleRadius * 2,
-            h
-            );
+        clearRectX = prevIndicatorX - indicatorActiveCircleRadius;
+        clearRectY = 0;
+        clearRectW = indicatorActiveCircleRadius * 2;
+        clearRectH = h;
       }
+
+      ctx.clearRect(clearRectX, clearRectY, clearRectW, clearRectH);
 
       // slider body
       {
@@ -281,7 +324,28 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         ctx.moveTo(indicatorX, sliderY);
         ctx.lineTo(sliderX2, sliderY);
         ctx.stroke();
+        // song part separators
+        // TODO: don't draw unaffected points over and over
+        cachedSongPartPointsX.forEach(function(separatorX) {
+          /*
+          if (
+              !isCompleteRedraw &&
+              prevCachedSongPartGeneration == cachedSongPartGeneration &&
+              (separatorX < clearRectX || separatorX > clearRectX + clearRectW)
+              ) {
+            return;
+          }
+          */
+
+          ctx.strokeStyle = separatorX < indicatorX ? '#666666' : '#eeeeee';
+          ctx.beginPath();
+          ctx.moveTo(separatorX, sliderY - 12);
+          ctx.lineTo(separatorX, sliderY + 12);
+          ctx.stroke();
+        });
         ctx.restore();
+
+        prevCachedSongPartGeneration = cachedSongPartGeneration;
       }
 
       // slider indicator
@@ -494,7 +558,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
     return {
       update: update,
-      updateTick: updateTick
+      updateTick: updateTick,
+      updateSongForm: updateSongForm
     };
   };
 
