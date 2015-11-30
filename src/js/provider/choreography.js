@@ -19,17 +19,21 @@ mod.factory('Choreography', function($log) {
 
 
   var queueEventCallback = function(nextEvents, lookaheadEvents, prevEvents) {
-    $log.debug(
-        'queue event: nextEvents=',
-        nextEvents,
-        'lookaheadEvents=',
-        lookaheadEvents,
-        'prevEvents=',
-        prevEvents
-        );
-    nextEvents.map(function(v) {
-      $log.debug('queue event:', v);
-    });
+    // actually log inside audio callback is bad
+    // TODO: implement global setting provider
+    if (0) {
+      $log.debug(
+          'queue event: nextEvents=',
+          nextEvents,
+          'lookaheadEvents=',
+          lookaheadEvents,
+          'prevEvents=',
+          prevEvents
+          );
+      nextEvents.map(function(v) {
+        $log.debug('queue event:', v);
+      });
+    }
   }
 
   var load = function(data, hash) {
