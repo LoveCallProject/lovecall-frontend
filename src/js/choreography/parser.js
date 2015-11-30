@@ -184,6 +184,16 @@ var parseTimeline = function(timeline, tempo) {
 };
 
 
+var parseForm = function(form, tempo) {
+  // TODO: respect or delete the end points?
+  return _(form)
+    .map(function(v) {
+      return makeEngineEvent([{m: v[0], s: v[1]}, "__form", {name: v[4]}], tempo);
+    })
+  .value();
+};
+
+
 var parseCall = function(data, hash) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
@@ -193,11 +203,13 @@ var parseCall = function(data, hash) {
   // TODO: case of unknown hash
   var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs ? globalOffsetMs : 0);
 
+  var form = parseForm(data.form, tempo);
   var events = parseTimeline(data.timeline, tempo);
 
   // TODO
   return {
     'tempo': tempo,
+    'form': form,
     'events': events
   };
 };
