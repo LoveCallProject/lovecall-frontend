@@ -194,6 +194,34 @@ var parseForm = function(form, tempo) {
 };
 
 
+var parseColors = function(palette, colorTimelines, tempo) {
+  console.log('palette', palette);
+  return colorTimelines.map(function(colorTimeline) {
+    var startTime = tempo.stepToTime(
+        colorTimeline[0], 
+        colorTimeline[1]
+        );
+
+    if ((colorTimeline[2] == -1) && (colorTimeline[3] == -1)) {
+      var endTime = Infinity; 
+    } else {
+      var endTime = tempo.stepToTime(
+          colorTimeline[2], 
+          colorTimeline[3]
+          );
+    }
+
+    var colors = colorTimeline
+        .slice(4, colorTimeline.length + 1)
+        .map(function(colorid) {
+          return palette[colorid];
+        });
+
+    return [startTime, endTime, colors];
+  });
+};
+
+
 var parseCall = function(data, hash) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
@@ -205,12 +233,14 @@ var parseCall = function(data, hash) {
 
   var form = parseForm(data.form, tempo);
   var events = parseTimeline(data.timeline, tempo);
+  var colors = parseColors(data.metadata.palette, data.colors, tempo);
 
   // TODO
   return {
     'tempo': tempo,
     'form': form,
-    'events': events
+    'events': events,
+    'colors': colors
   };
 };
 
