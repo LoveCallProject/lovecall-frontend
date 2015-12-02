@@ -672,7 +672,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var onWidgetResize = function(e) {
-      $log.debug('widget resized, scheduling canvas re-size on next draw');
+      // $log.debug('widget/window resized, scheduling canvas re-size on next draw');
       inResizeFallout = true;
     };
 
@@ -682,6 +682,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     elem.addEventListener('mousedown', onmousedown);
     MouseEvent.addMouseUpListener(onmouseup);
 
+    $window.addEventListener('resize', onWidgetResize);
     ResizeDetector.listenTo(containerElem, onWidgetResize);
 
     // add canvas to container
