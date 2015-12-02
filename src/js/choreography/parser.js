@@ -204,7 +204,6 @@ var parseSongMetadata = function(songMetadata) {
 
 
 var parseColors = function(palette, colorTimelines, tempo) {
-  console.log('palette', palette);
   return colorTimelines.map(function(colorTimeline) {
     var startTime = tempo.stepToTime(
         colorTimeline[0],
