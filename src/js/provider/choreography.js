@@ -66,8 +66,14 @@ mod.factory('Choreography', function($log) {
     return queueEngine;
   };
 
+
   var getColors = function() {
     return parsedData ? parsedData.colors : null;
+  };
+
+
+  var getSongMetadata = function() {
+    return parsedData.songMetadata;
   };
 
 
@@ -76,6 +82,7 @@ mod.factory('Choreography', function($log) {
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,
+    'getSongMetadata': getSongMetadata,
     'getEvents': getEvents,
     'getQueueEngine': getQueueEngine
   };
