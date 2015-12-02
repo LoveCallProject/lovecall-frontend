@@ -203,6 +203,16 @@ var parseSongMetadata = function(songMetadata) {
 }
 
 
+var parsePalette = function(palette) {
+  return palette.map(function(color) {
+    var r = parseInt(color.slice(1, 3), 16);
+    var g = parseInt(color.slice(3, 5), 16);
+    var b = parseInt(color.slice(5, 7), 16);
+    return [r, g, b];
+  });
+};
+
+
 var parseColors = function(palette, colorTimelines, tempo) {
   return colorTimelines.map(function(colorTimeline) {
     var startTime;
@@ -250,7 +260,9 @@ var parseCall = function(data, hash) {
 
   var form = parseForm(data.form, tempo);
   var events = parseTimeline(data.timeline, tempo);
-  var colors = parseColors(data.metadata.palette, data.colors, tempo);
+
+  var parsedPalette = parsePalette(metadata.palette);
+  var colors = parseColors(parsedPalette, data.colors, tempo);
 
   // TODO
   return {

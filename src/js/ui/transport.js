@@ -138,6 +138,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var sliderHitTestDistance = 8;
     var partSeparatorHeightT = 12;
     var partSeparatorHeightB = 12;
+    var colorRectAlphaNotPlayed = 0.1;
+    var colorRectAlphaPlayed = 1;
     var indicatorRadius = 8;
     var indicatorRadiusHovered = 10;
     var indicatorRadiusActive = 12;
@@ -191,6 +193,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
     var cachedSongColorsSegments = [];
     var cachedSongColorsRGB = [];
+    var colorRectY = 0;
+    var colorRectH = 0;
 
     var tickBoxAreaWidth = 0;
     var tickBoxSize = 0;
@@ -269,6 +273,13 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
+    var fillRectWithRGBA = function(ctx, x, y, w, h, rgb, a) {
+      var colorStr = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+      ctx.fillStyle = colorStr;
+      ctx.fillRect(x, y, w, h);
+    };
+
+
     var draw = function() {
       var isCompleteRedraw = true;  // inResizeFallout;
       var prevIndicatorX = indicatorX;
@@ -308,6 +319,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
         // colors
         refreshSongColorsCache();
+        colorRectY = sliderY - partSeparatorHeightT;
+        colorRectH = partSeparatorHeightT;
 
         // tick box
         tickBoxAreaWidth = (w - marginL - marginR - sliderLength)|0;
@@ -353,13 +366,44 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           var color = cachedSongColorsRGB[idx];
 
           // TODO: support color stripes
-          ctx.fillStyle = color[0];
-          ctx.fillRect(
-              segment[0],
-              sliderY - partSeparatorHeightT,
-              segment[1] - segment[0],
-              partSeparatorHeightT
-              );
+          var colorUsed = color[0];
+          if (segment[0] < indicatorX && indicatorX < segment[1]) {
+            // indicator inside
+            fillRectWithRGBA(
+                ctx,
+                segment[0],
+                colorRectY,
+                indicatorX - segment[0],
+                colorRectH,
+                colorUsed,
+                colorRectAlphaPlayed
+                );
+            fillRectWithRGBA(
+                ctx,
+                indicatorX,
+                colorRectY,
+                segment[1] - indicatorX,
+                colorRectH,
+                colorUsed,
+                colorRectAlphaNotPlayed
+                );
+          } else {
+            // indicator not inside
+            var opacity = (
+                segment[1] <= indicatorX ?
+                colorRectAlphaPlayed :
+                colorRectAlphaNotPlayed
+                );
+            fillRectWithRGBA(
+                ctx,
+                segment[0],
+                colorRectY,
+                segment[1] - segment[0],
+                colorRectH,
+                colorUsed,
+                opacity
+                );
+          }
         });
         ctx.restore();
       }
