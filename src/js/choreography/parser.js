@@ -205,15 +205,22 @@ var parseSongMetadata = function(songMetadata) {
 
 var parseColors = function(palette, colorTimelines, tempo) {
   return colorTimelines.map(function(colorTimeline) {
-    var startTime = tempo.stepToTime(
-        colorTimeline[0],
-        colorTimeline[1]
-        );
+    var startTime;
+    var endTime;
+
+    if ((colorTimeline[0] == -2) && (colorTimeline[1] == -2)) {
+      startTime = -Infinity;
+    } else {
+      startTime = tempo.stepToTime(
+          colorTimeline[0],
+          colorTimeline[1]
+          );
+    }
 
     if ((colorTimeline[2] == -1) && (colorTimeline[3] == -1)) {
-      var endTime = Infinity;
+      endTime = Infinity;
     } else {
-      var endTime = tempo.stepToTime(
+      endTime = tempo.stepToTime(
           colorTimeline[2],
           colorTimeline[3]
           );
