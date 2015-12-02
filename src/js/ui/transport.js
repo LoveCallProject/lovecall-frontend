@@ -392,7 +392,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
             return;
           }
 
-          ctx.strokeStyle = separatorX < indicatorX ? '#666666' : '#eeeeee';
+          ctx.strokeStyle = separatorX <= indicatorX ? '#666666' : '#eeeeee';
           ctx.beginPath();
           ctx.moveTo(separatorX, sliderY - partSeparatorHeightT);
           ctx.lineTo(separatorX, sliderY + partSeparatorHeightB);
