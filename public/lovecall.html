@@ -85,6 +85,18 @@
       >
     <div class="main-container">
       <section
+          id="metadata"
+          data-ng-controller="MetadataController"
+          >
+        <div class="metadata__image">
+        </div>
+        <div class="metadata__text">
+          <h1 class="metadata__text__title">{{title}}</h1>
+          <span class="metadata__text__artist">{{artist}}</span>
+          <span class="metadata__text__album">{{album}}</span>
+        </div>
+      </section>
+      <section
           id="transport"
           data-ng-controller="TransportController"
           >
