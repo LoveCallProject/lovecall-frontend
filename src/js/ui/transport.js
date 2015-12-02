@@ -27,6 +27,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   $scope.isPlaying = false;
   $scope.playButtonIcon = 'play_arrow';
   $scope.volumePercentage = 100;
+  $scope.volumeIcon = 'volume_up';
 
   // internal states
   var isPlaying = false;
@@ -34,6 +35,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   var prevIsPlaying = true;
   var prevPlaybackPos = -1;
   var duration = 0;
+  var isMuted = false;
 
 
   // actions
@@ -49,13 +51,43 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   };
 
 
+  var getVolumeIcon = function(volumePercentage, isMuted) {
+    if (isMuted) {
+      return 'volume_off';
+    }
+
+    if (volumePercentage == 0) {
+      return 'volume_mute';
+    }
+
+    if (volumePercentage < 50) {
+      return 'volume_down';
+    }
+
+    return 'volume_up';
+  };
+
+
+  var updateVolumeIcon = function() {
+    $scope.volumeIcon = getVolumeIcon($scope.volumePercentage, isMuted);
+  };
+
+
   $scope.togglePlay = function() {
     (isPlaying ? pause : play)();
   };
 
 
+  $scope.toggleMute = function() {
+    isMuted = !isMuted;
+    AudioEngine.setMuted(isMuted);
+    updateVolumeIcon();
+  };
+
+
   $scope.$watch('volumePercentage', function(to, from) {
     AudioEngine.setVolume(to / 100);
+    updateVolumeIcon();
   });
 
 

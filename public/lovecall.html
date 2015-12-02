@@ -91,8 +91,8 @@
         <div class="transport__canvas-container">
         </div>
         <md-button
-            id="play__button"
-            class="transport__play md-icon-button md-primary"
+            id="transport__play"
+            class="md-icon-button md-primary"
             data-ng-disabled="!isLoaded"
             data-ng-click="togglePlay()"
             >
@@ -104,9 +104,15 @@
           </md-icon>
         </md-button>
         <div class="transport__volume">
-          <md-icon data-md-font-library="material-icons">
-            volume_up
-          </md-icon>
+          <md-button
+              id="transport__mute"
+              class="md-icon-button"
+              data-ng-click="toggleMute()"
+              >
+            <md-icon data-md-font-library="material-icons">
+              {{volumeIcon}}
+            </md-icon>
+          </md-button>
           <md-slider
               data-ng-model="volumePercentage"
               aria-label="Volume control"
