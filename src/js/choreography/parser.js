@@ -194,11 +194,22 @@ var parseForm = function(form, tempo) {
 };
 
 
+var parseSongMetadata = function(songMetadata) {
+  return {
+    ti: songMetadata.title,
+    ar: songMetadata.artist,
+    al: songMetadata.album
+  };
+};
+
+
 var parseCall = function(data, hash) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
   var sources = songMetadata.sources;
   var globalOffsetMs = sources[hash].offset;
+
+  var parsedMetadata = parseSongMetadata(songMetadata);
 
   // TODO: case of unknown hash
   var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs ? globalOffsetMs : 0);
@@ -208,6 +219,7 @@ var parseCall = function(data, hash) {
 
   // TODO
   return {
+    'songMetadata': parsedMetadata,
     'tempo': tempo,
     'form': form,
     'events': events
