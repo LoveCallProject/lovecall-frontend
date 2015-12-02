@@ -103,12 +103,16 @@
             {{playButtonIcon}}
           </md-icon>
         </md-button>
-        <md-slider
-            class="transport__volume"
-            data-ng-model="volumePercentage"
-            aria-label="Volume control"
-            >
-        </md-slider>
+        <div class="transport__volume">
+          <md-icon data-md-font-library="material-icons">
+            volume_up
+          </md-icon>
+          <md-slider
+              data-ng-model="volumePercentage"
+              aria-label="Volume control"
+              >
+          </md-slider>
+        </div>
       </section>
 
       <div data-ng-controller="DemoController">

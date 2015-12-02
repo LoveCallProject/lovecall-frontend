@@ -66,11 +66,16 @@ mod.factory('Choreography', function($log) {
     return queueEngine;
   };
 
+  var getColors = function() {
+    return parsedData ? parsedData.colors : null;
+  };
+
 
   return {
     'load': load,
     'getTempo': getTempo,
     'getForm': getForm,
+    'getColors': getColors,
     'getEvents': getEvents,
     'getQueueEngine': getQueueEngine
   };

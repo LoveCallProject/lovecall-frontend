@@ -290,7 +290,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           indicatorRadiusHovered :
           indicatorRadius
           )|0;
-
+      /*
       // actual draw
       // ctx.fillStyle = "grey";
       // ctx.fillRect(0, 0, w, h);
@@ -305,19 +305,35 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         clearRectW = indicatorActiveCircleRadius * 2;
         clearRectH = h;
       }
+      */
 
-      ctx.clearRect(clearRectX, clearRectY, clearRectW, clearRectH);
+      ctx.clearRect(0, 0, w, h);
 
       // slider body
       {
         ctx.save();
         ctx.lineWidth = sliderLineWidth;
         // played parts
-        ctx.strokeStyle = '#666666';
-        ctx.beginPath();
-        ctx.moveTo(sliderX1, sliderY);
-        ctx.lineTo(indicatorX, sliderY);
-        ctx.stroke();
+        var sliderColors = getSliderColors(
+            AudioEngine.getPlaybackPosition()
+            );
+
+        if (sliderColors) {
+          var strokeLength = ( indicatorX - sliderX1 ) /
+              sliderColors.length;
+        } else {
+          sliderColors = ['#eeeeee'];
+          strokeLength = 0;
+        }
+
+        sliderColors.map(function(color, index) {
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(sliderX1 + index * strokeLength, sliderY);
+          ctx.lineTo(sliderX1 + (index + 1) * strokeLength, sliderY);
+          ctx.stroke();
+        });
+
         // unplayed parts
         ctx.strokeStyle = '#eeeeee';
         ctx.beginPath();
@@ -382,6 +398,21 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           curX += tickBoxSize + tickBoxGapWidth;
         };
         ctx.restore();
+      }
+    };
+
+    var getSliderColors = function(playbackPos) {
+      var colors = Choreography.getColors();
+
+      if (colors === null) {
+        return ['#eeeeee'];
+      }
+
+      for (var i = 0;i < colors.length;i++) {
+        if ((playbackPos > colors[i][0]) &&
+            (playbackPos <= colors[i][1])) {
+          return colors[i][2];
+        }
       }
     };
 
