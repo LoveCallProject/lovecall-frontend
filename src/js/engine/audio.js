@@ -23,6 +23,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
   var playbackPosMs = 0;
+  var currentVolume = 1;
+  var isMuted = false;
 
   var currentMetronome = null;
   var currentQueueEngine = null;
@@ -136,13 +138,30 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
   };
 
 
+  var updateGainNode = function() {
+    gainNode.gain.value = isMuted ? 0 : currentVolume;
+  };
+
+
   var getVolume = function() {
-    return gainNode.gain.value;
+    return currentVolume;
   };
 
 
   var setVolume = function(volume) {
-    gainNode.gain.value = volume > 1 ? 1 : volume < 0 ? 0 : volume;
+    currentVolume = volume > 1 ? 1 : volume < 0 ? 0 : volume;
+    updateGainNode();
+  };
+
+
+  var getMuted = function() {
+    return isMuted;
+  };
+
+
+  var setMuted = function(mute) {
+    isMuted = mute;
+    updateGainNode();
   };
 
 
@@ -216,6 +235,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     'getPlaybackPosition': getPlaybackPosition,
     'getVolume': getVolume,
     'setVolume': setVolume,
+    'getMuted': getMuted,
+    'setMuted': setMuted,
     'setSourceData': setSourceData,
     'initEvents': initEvents,
     'resume': resume,
