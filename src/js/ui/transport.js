@@ -77,6 +77,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     playbackPos = 0;
     updateTransport(0.0, duration);
     transportState.updateSongForm(Choreography.getForm());
+    transportState.updateSongColors(Choreography.getColors());
     $scope.$digest();
   });
 
@@ -135,6 +136,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var marginR = 16;
     var sliderLineWidth = 2;
     var sliderHitTestDistance = 8;
+    var partSeparatorHeightT = 12;
+    var partSeparatorHeightB = 12;
     var indicatorRadius = 8;
     var indicatorRadiusHovered = 10;
     var indicatorRadiusActive = 12;
@@ -152,6 +155,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var positionBeforeIndicatorActive = 0;
 
     var songForm = null;
+    var songColors = null;
 
     var totalTicks = 4;  // TODO
     var currentTick = 0;
@@ -185,6 +189,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var cachedSongPartGeneration = 0;
     var prevCachedSongPartGeneration = -1;
 
+    var cachedSongColorsSegments = [];
+    var cachedSongColorsRGB = [];
+
     var tickBoxAreaWidth = 0;
     var tickBoxSize = 0;
     var tickBoxGapWidth = 0;
@@ -217,11 +224,27 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
+    var updateSongColors = function(colors, skipDraw) {
+      songColors = colors;
+      refreshSongColorsCache();
+      skipDraw || draw();
+    };
+
+
+    var positionToSliderX = function(position) {
+      if (isFinite(position)) {
+        return (sliderX1 + (position / durationMs) * sliderLength)|0;
+      }
+
+      return (position < 0 ? sliderX1 : sliderX2)|0;
+    };
+
+
     var refreshSongPartCache = function() {
       cachedSongPartPointsX.splice(0, cachedSongPartPointsX.length);
       if (songForm) {
         songForm.forEach(function(x) {
-          cachedSongPartPointsX.push((sliderX1 + (x.ts / durationMs) * sliderLength)|0);
+          cachedSongPartPointsX.push(positionToSliderX(x.ts));
         });
         cachedSongPartPointsX.sort(function(a, b) {
           return a - b;
@@ -232,8 +255,22 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
+    var refreshSongColorsCache = function() {
+      cachedSongColorsSegments.splice(0, cachedSongColorsSegments.length);
+      cachedSongColorsRGB.splice(0, cachedSongColorsRGB.length);
+      if (songColors && durationMs) {
+        songColors.forEach(function(x) {
+          cachedSongColorsSegments.push(
+              [positionToSliderX(x[0]), positionToSliderX(x[1])]
+              );
+          cachedSongColorsRGB.push(x[2]);
+        });
+      }
+    };
+
+
     var draw = function() {
-      var isCompleteRedraw = inResizeFallout;
+      var isCompleteRedraw = true;  // inResizeFallout;
       var prevIndicatorX = indicatorX;
       var clearRectX;
       var clearRectY;
@@ -258,7 +295,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
         // cache static parameters
         // slider body
-        // sliderX1 = marginL;
+        sliderX1 = marginL;
         sliderLength = ((w - marginL - marginR) * (1 - tickBoxWidthRatio)) |0;
         sliderX2 = (sliderX1 + sliderLength)|0;
         sliderY = halfH;
@@ -268,6 +305,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
         // song parts
         refreshSongPartCache();
+
+        // colors
+        refreshSongColorsCache();
 
         // tick box
         tickBoxAreaWidth = (w - marginL - marginR - sliderLength)|0;
@@ -284,16 +324,14 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
       // dynamic parameters
       // slider indicator
-      indicatorX = (marginL + position * sliderLength)|0;
+      indicatorX = (sliderX1 + position * sliderLength)|0;
       indicatorR = (
           indicatorHovered ?
           indicatorRadiusHovered :
           indicatorRadius
           )|0;
-      /*
+
       // actual draw
-      // ctx.fillStyle = "grey";
-      // ctx.fillRect(0, 0, w, h);
       if (isCompleteRedraw) {
         clearRectX = clearRectY = 0;
         clearRectW = w;
@@ -305,34 +343,37 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         clearRectW = indicatorActiveCircleRadius * 2;
         clearRectH = h;
       }
-      */
 
-      ctx.clearRect(0, 0, w, h);
+      ctx.clearRect(clearRectX, clearRectY, clearRectW, clearRectH);
+
+      // colors
+      {
+        ctx.save();
+        cachedSongColorsSegments.forEach(function(segment, idx) {
+          var color = cachedSongColorsRGB[idx];
+
+          // TODO: support color stripes
+          ctx.fillStyle = color[0];
+          ctx.fillRect(
+              segment[0],
+              sliderY - partSeparatorHeightT,
+              segment[1] - segment[0],
+              partSeparatorHeightT
+              );
+        });
+        ctx.restore();
+      }
 
       // slider body
       {
         ctx.save();
         ctx.lineWidth = sliderLineWidth;
         // played parts
-        var sliderColors = getSliderColors(
-            AudioEngine.getPlaybackPosition()
-            );
-
-        if (sliderColors) {
-          var strokeLength = ( indicatorX - sliderX1 ) /
-              sliderColors.length;
-        } else {
-          sliderColors = ['#eeeeee'];
-          strokeLength = 0;
-        }
-
-        sliderColors.map(function(color, index) {
-          ctx.strokeStyle = color;
-          ctx.beginPath();
-          ctx.moveTo(sliderX1 + index * strokeLength, sliderY);
-          ctx.lineTo(sliderX1 + (index + 1) * strokeLength, sliderY);
-          ctx.stroke();
-        });
+        ctx.strokeStyle = '#666666';
+        ctx.beginPath();
+        ctx.moveTo(sliderX1, sliderY);
+        ctx.lineTo(indicatorX, sliderY);
+        ctx.stroke();
 
         // unplayed parts
         ctx.strokeStyle = '#eeeeee';
@@ -343,7 +384,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         // song part separators
         // TODO: don't draw unaffected points over and over
         cachedSongPartPointsX.forEach(function(separatorX) {
-          /*
           if (
               !isCompleteRedraw &&
               prevCachedSongPartGeneration == cachedSongPartGeneration &&
@@ -351,12 +391,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
               ) {
             return;
           }
-          */
 
           ctx.strokeStyle = separatorX < indicatorX ? '#666666' : '#eeeeee';
           ctx.beginPath();
-          ctx.moveTo(separatorX, sliderY - 12);
-          ctx.lineTo(separatorX, sliderY + 12);
+          ctx.moveTo(separatorX, sliderY - partSeparatorHeightT);
+          ctx.lineTo(separatorX, sliderY + partSeparatorHeightB);
           ctx.stroke();
         });
         ctx.restore();
@@ -398,21 +437,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           curX += tickBoxSize + tickBoxGapWidth;
         };
         ctx.restore();
-      }
-    };
-
-    var getSliderColors = function(playbackPos) {
-      var colors = Choreography.getColors();
-
-      if (colors === null) {
-        return ['#eeeeee'];
-      }
-
-      for (var i = 0;i < colors.length;i++) {
-        if ((playbackPos > colors[i][0]) &&
-            (playbackPos <= colors[i][1])) {
-          return colors[i][2];
-        }
       }
     };
 
@@ -590,7 +614,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     return {
       update: update,
       updateTick: updateTick,
-      updateSongForm: updateSongForm
+      updateSongForm: updateSongForm,
+      updateSongColors: updateSongColors
     };
   };
 
