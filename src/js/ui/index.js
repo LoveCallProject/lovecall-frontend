@@ -4,6 +4,7 @@
 require('angular');
 
 require('./container');
+require('./call');
 require('./frame');
 require('./metadata');
 require('./navigation');
@@ -12,6 +13,7 @@ require('./transport');
 
 angular.module('lovecall/ui/index', [
     'lovecall/ui/container',
+    'lovecall/ui/call',
     'lovecall/ui/frame',
     'lovecall/ui/metadata',
     'lovecall/ui/navigation',
