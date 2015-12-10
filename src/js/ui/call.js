@@ -69,38 +69,65 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var preDrawTime = 0;
     var tempo = Choreography.getTempo();
     var pixPreSec = ( circleRadius * 2 + circleMargin ) / (tempo.stepToTime(0,4) - tempo.stepToTime(0, 2)) ;
-    var preStates = [];
+    var preStates = {
+        preTime: 0,
+        nodeStates: []
+    };
+    var isDrawComplete = true;
 
     this.draw = function(events, flag) {
+      if (!isDrawComplete) return;
+      isDrawComplete = false;
       var canvasRect = elem.getBoundingClientRect();
       w = canvasRect.width | 0;
       h = canvasRect.height | 0;
       elem.width = w;
       elem.height = h;
       var y = h / 2;
-      currentTime = AudioEngine.getPlaybackPosition();
       // draw 
       ctx.clearRect(0, 0, w, h);
-      preStates = [];
-      events.map(function(event, index) {
-        var remainedTime = event.ts - currentTime;
-        var x = pixPreSec * remainedTime;
-        ctx.beginPath();
-        ctx.fillStyle = "#ff6666";
-        ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.fillStyle = "#000";
-        ctx.fillText(event.type, x, y);
-        preStates.push({
-            ts: event.ts,
-            type: event.type,
-            position: {
-                "x": x,
-                "y": y
-              }
-            });
-      });
+      currentTime = AudioEngine.getPlaybackPosition();
+
+      //sync from events
+      if (flag) { 
+        console.log('sync');
+        preStates.nodeStates = [];
+        events.map(function(event, index) {
+          var remainedTime = event.ts - currentTime;
+          var x = pixPreSec * remainedTime;
+          ctx.beginPath();
+          ctx.fillStyle = "#ff6666";
+          ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.fillStyle = "#000";
+          ctx.fillText(event.type, x, y);
+          preStates.nodeStates.push({
+              ts: event.ts,
+              type: event.type,
+              position: {
+                  "x": x,
+                  "y": y
+                }
+              });
+        });
+      } else {
+        console.log('move');
+        preStates.nodeStates.map(function(preState, index) {
+          var remainedTime = currentTime - preStates.preTime;
+          var x = preState.position.x - pixPreSec * remainedTime;
+          preStates.nodeStates[index].position.x = x;
+          ctx.beginPath();
+          ctx.fillStyle = "#ff6666";
+          ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.fillStyle = "#000";
+          ctx.fillText(preState.type, x, y);
+        });
+      }
+      preStates.preTime = currentTime;
+      isDrawComplete = true;
     };
     
   };
