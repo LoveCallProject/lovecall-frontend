@@ -48,7 +48,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     var callFrameCallback = function(ts) {
       queueEngine.update(AudioEngine.getPlaybackPosition(), true);
-      if (ts - preCallDrawTime >= 16.66) {
+      if (ts - preCallDrawTime >= 0) {
         callCanvas.draw(events, false);
         preCallDrawTime = ts;
       }
@@ -63,7 +63,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var elem = document.getElementById('call__canvas');
     var ctx = elem.getContext('2d');
     var circleRadius = 50;
-    var circleMargin = 10;
+    var circleMargin = -10;
     var w, h;
     var currentTime = 0;
     var preDrawTime = 0;
@@ -74,6 +74,19 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         nodeStates: []
     };
     var isDrawComplete = true;
+
+    var getTaikoImage = function(action) {
+      var img = new Image();
+      img.src = '/images/' + action + '.png';
+
+      return img;
+    }
+
+    var taikoImages = {
+      '上举' : getTaikoImage('上举'),
+      '里打' : getTaikoImage('里打'),
+      'Fu!'  : getTaikoImage('Fu!')
+    };
 
     this.draw = function(events, flag) {
       if (!isDrawComplete) return;
@@ -90,40 +103,30 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
       //sync from events
       if (flag) { 
-        console.log('sync');
+        //console.log('sync');
         preStates.nodeStates = [];
         events.map(function(event, index) {
           var remainedTime = event.ts - currentTime;
           var x = pixPreSec * remainedTime;
-          ctx.beginPath();
-          ctx.fillStyle = "#ff6666";
-          ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.fillStyle = "#000";
-          ctx.fillText(event.type, x, y);
+          ctx.drawImage(taikoImages[event.type], x + 50, y - 50);
+          //console.log('sync draw');
           preStates.nodeStates.push({
               ts: event.ts,
               type: event.type,
               position: {
                   "x": x,
                   "y": y
-                }
-              });
+              }
+          });
         });
       } else {
-        console.log('move');
+        //console.log('move');
         preStates.nodeStates.map(function(preState, index) {
           var remainedTime = currentTime - preStates.preTime;
           var x = preState.position.x - pixPreSec * remainedTime;
           preStates.nodeStates[index].position.x = x;
-          ctx.beginPath();
-          ctx.fillStyle = "#ff6666";
-          ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.fillStyle = "#000";
-          ctx.fillText(preState.type, x, y);
+          //console.log('move draw');
+          ctx.drawImage(taikoImages[preState.type], x + 50, y - 50);
         });
       }
       preStates.preTime = currentTime;
