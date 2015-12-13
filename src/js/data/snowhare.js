@@ -1,4 +1,4 @@
-var CALL_DATA = {
+module.exports = {
 	"lovecall": 0,
 	"metadata": {
 		"song": {
