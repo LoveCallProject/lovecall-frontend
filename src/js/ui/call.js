@@ -70,12 +70,14 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var w = 0;
     var h = 0;
     var axisY = 0;
+    var textHeight = 30;
     var currentTime = 0;
     var preDrawTime = 0;
     var isDrawComplete = true;
     var inResizeFallout = true;
 
     var pixPreSec = 0;
+
     var preStates = {
         preTime: 0,
         nodeStates: []
@@ -111,7 +113,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       ctx.strokeStyle = '#ABABAB';
       ctx.beginPath();
       ctx.moveTo(basePos, 0);
-      ctx.lineTo(basePos, h);
+      ctx.lineTo(basePos, h - textHeight);
       ctx.stroke();
     }
 
@@ -121,12 +123,12 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
       while (prePos >= 0) {
         prePos -= circleDistence;
-        drawStepLine(prePos - circleMargin);
+        drawStepLine(prePos);
       }
 
       while (afterPos <= w) {
         afterPos += circleDistence;
-        drawStepLine(afterPos - circleMargin);
+        drawStepLine(afterPos);
       }
     }
 
@@ -142,7 +144,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         h = canvasRect.height|0;
         elem.width = w;
         elem.height = h;
-        axisY = (h / 2)|0;
+        axisY = ((h - textHeight) / 2)|0;
       }
 
       // draw
@@ -159,11 +161,18 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           if (index === 0) {
             drawStepLines(x);
           }
-          ctx.drawImage(taikoImages[event.type], x + 50, axisY - 50);
+          ctx.drawImage(taikoImages[event.type], x - 50, axisY - 50);
+          if (event.params) {
+            ctx.font = textHeight + "px sans-serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(event.params, x, 150);
+          }
           //console.log('sync draw');
           preStates.nodeStates.push({
               ts: event.ts,
               type: event.type,
+              params: event.params,
               position: {
                   "x": x,
                   "y": axisY
@@ -172,15 +181,21 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         });
       } else {
         //console.log('move');
-        preStates.nodeStates.map(function(preState, index) {
+        preStates.nodeStates.map(function(nodeState, index) {
           var remainedTime = currentTime - preStates.preTime;
-          var x = preState.position.x - pixPreSec * remainedTime;
+          var x = nodeState.position.x - pixPreSec * remainedTime;
           if (index === 0) {
             drawStepLines(x);
           }
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
-          ctx.drawImage(taikoImages[preState.type], x + 50, axisY - 50);
+          ctx.drawImage(taikoImages[nodeState.type], x - 50, axisY - 50);
+          if (nodeState.params) {
+            ctx.font = textHeight + "px sans-serif";
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(nodeState.params, x, 150);
+          }
         });
       }
       preStates.preTime = currentTime;
