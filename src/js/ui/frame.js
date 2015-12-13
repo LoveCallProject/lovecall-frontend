@@ -32,16 +32,21 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
   var frameCallback = function(ts) {
     requestAnimFrame(frameCallback);
 
+    var shouldBroadcastStep = false;
+
     if (prevFrameMeasure != playbackPosMeasure) {
-      $rootScope.$broadcast('frame:playbackPosMeasure', playbackPosMeasure);
-      $rootScope.$digest();
+      shouldBroadcastStep = true;
       prevFrameMeasure = playbackPosMeasure;
     }
 
     if (prevFrameStep != playbackPosStep) {
-      $rootScope.$broadcast('frame:playbackPosStep', playbackPosStep);
-      $rootScope.$digest();
+      shouldBroadcastStep = true;
       prevFrameStep = playbackPosStep;
+    }
+
+    if (shouldBroadcastStep) {
+      $rootScope.$broadcast('frame:playbackPosStep', playbackPosMeasure, playbackPosStep);
+      $rootScope.$digest();
     }
 
     var i = 0;

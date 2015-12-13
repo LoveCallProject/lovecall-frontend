@@ -127,9 +127,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   });
 
 
-  $scope.$on('frame:playbackPosStep', function(evt, v) {
+  $scope.$on('frame:playbackPosStep', function(evt, m, v) {
     // don't draw immediately as frame callback will take care of that
-    transportState.updateTick(v >> 2, true);
+    transportState.updateTick(m, v >> 2, true);
   });
 
 
@@ -192,6 +192,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var songColors = null;
 
     var totalTicks = 4;  // TODO
+    var currentMeasure = 0;
     var currentTick = 0;
 
     // draw states
@@ -247,7 +248,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
-    var updateTick = function(tick, skipDraw) {
+    var updateTick = function(measure, tick, skipDraw) {
+      currentMeasure = measure;
       currentTick = tick;
       skipDraw || draw();
     };
@@ -512,6 +514,18 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           ctx.fillRect(curX, tickBoxStartY, tickBoxSize, tickBoxSize);
           curX += tickBoxSize + tickBoxGapWidth;
         };
+        ctx.restore();
+      }
+
+      // measure number
+      // TODO: performance
+      {
+        ctx.save();
+        ctx.fillStyle = '#000';
+        ctx.font = '12px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText("" + currentMeasure, tickBoxStartX + tickBoxSize / 2, tickBoxStartY + tickBoxSize / 2 - 6, tickBoxSize);
         ctx.restore();
       }
     };
