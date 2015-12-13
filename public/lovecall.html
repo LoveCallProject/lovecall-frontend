@@ -80,7 +80,7 @@
       class="content-container"
       data-ng-controller="ContainerController"
       data-ng-class="{'sidenav-locked-open': $mdMedia('gt-md')}"
-      layout-margin layout="column"
+      layout="column"
       layout-align="start center"
       >
     <div class="main-container">
@@ -91,9 +91,13 @@
         <div class="metadata__image">
         </div>
         <div class="metadata__text">
-          <h1 class="metadata__text__title">{{title}}</h1>
-          <span class="metadata__text__artist">{{artist}}</span>
-          <span class="metadata__text__album">{{album}}</span>
+          <div class="metadata__text__title-container">
+            <h1 class="metadata__text__title">{{title}}</h1>
+          </div>
+          <div class="metadata__text__other">
+            <span class="metadata__text__other__artist">{{artist}}</span>
+            <span class="metadata__text__other__album">{{album}}</span>
+          <div>
         </div>
       </section>
       <section

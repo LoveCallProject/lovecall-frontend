@@ -10,4 +10,45 @@ $md-sidenav-locked-open-width: 304px;
   width: 100%;
   position: relative;
   flex: 1;
+  padding: 8px;
+}
+
+#metadata {
+  display: flex;
+  flex-direction: row;
+}
+
+.metadata__image {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  border: 2px solid black;
+}
+
+.metadata__text {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+}
+
+.metadata__text__other {
+  flex: 1;
+}
+
+.metadata__text__title-container {
+  flex: 1;
+  position: relative;
+  border-bottom: 2px solid black;
+}
+
+.metadata__text__other,
+.metadata__text__title-container {
+  padding-left: 0.5rem;
+}
+
+.metadata__text__title {
+  position: absolute;
+  bottom: 0;
+  margin: 0;
 }
