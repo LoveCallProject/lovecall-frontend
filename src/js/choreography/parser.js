@@ -53,6 +53,11 @@ var parseLTAction = function(startStep, endStep, params) {
 };
 
 
+var parseQHAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "前挥", {m: 0, s: 0}, {m: 0, s: 8});
+};
+
+
 var parseKHAction = function(startStep, endStep, params) {
   return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: 4});
 }
@@ -103,6 +108,13 @@ var parseFollowAction = function(startStep, endStep, params) {
 };
 
 
+var parseCelebrateAction = function(startStep, endStep, params) {
+  return [
+    [startStep, "欢呼", null]
+  ];
+};
+
+
 // action type lookup maps
 var POINT_ACTION_PARSERS = {
   'fufu': parseFuFuAction
@@ -114,8 +126,10 @@ var LONG_ACTION_PARSERS = {
   '警报': parseAlarmAction,
   'PPPH': parsePPPHAction,
   '里跳': parseLTAction,
+  '前挥': parseQHAction,
   '快挥': parseKHAction,
-  '跟唱': parseFollowAction
+  '跟唱': parseFollowAction,
+  '欢呼': parseCelebrateAction
 };
 
 
