@@ -9,7 +9,11 @@ module.exports = {
 				"89efa6e06c8a2e310f20cac27ddb1bcc": {
 					"hash": "md5",
 					"offset": 2199
-				}
+				},
+        "c80b88e686eb5044532d74722bb09069": {
+          "hash": "md5",
+          "offset": 401
+        }
 			},
 			"timing": [
 				[0, 173.0, 4, 4, 0]

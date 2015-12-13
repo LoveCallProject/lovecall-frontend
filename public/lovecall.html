@@ -42,7 +42,10 @@
           data-ng-controller="MetadataController"
           data-ng-class="{'sidenav-locked-open': $mdMedia('gt-md')}"
           >
-        <div class="metadata__image">
+        <div
+            class="metadata__image"
+            data-ng-style="{'background-image': songImage}"
+            >
         </div>
         <div class="metadata__text">
           <div class="metadata__text__title-container">
