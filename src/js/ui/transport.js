@@ -447,14 +447,14 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         ctx.save();
         ctx.lineWidth = sliderLineWidth;
         // played parts
-        ctx.strokeStyle = '#666666';
+        ctx.strokeStyle = '#111';
         ctx.beginPath();
         ctx.moveTo(sliderX1, sliderY);
         ctx.lineTo(indicatorX, sliderY);
         ctx.stroke();
 
         // unplayed parts
-        ctx.strokeStyle = '#eeeeee';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
         ctx.beginPath();
         ctx.moveTo(indicatorX, sliderY);
         ctx.lineTo(sliderX2, sliderY);
@@ -470,7 +470,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
             return;
           }
 
-          ctx.strokeStyle = separatorX <= indicatorX ? '#666666' : '#eeeeee';
+          ctx.strokeStyle = separatorX <= indicatorX ? '#111' : 'rgba(255, 255, 255, 0.75)';
           ctx.beginPath();
           ctx.moveTo(separatorX, sliderY - partSeparatorHeightT);
           ctx.lineTo(separatorX, sliderY + partSeparatorHeightB);
@@ -492,7 +492,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           ctx.fill();
         }
 
-        ctx.fillStyle = "#666666";
+        ctx.fillStyle = "#111";
         ctx.beginPath();
         ctx.arc(indicatorX, indicatorY, indicatorR, 0, 2 * Math.PI);
         ctx.fill();

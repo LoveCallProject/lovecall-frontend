@@ -110,7 +110,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
     var drawStepLine = function(basePos) {
-      ctx.strokeStyle = '#ABABAB';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
       ctx.beginPath();
       ctx.moveTo(basePos, 0);
       ctx.lineTo(basePos, h - textHeight);
