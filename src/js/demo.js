@@ -8,6 +8,8 @@ require('./provider/choreography');
 require('./provider/song');
 require('./ui/frame');
 
+var snowhare = require('./data/snowhare');
+
 
 var mod = angular.module('lovecall/demo', [
     'lovecall/engine/audio',
@@ -22,7 +24,7 @@ mod.controller('DemoController', function($window, AudioEngine, Choreography, So
     console.log(hash, buffer);
 
     // demo
-    Choreography.load(CALL_DATA, hash);
+    Choreography.load(snowhare, hash);
 
     AudioEngine.setSourceData(buffer);
     AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
