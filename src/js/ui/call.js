@@ -24,7 +24,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
   var preCallDrawTime = 0;
 
   $scope.$on('audio:loaded', function(e) {
-    var callCanvas = new callCanvasState();
+    var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
     var callEventCallback = function(nowevent, lookaheadEvent, prevEvent) {
      /*
       $log.debug(
@@ -59,21 +59,27 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
   /* canvas */
-  function callCanvasState() {
-    var elem = document.getElementById('call__canvas');
+  function CallCanvasState(containerElem) {
+    var elem = document.createElement('canvas');
     var ctx = elem.getContext('2d');
+
     var circleRadius = 50;
     var circleMargin = -10;
-    var w, h;
+
+    var w = 0;
+    var h = 0;
+    var axisY = 0;
     var currentTime = 0;
     var preDrawTime = 0;
+    var isDrawComplete = true;
+    var inResizeFallout = true;
+
     var tempo = Choreography.getTempo();
-    var pixPreSec = ( circleRadius * 2 + circleMargin ) / (tempo.stepToTime(0,4) - tempo.stepToTime(0, 2)) ;
+    var pixPreSec = ((circleRadius * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)))|0;
     var preStates = {
         preTime: 0,
         nodeStates: []
     };
-    var isDrawComplete = true;
 
     var getTaikoImage = function(action) {
       var img = new Image();
@@ -88,34 +94,41 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       'Fu!'  : getTaikoImage('Fu!')
     };
 
+
     this.draw = function(events, flag) {
       if (!isDrawComplete) return;
       isDrawComplete = false;
-      var canvasRect = elem.getBoundingClientRect();
-      w = canvasRect.width | 0;
-      h = canvasRect.height | 0;
-      elem.width = w;
-      elem.height = h;
-      var y = h / 2;
-      // draw 
+
+      if (inResizeFallout) {
+        inResizeFallout = false;
+
+        var canvasRect = elem.getBoundingClientRect();
+        w = canvasRect.width|0;
+        h = canvasRect.height|0;
+        elem.width = w;
+        elem.height = h;
+        axisY = (h / 2)|0;
+      }
+
+      // draw
       ctx.clearRect(0, 0, w, h);
       currentTime = AudioEngine.getPlaybackPosition();
 
-      //sync from events
+      // sync from events
       if (flag) { 
         //console.log('sync');
         preStates.nodeStates = [];
         events.map(function(event, index) {
           var remainedTime = event.ts - currentTime;
           var x = pixPreSec * remainedTime;
-          ctx.drawImage(taikoImages[event.type], x + 50, y - 50);
+          ctx.drawImage(taikoImages[event.type], x + 50, axisY - 50);
           //console.log('sync draw');
           preStates.nodeStates.push({
               ts: event.ts,
               type: event.type,
               position: {
                   "x": x,
-                  "y": y
+                  "y": axisY
               }
           });
         });
@@ -126,13 +139,21 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           var x = preState.position.x - pixPreSec * remainedTime;
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
-          ctx.drawImage(taikoImages[preState.type], x + 50, y - 50);
+          ctx.drawImage(taikoImages[preState.type], x + 50, axisY - 50);
         });
       }
       preStates.preTime = currentTime;
       isDrawComplete = true;
     };
-    
+
+    var onWidgetResize = function(e) {
+      inResizeFallout = true;
+    };
+
+    // $window.addEventListener('resize', onWidgetResize);
+    ResizeDetector.listenTo(containerElem, onWidgetResize);
+
+    containerElem.appendChild(elem);
   };
 
 
