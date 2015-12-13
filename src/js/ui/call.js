@@ -65,6 +65,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     var circleRadius = 50;
     var circleMargin = -10;
+    var circleDistence = 2 * circleRadius + circleMargin;
 
     var w = 0;
     var h = 0;
@@ -106,6 +107,29 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
+    var drawStepLine = function(basePos) {
+      ctx.strokeStyle = '#ABABAB';
+      ctx.beginPath();
+      ctx.moveTo(basePos, 0);
+      ctx.lineTo(basePos, h);
+      ctx.stroke();
+    }
+
+    var drawStepLines = function(basePos) {
+      var prePos = basePos;
+      var afterPos = basePos;
+
+      while (prePos >= 0) {
+        prePos -= circleDistence;
+        drawStepLine(prePos - circleMargin);
+      }
+
+      while (afterPos <= w) {
+        afterPos += circleDistence;
+        drawStepLine(afterPos - circleMargin);
+      }
+    }
+
     this.draw = function(events, flag) {
       if (!isDrawComplete) return;
       isDrawComplete = false;
@@ -132,6 +156,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         events.map(function(event, index) {
           var remainedTime = event.ts - currentTime;
           var x = pixPreSec * remainedTime;
+          if (index === 0) {
+            drawStepLines(x);
+          }
           ctx.drawImage(taikoImages[event.type], x + 50, axisY - 50);
           //console.log('sync draw');
           preStates.nodeStates.push({
@@ -148,6 +175,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         preStates.nodeStates.map(function(preState, index) {
           var remainedTime = currentTime - preStates.preTime;
           var x = preState.position.x - pixPreSec * remainedTime;
+          if (index === 0) {
+            drawStepLines(x);
+          }
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
           ctx.drawImage(taikoImages[preState.type], x + 50, axisY - 50);
