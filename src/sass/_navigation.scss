@@ -31,4 +31,8 @@ md-icon.inline {
 
 #toolbar {
   background: none;
+
+  @include sidenav-locked-open-aware {
+    display: none;
+  }
 }

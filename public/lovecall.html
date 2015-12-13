@@ -28,8 +28,9 @@
       >
     <div class="toolbar-container">
       <md-toolbar
-          layout="row" layout-align="start center"
           id="toolbar"
+          layout="row" layout-align="start center"
+          data-ng-class="{'sidenav-locked-open': $mdMedia('gt-md')}"
           >
         <md-button class="md-icon-button" hide-gt-md data-ng-click="showSide()">
           <md-icon md-font-library="material-icons">menu</md-icon>
