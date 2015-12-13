@@ -7,7 +7,6 @@ require('../engine/audio');
 require('../provider/choreography');
 require('../provider/resize-detector');
 require('./frame');
-var queue = require('../engine/queue');
 
 
 var mod = angular.module('lovecall/ui/call', [
@@ -23,38 +22,39 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
   var events = [];
   var preCallDrawTime = 0;
 
+  var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
+
   $scope.$on('audio:loaded', function(e) {
-    var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
-    var callEventCallback = function(nowevent, lookaheadEvent, prevEvent) {
-     /*
-      $log.debug(
-        'now:', nowevent[0].type, nowevent[0].ts, 
-        'lookahead', lookaheadEvent, 'prev', prevEvent
-        );
-        */
-        lookaheadEvent.map(function(event) {
-          nowevent.push(event);
-        });
-        events = nowevent;
-        callCanvas.draw(events, true);
-    };
-
-    var queueEngine = queue.queueEngineFactory(
-        Choreography.getEvents(), 
-        callEventCallback, 
-        $log,
-        false
-        );
-
-    var callFrameCallback = function(ts) {
-      queueEngine.update(AudioEngine.getPlaybackPosition(), true);
-      if (ts - preCallDrawTime >= 0) {
-        callCanvas.draw(events, false);
-        preCallDrawTime = ts;
-      }
-    };
-    FrameManager.addFrameCallback(callFrameCallback);
+    callCanvas.setTempo(Choreography.getTempo());
   });
+
+  var callFrameCallback = function(ts) {
+    if (ts - preCallDrawTime >= 0) {
+      callCanvas.draw(events, false);
+      preCallDrawTime = ts;
+    }
+  };
+
+
+  FrameManager.addFrameCallback(callFrameCallback);
+
+
+  var callEventCallback = function(nowevent, lookaheadEvent, prevEvent) {
+   /*
+    $log.debug(
+      'now:', nowevent[0].type, nowevent[0].ts,
+      'lookahead', lookaheadEvent, 'prev', prevEvent
+      );
+      */
+      lookaheadEvent.forEach(function(event) {
+        nowevent.push(event);
+      });
+      events = nowevent;
+      callCanvas.draw(events, true);
+  };
+
+
+  Choreography.addQueueCallback(callEventCallback);
 
 
   /* canvas */
@@ -73,8 +73,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var isDrawComplete = true;
     var inResizeFallout = true;
 
-    var tempo = Choreography.getTempo();
-    var pixPreSec = +((circleRadius * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
+    var pixPreSec = 0;
     var preStates = {
         preTime: 0,
         nodeStates: []
@@ -94,6 +93,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       'Fu!': getTaikoImage('fufu'),  // FIXME
       'Oh~': getTaikoImage('ppph_oh'),
       'Hi!': getTaikoImage('ppph_hi')
+    };
+
+
+    this.setTempo = function(tempo) {
+      pixPreSec = +((circleRadius * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     };
 
 
@@ -157,9 +161,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     containerElem.appendChild(elem);
   };
-
-
-
 });
 /* @license-end */
 
