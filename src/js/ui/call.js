@@ -54,7 +54,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       }
     };
     FrameManager.addFrameCallback(callFrameCallback);
-
   });
 
 
@@ -75,7 +74,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var inResizeFallout = true;
 
     var tempo = Choreography.getTempo();
-    var pixPreSec = ((circleRadius * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)))|0;
+    var pixPreSec = +((circleRadius * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     var preStates = {
         preTime: 0,
         nodeStates: []
