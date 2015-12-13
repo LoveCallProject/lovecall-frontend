@@ -26,6 +26,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   $scope.$on('audio:loaded', function(e) {
     callCanvas.setTempo(Choreography.getTempo());
+    callCanvas.draw(events, true);
   });
 
   var callFrameCallback = function(ts) {
