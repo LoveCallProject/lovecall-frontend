@@ -1,9 +1,10 @@
 $md-sidenav-locked-open-width: 304px;
 $metadata-height: 7rem;
+
+
 .content-container {
-  &.sidenav-locked-open {
-    padding-left: $md-sidenav-locked-open-width;
-  }
+  @include reserve-space-for-locked-sidenav;
+
   flex: 1;
   padding-top: $metadata-height / 2;
 }

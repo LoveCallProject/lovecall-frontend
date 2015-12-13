@@ -1,0 +1,14 @@
+@mixin sidenav-locked-open-aware {
+  &.sidenav-locked-open {
+    @content;
+  }
+}
+
+
+@mixin reserve-space-for-locked-sidenav {
+  @include sidenav-locked-open-aware {
+    padding-left: $md-sidenav-locked-open-width;
+  }
+}
+
+
