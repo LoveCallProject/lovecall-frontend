@@ -9,18 +9,31 @@ var mod = angular.module('lovecall/ui/metadata', [
     'lovecall/provider/choreography'
 ]);
 
-mod.controller('MetadataController', function($scope, $log, Choreography) {
+mod.controller('MetadataController', function($scope, $window, $log, Choreography) {
   $log = $log.getInstance('MetadataController');
 
 	$scope.title = '';
   $scope.artist = '';
   $scope.album = '';
+  $scope.songImage = 'none';
+
+
+  var setSongImage = function(imageBlob) {
+    if (!imageBlob) {
+      $scope.songImage = 'none';
+      return;
+    }
+
+    var url = $window.URL || $window.webkitURL;
+    $scope.songImage = 'url(' + url.createObjectURL(imageBlob) + ')';
+  };
 
 
   $scope.$on('audio:unloaded', function(e) {
     $scope.title = '';
     $scope.artist = '';
     $scope.album = '';
+    setSongImage(null);
   });
 
 
@@ -29,6 +42,11 @@ mod.controller('MetadataController', function($scope, $log, Choreography) {
     $scope.title = songMetadata.ti;
     $scope.artist = songMetadata.ar;
     $scope.album = songMetadata.al;
+  });
+
+
+  $scope.$on('song:imageLoaded', function(e, imageBlob) {
+    setSongImage(imageBlob);
   });
 
 
