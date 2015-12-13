@@ -17,6 +17,8 @@ mod.factory('Choreography', function($log) {
   var parsedData = null;
   var queueEngine = null;
 
+  var queueCallbacks = [];
+
 
   var queueEventCallback = function(nextEvents, lookaheadEvents, prevEvents) {
     // actually log inside audio callback is bad
@@ -34,7 +36,33 @@ mod.factory('Choreography', function($log) {
         $log.debug('queue event:', v);
       });
     }
+
+    queueCallbacks.forEach(function(callback) {
+      callback(nextEvents, lookaheadEvents, prevEvents);
+    });
   }
+
+
+  var addQueueCallback = function(callback) {
+    queueCallbacks.push(callback);
+  };
+
+
+  var removeQueueCallback = function(callback) {
+    var i = 0;
+    var found = false;
+    for (i = 0; i < queueCallbacks.length; i++) {
+      if (queueCallbacks[i] == callback) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      queueCallbacks.splice(i, 1);
+    }
+  };
+
 
   var load = function(data, hash) {
     parsedData = parser.parseCall(data, hash);
@@ -78,6 +106,8 @@ mod.factory('Choreography', function($log) {
 
 
   return {
+    'addQueueCallback': addQueueCallback,
+    'removeQueueCallback': removeQueueCallback,
     'load': load,
     'getTempo': getTempo,
     'getForm': getForm,
