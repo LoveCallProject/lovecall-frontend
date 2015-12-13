@@ -1,0 +1,55 @@
+$metadata-height: 7rem;
+
+
+#metadata {
+  display: flex;
+  flex-direction: row;
+  z-index: 1;
+  overflow: visible;
+  position: absolute;
+  bottom: -$metadata-height / 2;
+  width: 100%;
+  padding: 0 8px;
+}
+
+#metadata.sidenav-locked-open {
+  padding-left: 8px + $md-sidenav-locked-open-width;
+}
+
+.metadata__image {
+  width: $metadata-height;
+  height: $metadata-height;
+  border-radius: 50%;
+
+  background-color: #666;
+  background-size: 100%;
+  box-shadow: 0 2px 5px #000;
+}
+
+.metadata__text {
+  width: 100%;
+  flex: 1;
+  position: relative;
+}
+
+.metadata__text__title-container {
+  position: absolute;
+  bottom: 50%;
+  left: 0;
+}
+
+.metadata__text__other {
+  position: absolute;
+  top: 50%;
+  left: 0;
+}
+
+.metadata__text__other,
+.metadata__text__title-container {
+  padding-left: 0.5rem;
+}
+
+.metadata__text__title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.87);
+}
