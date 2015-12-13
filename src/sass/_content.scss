@@ -35,8 +35,10 @@ $metadata-height: 7rem;
   width: $metadata-height;
   height: $metadata-height;
   border-radius: 50%;
-  border: 2px solid black;
+
+  background-color: #666;
   background-size: 100%;
+  box-shadow: 0 2px 5px #000;
 }
 
 .metadata__text {
