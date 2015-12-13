@@ -26,14 +26,34 @@
   <section
       data-ng-controller="NavigationController"
       >
-    <md-toolbar
-        layout="row" layout-align="start center"
-        >
-      <md-button class="md-icon-button" hide-gt-md data-ng-click="showSide()">
-        <md-icon md-font-library="material-icons">menu</md-icon>
-      </md-button>
-      <h3>LoveCall</h3>
-    </md-toolbar>
+    <div class="toolbar-container">
+      <md-toolbar
+          layout="row" layout-align="start center"
+          id="toolbar"
+          >
+        <md-button class="md-icon-button" hide-gt-md data-ng-click="showSide()">
+          <md-icon md-font-library="material-icons">menu</md-icon>
+        </md-button>
+        <h1>LoveCall</h1>
+      </md-toolbar>
+      <section
+          id="metadata"
+          data-ng-controller="MetadataController"
+          data-ng-class="{'sidenav-locked-open': $mdMedia('gt-md')}"
+          >
+        <div class="metadata__image">
+        </div>
+        <div class="metadata__text">
+          <div class="metadata__text__title-container">
+            <h2 class="metadata__text__title">{{title}}</h2>
+          </div>
+          <div class="metadata__text__other">
+            <span class="metadata__text__other__artist">{{artist}}</span>
+            <span class="metadata__text__other__album">{{album}}</span>
+          <div>
+        </div>
+      </section>
+    </div>
 
     <md-sidenav
         id="sidenav"
@@ -41,11 +61,14 @@
         md-component-id="sidenav"
         md-is-locked-open="$mdMedia('gt-md')"
         >
-      <md-toolbar layout="row" layout-align="start center">
+      <md-toolbar
+          layout="row" layout-align="start center"
+          class="md-menu-toolbar"
+          >
         <md-button class="md-icon-button" data-ng-click="closeSide()">
           <md-icon md-font-library="material-icons">arrow_back</md-icon>
         </md-button>
-        <h3>LoveCall</h3>
+        <h1>LoveCall</h1>
       </md-toolbar>
       <md-list>
         <md-list-item>
@@ -84,22 +107,6 @@
       layout-align="start center"
       >
     <div class="main-container">
-      <section
-          id="metadata"
-          data-ng-controller="MetadataController"
-          >
-        <div class="metadata__image">
-        </div>
-        <div class="metadata__text">
-          <div class="metadata__text__title-container">
-            <h1 class="metadata__text__title">{{title}}</h1>
-          </div>
-          <div class="metadata__text__other">
-            <span class="metadata__text__other__artist">{{artist}}</span>
-            <span class="metadata__text__other__album">{{album}}</span>
-          <div>
-        </div>
-      </section>
       <section
           id="call"
           data-ng-controller="CallController"

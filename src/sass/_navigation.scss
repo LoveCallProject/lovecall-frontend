@@ -1,3 +1,5 @@
+$toolbar-height: 10rem;
+
 #sidenav {
   position: absolute;
   top: 0;
@@ -17,4 +19,16 @@ md-icon.inline {
   md-icon {
     font-size: 30px;
   }
+}
+
+.toolbar-container {
+  height: $toolbar-height;
+  position: relative;
+  // TODO
+  background: #333;
+  overflow-y: visible;
+}
+
+#toolbar {
+  background: none;
 }
