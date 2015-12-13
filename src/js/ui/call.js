@@ -93,7 +93,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       '里跳': getTaikoImage('lt'),  // FIXME
       'Fu!': getTaikoImage('fufu'),  // FIXME
       'Oh~': getTaikoImage('ppph_oh'),
-      'Hi!': getTaikoImage('ppph_hi')
+      'Hi!': getTaikoImage('ppph_hi'),
+      '跟唱': getTaikoImage('gc'),
+      '前挥': getTaikoImage('qh'),
+      '快挥': getTaikoImage('kh')
     };
 
 
