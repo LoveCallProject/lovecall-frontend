@@ -1,27 +1,27 @@
 module.exports = {
-	"lovecall": 0,
-	"metadata": {
-		"song": {
-			"title": "ススメ→トゥモロウ",
-			"artist": "μ's",
-			"album": "START:DASH!!",
-			"sources": {
-				"md5:c58b2892e24d0239a6f31b769c230dac": {
-					"offset": 5134
-				}
-			},
-			"timing": [
-				[0, 100.0, 4, 4, 0],
-				[21178, 190.0, 4, 4, 9]
-			]
-		},
-		"palette": [
-			"#ffa500",
-			"#eeeeee",
-			"#0000ff"
-		]
-	},
-	"form": [
+  "lovecall": 0,
+  "metadata": {
+    "song": {
+      "title": "ススメ→トゥモロウ",
+      "artist": "μ's",
+      "album": "START:DASH!!",
+      "sources": {
+        "md5:c58b2892e24d0239a6f31b769c230dac": {
+          "offset": 5134
+        }
+      },
+      "timing": [
+        [0, 100.0, 4, 4, 0],
+        [21178, 190.0, 4, 4, 9]
+      ]
+    },
+    "palette": [
+      "#ffa500",
+      "#eeeeee",
+      "#0000ff"
+    ]
+  },
+  "form": [
     [0, 0, 9, 0, "I"],
     [9, 0, 25, 0, "G0"],
     [25, 0, 43, 0, "A1"],
@@ -37,11 +37,11 @@ module.exports = {
     [167, 0, 176, 0, "S2"],
     [176, 0, 190, 0, "C3"],
     [190, 0, -1, -1, "O"]
-	],
-	"colors": [
-		[0, 0, -1, -1, -1]
-	],
-	"timeline": [
-		[1, 0, 0, 16, 0, "上举", 16]
-	]
+  ],
+  "colors": [
+    [0, 0, -1, -1, -1]
+  ],
+  "timeline": [
+    [1, 0, 0, 16, 0, "上举", 16]
+  ]
 };
