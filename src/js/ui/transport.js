@@ -308,7 +308,13 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var fillRectWithRGBA = function(ctx, x, y, w, h, rgb, a) {
-      var colorStr = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+      var colorStr;
+
+      if (!rgb) {
+        colorStr = 'transparent';
+      } else {
+        colorStr = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+      }
       ctx.fillStyle = colorStr;
       ctx.fillRect(x, y, w, h);
     };
