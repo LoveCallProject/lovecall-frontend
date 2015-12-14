@@ -45,7 +45,7 @@ mod.factory('Song', function($rootScope, $http, $log) {
 
       songStatus = 'loaded';
       songBuffer = response.data;
-      songHash = SparkMD5.ArrayBuffer.hash(response.data);
+      songHash = 'md5:' + SparkMD5.ArrayBuffer.hash(response.data).toLowerCase();
 
       extractSongImageAsync(songBuffer);
 

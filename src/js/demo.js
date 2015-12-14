@@ -9,6 +9,7 @@ require('./provider/song');
 require('./ui/frame');
 
 var snowhare = require('./data/snowhare');
+var susutomo = require('./data/susutomo');
 
 
 var mod = angular.module('lovecall/demo', [
@@ -19,12 +20,16 @@ var mod = angular.module('lovecall/demo', [
 ]);
 
 mod.controller('DemoController', function($window, AudioEngine, Choreography, Song, FrameManager) {
+  // load bundled call tables
+  Choreography.loadTable(snowhare);
+  Choreography.loadTable(susutomo);
+
   // test Ajax loading
   Song.load('snowhare.mp3', function(hash, buffer) {
     console.log(hash, buffer);
 
     // demo
-    Choreography.load(snowhare, hash);
+    Choreography.load(hash);
 
     AudioEngine.setSourceData(buffer);
     AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
