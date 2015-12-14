@@ -121,7 +121,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
     var drawStepLine = function(basePos) {
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      basePos = basePos|0;
+
       ctx.beginPath();
       ctx.moveTo(basePos, stepLineY1);
       ctx.lineTo(basePos, stepLineY2);
@@ -132,6 +133,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       var prePos = basePos;
       var afterPos = basePos;
 
+      ctx.save();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
       while (prePos >= 0) {
         prePos -= circleDistance;
         drawStepLine(prePos);
@@ -141,6 +145,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         afterPos += circleDistance;
         drawStepLine(afterPos);
       }
+
+      ctx.restore();
     }
 
     this.draw = function(events, flag) {
