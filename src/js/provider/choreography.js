@@ -4,6 +4,7 @@
 require('angular');
 
 var parser = require('../choreography/parser');
+var manager = require('../choreography/manager');
 var queue = require('../engine/queue');
 
 
@@ -14,6 +15,7 @@ mod.factory('Choreography', function($log) {
   var $queueEngineLog = $log.getInstance('QueueEngine');
   $log = $log.getInstance('Choreography');
 
+  var tableManager = new manager.LoveCallTableManager();
   var parsedData = null;
   var queueEngine = null;
 
@@ -64,14 +66,26 @@ mod.factory('Choreography', function($log) {
   };
 
 
-  var load = function(data, hash) {
-    parsedData = parser.parseCall(data, hash);
+  var load = function(hash) {
+    var table = tableManager.lookupTableByHash(hash);
+
+    if (!table) {
+      $log.error('no table found for hash', hash);
+      return;
+    }
+
+    parsedData = parser.parseCall(table, hash);
     queueEngine = queue.queueEngineFactory(
         parsedData.events,
         queueEventCallback,
         $queueEngineLog,
         false
         );
+  };
+
+
+  var loadTable = function(table) {
+    return tableManager.registerTable(table);
   };
 
 
@@ -109,6 +123,7 @@ mod.factory('Choreography', function($log) {
     'addQueueCallback': addQueueCallback,
     'removeQueueCallback': removeQueueCallback,
     'load': load,
+    'loadTable': loadTable,
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,
