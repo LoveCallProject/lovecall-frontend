@@ -38,104 +38,158 @@
 
   <br />
 
+  <canvas id="result-oscilloscope" width="512" height="256">
+  </canvas>
+
+  <canvas id="result-fft" width="512" height="256">
+  </canvas>
+
   <script>
 'use strict';
 
-var oscW = 512;
-var oscH = 256;
-var fftW = 512;
-var fftH = 256;
+var oscElem = document.getElementById('oscilloscope');
+var fftElem = document.getElementById('fft');
 
-var oscCtx = document.getElementById('oscilloscope').getContext('2d');
-var fftCtx = document.getElementById('fft').getContext('2d');
+var rOscElem = document.getElementById('result-oscilloscope');
+var rFftElem = document.getElementById('result-fft');
 
 var ctx = new AudioContext();
 var sourceNode = ctx.createMediaElementSource(document.getElementById('source'));
+var lpNode = ctx.createBiquadFilter();
+var cNode = ctx.createDynamicsCompressor();
+
+var resultNode = cNode;
+var outNode = sourceNode;
+
 var coarseAnalyserNode = ctx.createAnalyser();
 var fineAnalyserNode = ctx.createAnalyser();
+var rCoarseAnalyserNode = ctx.createAnalyser();
+var rFineAnalyserNode = ctx.createAnalyser();
 
 
-coarseAnalyserNode.fftSize = 256;
-fineAnalyserNode.fftSize = 1024;
+lpNode.frequency.value = 200;
+lpNode.type = 'lowpass';
+
+cNode.threshold.value = -20;
+cNode.knee.value = 20;
+cNode.ratio.value = 12;
+cNode.reduction.value = -12;
+cNode.attack.value = 0;
+cNode.release.value = 0.1;
+
+coarseAnalyserNode.fftSize = rCoarseAnalyserNode.fftSize = 512;
+fineAnalyserNode.fftSize = rFineAnalyserNode.fftSize = 1024;
 var coarseBufferLength = coarseAnalyserNode.frequencyBinCount;
 var fineBufferLength = fineAnalyserNode.frequencyBinCount;
 var coarseArray = new Uint8Array(coarseBufferLength);
 var fineArray = new Uint8Array(fineBufferLength);
+var rCoarseArray = new Uint8Array(coarseBufferLength);
+var rFineArray = new Uint8Array(fineBufferLength);
 
 
-var oscFrameCallback = function(ts) {
-  oscCtx.fillStyle = '#eee';
-  oscCtx.fillRect(0, 0, oscW, oscH);
+var oscFrameCallbackFactory = function(oscElem, node, arr) {
+  var oscW = oscElem.width;
+  var oscH = oscElem.height;
+  var oscCtx = oscElem.getContext('2d');
+  var buflen = arr.length;
 
-  fineAnalyserNode.getByteTimeDomainData(fineArray);
-  // oscCtx.lineWidth = 0.5;
-  oscCtx.strokeStyle = '#111';
+  return function(ts) {
+    oscCtx.fillStyle = '#eee';
+    oscCtx.fillRect(0, 0, oscW, oscH);
 
-  oscCtx.beginPath();
+    node.getByteTimeDomainData(arr);
+    // oscCtx.lineWidth = 0.5;
+    oscCtx.strokeStyle = '#111';
 
-  var sliceW = (oscW / fineBufferLength);
-  var x = 0;
+    oscCtx.beginPath();
 
-  for (var i = 0; i < fineBufferLength; i++) {
-    var v = +(fineArray[i] / 128);
-    var y = (v * oscH / 2)|0;
+    var sliceW = (oscW / buflen);
+    var x = 0;
 
-    if (i === 0) {
-      oscCtx.moveTo(x, y);
-    } else {
-      oscCtx.lineTo(x, y);
+    for (var i = 0; i < buflen; i++) {
+      var v = +(arr[i] / 128);
+      var y = (v * oscH / 2)|0;
+
+      if (i === 0) {
+        oscCtx.moveTo(x, y);
+      } else {
+        oscCtx.lineTo(x, y);
+      }
+
+      x += sliceW;
     }
 
-    x += sliceW;
-  }
-
-  oscCtx.stroke();
+    oscCtx.stroke();
+  };
 };
 
 
-var fftFrameCallback = function(ts) {
-  fftCtx.fillStyle = '#eee';
-  fftCtx.fillRect(0, 0, fftW, fftH);
+var fftFrameCallbackFactory = function(fftElem, node, arr) {
+  var fftW = fftElem.width;
+  var fftH = fftElem.height;
+  var fftCtx = fftElem.getContext('2d');
+  var buflen = arr.length;
 
-  coarseAnalyserNode.getByteFrequencyData(coarseArray);
+  return function(ts) {
+    fftCtx.fillStyle = '#eee';
+    fftCtx.fillRect(0, 0, fftW, fftH);
 
-  var barW = +(fftW / coarseBufferLength);
-  var barHangingH = (fftH / 4)|0;
-  var barNegativeH = (fftH * 0.75)|0;
-  var x = 0;
+    node.getByteFrequencyData(arr);
 
-  fftCtx.fillStyle = '#111';
-  for (var i = 0; i < coarseBufferLength; i++) {
-    var v = +((Math.log(coarseArray[i]) - Math.log(256) + 2) / 2);
+    var barW = +(fftW / buflen);
+    var barHangingH = (fftH * 0.5)|0;
+    var barNegativeH = (fftH * 0.5)|0;
+    var x = 0;
 
-    var barH;
-    var barY;
+    fftCtx.fillStyle = '#111';
+    for (var i = 0; i < buflen; i++) {
+      var v = +((Math.log(arr[i]) - Math.log(256) + 2) / 2);
 
-    if (v < 0) {
-      barH = (-v * barNegativeH)|0;
-      barY = barHangingH|0;
-    } else {
-      barH = (v * barHangingH)|0;
-      barY = (barHangingH - barH)|0;
+      var barH;
+      var barY;
+
+      if (v < 0) {
+        barH = ((1 + v) * barNegativeH)|0;
+      } else {
+        barH = (v * barHangingH + barNegativeH)|0;
+      }
+
+      barY = (fftH - barH)|0;
+
+      fftCtx.fillRect(x, barY, barW - 1, barH);
+      x += barW;
     }
-
-    fftCtx.fillRect(x, barY, barW - 1, barH);
-    x += barW;
-  }
+  };
 };
 
+
+var oscFC = oscFrameCallbackFactory(oscElem, fineAnalyserNode, fineArray);
+var fftFC = fftFrameCallbackFactory(fftElem, coarseAnalyserNode, coarseArray);
+
+var rOscFC = oscFrameCallbackFactory(rOscElem, rFineAnalyserNode, rFineArray);
+var rFftFC = fftFrameCallbackFactory(rFftElem, rCoarseAnalyserNode, rCoarseArray);
 
 var frameCallback = function(ts) {
   requestAnimationFrame(frameCallback);
 
-  oscFrameCallback(ts);
-  fftFrameCallback(ts);
+  oscFC(ts);
+  fftFC(ts);
+
+  rOscFC(ts);
+  rFftFC(ts);
 };
 
 
 sourceNode.connect(coarseAnalyserNode);
 sourceNode.connect(fineAnalyserNode);
-sourceNode.connect(ctx.destination);
+sourceNode.connect(lpNode);
+
+lpNode.connect(cNode);
+
+resultNode.connect(rCoarseAnalyserNode);
+resultNode.connect(rFineAnalyserNode);
+
+outNode.connect(ctx.destination);
 
 requestAnimationFrame(frameCallback);
 
