@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!--
+  This file is part of LoveCall.
+
+  LoveCall is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  LoveCall is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with LoveCall.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+	<title>beats!</title>
+
+</head>
+<body>
+
+  <audio id="source" controls="controls">
+    <source src="snowhare.mp3" type="audio/mp3" />
+  </audio>
+
+  <br />
+
+  <canvas id="oscilloscope" width="512" height="256">
+  </canvas>
+
+  <canvas id="fft" width="512" height="256">
+  </canvas>
+
+  <br />
+
+  <script>
+'use strict';
+
+var oscW = 512;
+var oscH = 256;
+var fftW = 512;
+var fftH = 256;
+
+var oscCtx = document.getElementById('oscilloscope').getContext('2d');
+var fftCtx = document.getElementById('fft').getContext('2d');
+
+var ctx = new AudioContext();
+var sourceNode = ctx.createMediaElementSource(document.getElementById('source'));
+var coarseAnalyserNode = ctx.createAnalyser();
+var fineAnalyserNode = ctx.createAnalyser();
+
+
+coarseAnalyserNode.fftSize = 256;
+fineAnalyserNode.fftSize = 1024;
+var coarseBufferLength = coarseAnalyserNode.frequencyBinCount;
+var fineBufferLength = fineAnalyserNode.frequencyBinCount;
+var coarseArray = new Uint8Array(coarseBufferLength);
+var fineArray = new Uint8Array(fineBufferLength);
+
+
+var oscFrameCallback = function(ts) {
+  oscCtx.fillStyle = '#eee';
+  oscCtx.fillRect(0, 0, oscW, oscH);
+
+  fineAnalyserNode.getByteTimeDomainData(fineArray);
+  // oscCtx.lineWidth = 0.5;
+  oscCtx.strokeStyle = '#111';
+
+  oscCtx.beginPath();
+
+  var sliceW = (oscW / fineBufferLength);
+  var x = 0;
+
+  for (var i = 0; i < fineBufferLength; i++) {
+    var v = +(fineArray[i] / 128);
+    var y = (v * oscH / 2)|0;
+
+    if (i === 0) {
+      oscCtx.moveTo(x, y);
+    } else {
+      oscCtx.lineTo(x, y);
+    }
+
+    x += sliceW;
+  }
+
+  oscCtx.stroke();
+};
+
+
+var fftFrameCallback = function(ts) {
+  fftCtx.fillStyle = '#eee';
+  fftCtx.fillRect(0, 0, fftW, fftH);
+
+  coarseAnalyserNode.getByteFrequencyData(coarseArray);
+
+  var barW = +(fftW / coarseBufferLength);
+  var barHangingH = (fftH / 4)|0;
+  var barNegativeH = (fftH * 0.75)|0;
+  var x = 0;
+
+  fftCtx.fillStyle = '#111';
+  for (var i = 0; i < coarseBufferLength; i++) {
+    var v = +((Math.log(coarseArray[i]) - Math.log(256) + 2) / 2);
+
+    var barH;
+    var barY;
+
+    if (v < 0) {
+      barH = (-v * barNegativeH)|0;
+      barY = barHangingH|0;
+    } else {
+      barH = (v * barHangingH)|0;
+      barY = (barHangingH - barH)|0;
+    }
+
+    fftCtx.fillRect(x, barY, barW - 1, barH);
+    x += barW;
+  }
+};
+
+
+var frameCallback = function(ts) {
+  requestAnimationFrame(frameCallback);
+
+  oscFrameCallback(ts);
+  fftFrameCallback(ts);
+};
+
+
+sourceNode.connect(coarseAnalyserNode);
+sourceNode.connect(fineAnalyserNode);
+sourceNode.connect(ctx.destination);
+
+requestAnimationFrame(frameCallback);
+
+  </script>
+<!-- vim:set ai et ts=2 sw=2 sts=2 fenc=utf-8: -->
+</body>
+</html>
