@@ -91,10 +91,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     }
 
     var taikoImages = {
-      '上举': getTaikoImage('sj'),  // FIXME
-      '里打': getTaikoImage('ld'),  // FIXME
-      '里跳': getTaikoImage('lt'),  // FIXME
-      'Fu!': getTaikoImage('fufu'),  // FIXME
+      '上举': getTaikoImage('sj'),
+      '里打': getTaikoImage('ld'),
+      '里跳': getTaikoImage('lt'),
+      'Fu!': getTaikoImage('fufu'),
       'Oh~': getTaikoImage('ppph_oh'),
       'Hi!': getTaikoImage('ppph_hi'),
       '跟唱': getTaikoImage('gc'),
