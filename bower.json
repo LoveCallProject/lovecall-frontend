@@ -1,0 +1,26 @@
+{
+  "name": "lovecall-frontend",
+  "version": "0.0.1",
+  "homepage": "https://github.com/LoveCallProject/lovecall-frontend",
+  "authors": [
+    "xen0n"
+  ],
+  "description": "Frontend to LoveCall",
+  "keywords": [
+    "lovecall",
+    "frontend"
+  ],
+  "license": "GPL-3",
+  "ignore": [
+    "**/.*",
+    "build",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular-logex": "~0.0.10",
+    "material-design-icons": "~2.1.1"
+  }
+}
