@@ -2,17 +2,20 @@
 'use strict';
 
 require('angular');
+require('angular-material');
 
 var SparkMD5 = require('spark-md5');
 
 // XXX: upstream is broken
 var id3 = require('../vendored/id3');
 
+require('../../templates/song-loading.tmpl.html');
+
 
 var mod = angular.module('lovecall/provider/song', [
 ]);
 
-mod.factory('Song', function($rootScope, $http, $log) {
+mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
   $log = $log.getInstance('Song');
 
   var songBuffer = null;
@@ -49,6 +52,7 @@ mod.factory('Song', function($rootScope, $http, $log) {
 
       extractSongImageAsync(songBuffer);
 
+      hideLoadingDialog();
       successCallback && successCallback(songHash, response.data);
     };
   };
@@ -58,8 +62,24 @@ mod.factory('Song', function($rootScope, $http, $log) {
     songStatus = 'errored';
 
     return function(response) {
+      hideLoadingDialog();
       errorCallback && errorCallback(response);
     };
+  };
+
+
+  var showLoadingDialog = function() {
+    $mdDialog.show({
+      controller: 'SongLoadingController',
+      templateUrl: 'song-loading.tmpl.html',
+      parent: angular.element(document.body),
+      clickOutsideToClose: false
+    });
+  };
+
+
+  var hideLoadingDialog = function() {
+    $rootScope.$broadcast('song:hideLoadingDialog');
   };
 
 
@@ -67,6 +87,8 @@ mod.factory('Song', function($rootScope, $http, $log) {
     $log.debug('load request: url', url);
 
     songStatus = 'loading';
+
+    showLoadingDialog();
     $http({
       method: 'GET',
       url: url,
