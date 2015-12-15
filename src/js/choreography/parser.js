@@ -144,14 +144,15 @@ var LONG_ACTION_PARSERS = {
 };
 
 
-var parsePointAction = function(actionData) {
+var parsePointAction = function(actionData, refStep) {
   var actionStartStep = {m: actionData[0], s: actionData[1]};
+  var realStartStep = refStep ? stepAdd(actionStartStep, refStep) : actionStartStep;
   var actionType = actionData[2];
   var actionParams = actionData.slice(3);
 
   var parseFn = POINT_ACTION_PARSERS[actionType];
   if (parseFn) {
-    return parseFn(actionStartStep, actionParams);
+    return parseFn(realStartStep, actionParams);
   }
 
   console.error('unrecognized point action', actionData);
@@ -159,15 +160,17 @@ var parsePointAction = function(actionData) {
 };
 
 
-var parseLongAction = function(actionData) {
+var parseLongAction = function(actionData, refStep) {
   var actionStartStep = {m: actionData[0], s: actionData[1]};
   var actionEndStep = {m: actionData[2], s: actionData[3]};
+  var realStartStep = refStep ? stepAdd(actionStartStep, refStep) : actionStartStep;
+  var realEndStep = refStep ? stepAdd(actionEndStep, refStep) : actionEndStep;
   var actionType = actionData[4];
   var actionParams = actionData.slice(5);
 
   var parseFn = LONG_ACTION_PARSERS[actionType];
   if (parseFn) {
-    return parseFn(actionStartStep, actionEndStep, actionParams);
+    return parseFn(realStartStep, realEndStep, actionParams);
   }
 
   console.error('unrecognized long action', actionData);
@@ -175,14 +178,36 @@ var parseLongAction = function(actionData) {
 };
 
 
-var parseTimelineAction = function(action) {
+var parseSequenceAction = function(actionData, seqs, refStep) {
+  var actionStartStep = {m: actionData[0], s: actionData[1]};
+  var realStartStep = refStep ? stepAdd(actionStartStep, refStep) : actionStartStep;
+  var name = actionData[2];
+
+  var seq = seqs[name];
+
+  if (typeof(seq) === 'undefined') {
+    console.error('unrecognized sequence', seq);
+    return [];
+  }
+
+  var result = _.flatten(seq.map(function(v) {
+    return parseTimelineAction(v, seqs, realStartStep);
+  }));
+
+  return result;
+};
+
+
+var parseTimelineAction = function(action, seqs, refStep) {
   var actionFlag = action[0];
   var actionData = action.slice(1);
   switch (actionFlag) {
     case 0:
-      return parsePointAction(actionData);
+      return parsePointAction(actionData, refStep);
     case 1:
-      return parseLongAction(actionData);
+      return parseLongAction(actionData, refStep);
+    case 2:
+      return parseSequenceAction(actionData, seqs, refStep);
   }
 
   console.error('unrecognized action', action);
@@ -190,10 +215,10 @@ var parseTimelineAction = function(action) {
 };
 
 
-var parseTimeline = function(timeline, tempo) {
+var parseTimeline = function(timeline, seqs, tempo) {
   var result = _(timeline)
     .map(function(v) {
-      return parseTimelineAction(v);
+      return parseTimelineAction(v, seqs, null);
     })
     .flatten()
     .map(function(elem) {
@@ -284,7 +309,9 @@ var parseCall = function(data, hash) {
   var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs ? globalOffsetMs : 0);
 
   var form = parseForm(data.form, tempo);
-  var events = parseTimeline(data.timeline, tempo);
+
+  var seqs = data.sequences || {};
+  var events = parseTimeline(data.timeline, seqs, tempo);
 
   var parsedPalette = parsePalette(metadata.palette);
   var colors = parseColors(parsedPalette, data.colors, tempo);
