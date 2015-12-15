@@ -69,7 +69,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var conveyorH = 150;
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
-    var judgementLineX = 150;
+    var judgementLineX = 75;
     var textMarginT = 4;
     var textMarginB = 8;
     var textH = 30;
