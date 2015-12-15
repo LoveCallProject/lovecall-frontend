@@ -8,14 +8,14 @@ require('angular-material');
 require('angular-logex');
 
 require('./ui/index');
-require('./demo');
+require('./init');
 
 require('../../node_modules/angular-material/angular-material.css');
 require('../sass/index.scss');
 
 var mod = angular.module('lovecall/main', [
+    'lovecall/init',
     'lovecall/ui/index',
-    'lovecall/demo',
     'log.ex.uo'
 ]);
 

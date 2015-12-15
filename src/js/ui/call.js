@@ -63,14 +63,25 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var elem = document.createElement('canvas');
     var ctx = elem.getContext('2d');
 
-    var circleRadius = 50;
+    var circleR = 50;
     var circleMargin = -10;
-    var circleDistence = 2 * circleRadius + circleMargin;
+    var circleDistance = 2 * circleR + circleMargin;
+    var conveyorH = 150;
+    var conveyorBorderT = 4;
+    var conveyorBorderB = 4;
+    var textMarginT = 4;
+    var textMarginB = 8;
+    var textH = 30;
+    var textBorderB = 1;
 
     var w = 0;
     var h = 0;
+    var stepLineY1 = 0;
+    var stepLineY2 = 0;
     var axisY = 0;
-    var textHeight = 30;
+    var textTopY = 0;
+    var textBaselineY = 0;
+    var textBorderBottomY = 0;
     var currentTime = 0;
     var preDrawTime = 0;
     var isDrawComplete = true;
@@ -91,29 +102,30 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     }
 
     var taikoImages = {
-      '上举': getTaikoImage('sj'),  // FIXME
-      '里打': getTaikoImage('ld'),  // FIXME
-      '里跳': getTaikoImage('lt'),  // FIXME
-      'Fu!': getTaikoImage('fufu'),  // FIXME
+      '上举': getTaikoImage('sj'),
+      '里打': getTaikoImage('ld'),
+      '里跳': getTaikoImage('lt'),
+      'Fu!': getTaikoImage('fufu'),
       'Oh~': getTaikoImage('ppph_oh'),
       'Hi!': getTaikoImage('ppph_hi'),
-      '跟唱': getTaikoImage('gc'),
       '前挥': getTaikoImage('qh'),
       '快挥': getTaikoImage('kh'),
-      '欢呼': getTaikoImage('gc')  // TODO
+      '欢呼': getTaikoImage('hh'),
+      'fuwa': getTaikoImage('fw')
     };
 
 
     this.setTempo = function(tempo) {
-      pixPreSec = +((circleRadius * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
+      pixPreSec = +((circleR * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     };
 
 
     var drawStepLine = function(basePos) {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+      basePos = basePos|0;
+
       ctx.beginPath();
-      ctx.moveTo(basePos, 0);
-      ctx.lineTo(basePos, h - textHeight);
+      ctx.moveTo(basePos, stepLineY1);
+      ctx.lineTo(basePos, stepLineY2);
       ctx.stroke();
     }
 
@@ -121,15 +133,20 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       var prePos = basePos;
       var afterPos = basePos;
 
+      ctx.save();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
       while (prePos >= 0) {
-        prePos -= circleDistence;
+        prePos -= circleDistance;
         drawStepLine(prePos);
       }
 
       while (afterPos <= w) {
-        afterPos += circleDistence;
+        afterPos += circleDistance;
         drawStepLine(afterPos);
       }
+
+      ctx.restore();
     }
 
     this.draw = function(events, flag) {
@@ -144,12 +161,38 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         h = canvasRect.height|0;
         elem.width = w;
         elem.height = h;
-        axisY = ((h - textHeight) / 2)|0;
+
+        stepLineY1 = (conveyorBorderT)|0;
+        stepLineY2 = (conveyorBorderT + conveyorH)|0;
+        axisY = (conveyorBorderT + conveyorH / 2)|0;
+        textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
+        textBaselineY = (textTopY + textMarginT + textH)|0;
+        textBorderBottomY = (textBaselineY + textMarginB)|0;
       }
 
       // draw
       ctx.clearRect(0, 0, w, h);
       currentTime = AudioEngine.getPlaybackPosition();
+
+      // background
+      {
+        ctx.save();
+
+        // borders
+        ctx.fillStyle = '#111';
+        ctx.fillRect(0, 0, w, conveyorBorderT);
+        ctx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
+        ctx.fillRect(0, textBorderBottomY, w, textBorderB);
+
+        // backgrounds
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, conveyorBorderB, w, conveyorH);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        ctx.fillRect(0, textTopY, w, textBorderBottomY - textTopY);
+
+        ctx.restore();
+      }
 
       // sync from events
       if (flag) { 
@@ -161,12 +204,13 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           if (index === 0) {
             drawStepLines(x);
           }
-          ctx.drawImage(taikoImages[event.type], x - 50, axisY - 50);
-          if (event.params) {
-            ctx.font = textHeight + "px sans-serif";
+          if (event.type !== '跟唱') {
+            ctx.drawImage(taikoImages[event.type], x - circleR, axisY - circleR);
+          }
+          if (event.params && event.params.msg) {
+            ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText(event.params, x, 150);
+            ctx.fillText(event.params.msg, x, textBaselineY);
           }
           //console.log('sync draw');
           preStates.nodeStates.push({
@@ -180,6 +224,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           });
         });
       } else {
+        // FIXME: de-duplicate this
         //console.log('move');
         preStates.nodeStates.map(function(nodeState, index) {
           var remainedTime = currentTime - preStates.preTime;
@@ -189,12 +234,13 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           }
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
-          ctx.drawImage(taikoImages[nodeState.type], x - 50, axisY - 50);
-          if (nodeState.params) {
-            ctx.font = textHeight + "px sans-serif";
+          if (nodeState.type !== '跟唱') {
+            ctx.drawImage(taikoImages[nodeState.type], x - circleR, axisY - circleR);
+          }
+          if (nodeState.params && nodeState.params.msg) {
+            ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            ctx.fillText(nodeState.params, x, 150);
+            ctx.fillText(nodeState.params.msg, x, textBaselineY);
           }
         });
       }

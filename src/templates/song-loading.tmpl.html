@@ -1,0 +1,15 @@
+<md-dialog class="song-loading-container">
+  <md-dialog-content class="song-loading" data-layout="row">
+    <md-progress-circular
+        class="song-loading__progress"
+        data-md-mode="indeterminate"
+		data-ng-style="{visibility: progressVisibility}"
+        >
+    </md-progress-circular>
+		<h2 class="song-loading__message">{{message}}</h2>
+  </md-dialog-content>
+  <md-dialog-actions class="song-loading__actions" data-layout="row" data-ng-show="loadFailed">
+    <span data-flex></span>
+    <md-button data-ng-click="closeDialog()">好吧</md-button>
+  </md-dialog-actions>
+</md-dialog>
