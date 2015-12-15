@@ -4,6 +4,9 @@ $toolbar-height: 10rem;
   position: absolute;
   top: 0;
   left: 0;
+  .md-button,.md-ripple-container{
+    border-radius: 0;
+  }
 }
 
 md-icon.inline {
