@@ -64,7 +64,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var ctx = elem.getContext('2d');
 
     var circleR = 50;
-    var circleMargin = -10;
+    var circleMargin = -40;
     var circleDistance = 2 * circleR + circleMargin;
     var conveyorH = 150;
     var conveyorBorderT = 4;
