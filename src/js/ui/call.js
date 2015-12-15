@@ -69,6 +69,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var conveyorH = 150;
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
+    var judgementLineX = 150;
     var textMarginT = 4;
     var textMarginB = 8;
     var textH = 30;
@@ -191,6 +192,14 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
         ctx.fillRect(0, textTopY, w, textBorderBottomY - textTopY);
 
+        // judgement line
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(judgementLineX, conveyorBorderT);
+        ctx.lineTo(judgementLineX, conveyorBorderT + conveyorH);
+        ctx.stroke();
+
         ctx.restore();
       }
 
@@ -201,16 +210,17 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         events.map(function(event, index) {
           var remainedTime = event.ts - currentTime;
           var x = pixPreSec * remainedTime;
+          var drawX = x + judgementLineX;
           if (index === 0) {
-            drawStepLines(x);
+            drawStepLines(drawX);
           }
           if (event.type !== '跟唱') {
-            ctx.drawImage(taikoImages[event.type], x - circleR, axisY - circleR);
+            ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
           }
           if (event.params && event.params.msg) {
             ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
-            ctx.fillText(event.params.msg, x, textBaselineY);
+            ctx.fillText(event.params.msg, drawX, textBaselineY);
           }
           //console.log('sync draw');
           preStates.nodeStates.push({
@@ -229,18 +239,19 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         preStates.nodeStates.map(function(nodeState, index) {
           var remainedTime = currentTime - preStates.preTime;
           var x = nodeState.position.x - pixPreSec * remainedTime;
+          var drawX = x + judgementLineX;
           if (index === 0) {
-            drawStepLines(x);
+            drawStepLines(drawX);
           }
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
           if (nodeState.type !== '跟唱') {
-            ctx.drawImage(taikoImages[nodeState.type], x - circleR, axisY - circleR);
+            ctx.drawImage(taikoImages[nodeState.type], drawX - circleR, axisY - circleR);
           }
           if (nodeState.params && nodeState.params.msg) {
             ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
-            ctx.fillText(nodeState.params.msg, x, textBaselineY);
+            ctx.fillText(nodeState.params.msg, drawX, textBaselineY);
           }
         });
       }
