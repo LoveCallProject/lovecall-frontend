@@ -14,6 +14,7 @@ module.exports = {
     ]
   },
   plugins: [
+    new webpack.ExtendedAPIPlugin(),
     new webpack.ResolverPlugin(
         new webpack.ResolverPlugin.DirectoryDescriptionFilePlugin("bower.json", ["main"])
     ),
