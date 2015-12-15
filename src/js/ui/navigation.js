@@ -8,7 +8,7 @@ require('../engine/audio');
 require('../provider/choreography');
 require('../provider/song');
 
-require('../../templates/songselector.tmpl.html');
+require('../../templates/song-selector.tmpl.html');
 require('../../templates/about.tmpl.html');
 
 
@@ -36,7 +36,7 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
     var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
     $mdDialog.show({
       controller: 'SongSelectorController',
-      templateUrl: 'songselector.tmpl.html',
+      templateUrl: 'song-selector.tmpl.html',
       parent: angular.element(document.body),
       targetEvent: ev,
       clickOutsideToClose: true,
