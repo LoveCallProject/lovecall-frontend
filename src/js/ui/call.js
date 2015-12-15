@@ -16,11 +16,15 @@ var mod = angular.module('lovecall/ui/call', [
     'lovecall/ui/frame'
 ]);
 
+
 mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
   $log.debug('$scope=', $scope);
 
-  var events = [];
+  var events = [];//TODO
   var preCallDrawTime = 0;
+
+  var pLeft = 0;
+  var pRight = 0;
 
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
