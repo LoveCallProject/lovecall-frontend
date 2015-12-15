@@ -88,10 +88,16 @@ mod.factory('Choreography', function($log) {
     return tableManager.registerTable(table);
   };
 
-  
+
+  var getSongUrlByIndex = function(idx) {
+    // FIXME: refactor this
+    return tableManager.lookupTableByIndex(idx).metadata.song.url;
+  };
+
+
   var getAvailableSongs = function() {
     return tableManager.getAvailableSongs();
-  }
+  };
 
 
   var getTempo = function() {
@@ -129,6 +135,7 @@ mod.factory('Choreography', function($log) {
     'removeQueueCallback': removeQueueCallback,
     'load': load,
     'loadTable': loadTable,
+    'getSongUrlByIndex': getSongUrlByIndex,
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,
