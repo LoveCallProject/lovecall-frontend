@@ -64,7 +64,8 @@ var parseQHAction = function(startStep, endStep, params) {
 
 
 var parseKHAction = function(startStep, endStep, params) {
-  return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: 4});
+  var interval = params[0] ? params[0]|0 : 4;
+  return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: interval});
 };
 
 
