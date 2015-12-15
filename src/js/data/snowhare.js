@@ -5,7 +5,7 @@ module.exports = {
       "title": "Snow halation",
       "artist": "μ's",
       "album": "Snow halation",
-      "url": "snowhare.mp3",
+      "url": "music/snowhare.mp3",
       "sources": {
         "md5:89efa6e06c8a2e310f20cac27ddb1bcc": {
           "offset": 2199
