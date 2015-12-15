@@ -42,7 +42,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
   };
 
 
-  var loadSuccessCallbackFactory = function(successCallback) {
+  var loadSuccessCallbackFactory = function(successCallback, idx) {
     return function(response) {
       $log.debug('load success:', response);
 
@@ -53,7 +53,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
       extractSongImageAsync(songBuffer);
 
       hideLoadingDialog(false);
-      successCallback && successCallback(songHash, response.data);
+      successCallback && successCallback(idx, songHash, response.data);
     };
   };
 
@@ -83,8 +83,8 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
   };
 
 
-  var load = function(url, successCallback, errorCallback) {
-    $log.debug('load request: url', url);
+  var load = function(idx, url, successCallback, errorCallback) {
+    $log.debug('load request: idx', idx, 'url', url);
 
     songStatus = 'loading';
 
@@ -96,7 +96,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
         'Content-Type': undefined
       },
       responseType: 'arraybuffer'
-    }).then(loadSuccessCallbackFactory(successCallback), errorCallback);
+    }).then(loadSuccessCallbackFactory(successCallback, idx), errorCallback);
   };
 
 

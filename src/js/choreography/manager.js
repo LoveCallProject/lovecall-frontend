@@ -35,14 +35,15 @@ LoveCallTableManager.prototype.registerTable = function(table) {
 };
 
 
-LoveCallTableManager.prototype.lookupTableByIndex = function(idx) {
-  return this.tables[idx];
-};
-
-
-LoveCallTableManager.prototype.lookupTableByHash = function(hash) {
+LoveCallTableManager.prototype.lookupTable = function(idx, hash) {
   var lookupKey = hash.toLowerCase();
-  return this.tables[this.hashCache[lookupKey]];
+
+  if (hash.startsWith('fallback:')) {
+    return this.tables[idx];
+  }
+
+  var tableByHash = this.tables[this.hashCache[lookupKey]];
+  return typeof(tableByHash) !== 'undefined' ? tableByHash : this.tables[idx];
 };
 
 
