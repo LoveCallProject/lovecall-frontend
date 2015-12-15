@@ -206,10 +206,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           }
           if (event.type !== '跟唱') {
             ctx.drawImage(taikoImages[event.type], x - circleR, axisY - circleR);
-          } else {
+          }
+          if (event.params && event.params.msg) {
             ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
-            ctx.fillText(event.params, x, textBaselineY);
+            ctx.fillText(event.params.msg, x, textBaselineY);
           }
           //console.log('sync draw');
           preStates.nodeStates.push({
@@ -235,10 +236,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           //console.log('move draw');
           if (nodeState.type !== '跟唱') {
             ctx.drawImage(taikoImages[nodeState.type], x - circleR, axisY - circleR);
-          } else {
+          }
+          if (nodeState.params && nodeState.params.msg) {
             ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
-            ctx.fillText(nodeState.params, x, textBaselineY);
+            ctx.fillText(nodeState.params.msg, x, textBaselineY);
           }
         });
       }

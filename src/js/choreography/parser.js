@@ -25,12 +25,14 @@ var parseFuFuAction = function(startStep, params) {
 };
 
 
-var parsePeriodicAction = function(startStep, endStep, type, offset, increment) {
+var parsePeriodicAction = function(startStep, endStep, type, offset, increment, params) {
+  params = params || null;
+
   var result = [];
   var currentStep = stepAdd(startStep, offset);
 
   while (stepCompare(currentStep, endStep) < 0) {
-    result.push([currentStep, type, null]);
+    result.push([currentStep, type, params]);
     currentStep = stepAdd(currentStep, increment);
   }
 
@@ -49,7 +51,9 @@ var parseLDAction = function(startStep, endStep, params) {
 
 
 var parseLTAction = function(startStep, endStep, params) {
-  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: 4}, {m: 0, s: 8});
+  var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var actionParams = withHi ? {msg: 'Hi!'} : null;
+  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: 4}, {m: 0, s: 8}, actionParams);
 };
 
 
@@ -109,7 +113,7 @@ var parseFollowAction = function(startStep, endStep, params) {
   var content = params[0];
 
   return [
-    [startStep, "跟唱", content]
+    [startStep, "跟唱", {msg: content}]
   ];
 };
 
