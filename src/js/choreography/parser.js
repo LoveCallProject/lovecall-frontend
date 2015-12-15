@@ -60,7 +60,12 @@ var parseQHAction = function(startStep, endStep, params) {
 
 var parseKHAction = function(startStep, endStep, params) {
   return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: 4});
-}
+};
+
+
+var parseFuwaAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "fuwa", {m: 0, s: 0}, {m: 0, s: 4});
+};
 
 
 var parseAlarmAction = function(startStep, endStep, params) {
@@ -128,6 +133,7 @@ var LONG_ACTION_PARSERS = {
   '里跳': parseLTAction,
   '前挥': parseQHAction,
   '快挥': parseKHAction,
+  'fuwa': parseFuwaAction,
   '跟唱': parseFollowAction,
   '欢呼': parseCelebrateAction
 };
