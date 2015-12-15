@@ -3,38 +3,22 @@
 
 require('angular');
 
-require('./engine/audio');
 require('./provider/choreography');
-require('./provider/song');
 require('./ui/frame');
 
 var snowhare = require('./data/snowhare');
 var susutomo = require('./data/susutomo');
 
 
-var mod = angular.module('lovecall/demo', [
-    'lovecall/engine/audio',
+var mod = angular.module('lovecall/init', [
     'lovecall/provider/choreography',
-    'lovecall/provider/song',
     'lovecall/ui/frame'
 ]);
 
-mod.controller('DemoController', function($window, AudioEngine, Choreography, Song, FrameManager) {
+mod.run(function($window, Choreography, FrameManager) {
   // load bundled call tables
   Choreography.loadTable(snowhare);
   Choreography.loadTable(susutomo);
-
-  // test Ajax loading
-  Song.load('snowhare.mp3', function(hash, buffer) {
-    console.log(hash, buffer);
-
-    // demo
-    Choreography.load(hash);
-
-    AudioEngine.setSourceData(buffer);
-    AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
-  });
-
 
   // frame loop
   FrameManager.startFrameLoop($window);
