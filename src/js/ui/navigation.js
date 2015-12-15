@@ -4,11 +4,23 @@
 require('angular');
 require('angular-material');
 
+require('../engine/audio');
+require('../provider/choreography');
+require('../provider/song');
+
 require('../../templates/songselector.tmpl.html');
 
-var mod = angular.module('lovecall/ui/navigation', ['ngMaterial']);
 
-mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $mdDialog) {
+var mod = angular.module('lovecall/ui/navigation', [
+    'ngMaterial',
+    'lovecall/engine/audio',
+    'lovecall/provider/choreography',
+    'lovecall/provider/song'
+]);
+
+mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $mdDialog, $log, AudioEngine, Choreography, Song) {
+  $log = $log.getInstance('NavigationController');
+
   $scope.showSide = function() {
     $mdSidenav('sidenav').open();
   };
@@ -29,10 +41,22 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
       clickOutsideToClose: true,
       fullscreen: useFullScreen
     }).then(function(answer) {
-      // TODO
+      $log.debug('selected song index', answer);
+
+      var songUrl = Choreography.getSongUrlByIndex(answer);
+
+      // load song via Ajax
+      Song.load(songUrl, function(hash, buffer) {
+        console.log(hash, buffer);
+
+        // demo
+        Choreography.load(hash);
+
+        AudioEngine.setSourceData(buffer);
+        AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
+      });
     }, function() {
-      // cancell dialog
-      // TODO
+      $log.debug('cancelled song select');
     });
   };
 });
