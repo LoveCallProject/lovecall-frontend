@@ -52,7 +52,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
 
       extractSongImageAsync(songBuffer);
 
-      hideLoadingDialog();
+      hideLoadingDialog(false);
       successCallback && successCallback(songHash, response.data);
     };
   };
@@ -62,7 +62,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
     songStatus = 'errored';
 
     return function(response) {
-      hideLoadingDialog();
+      hideLoadingDialog(true);
       errorCallback && errorCallback(response);
     };
   };
@@ -78,8 +78,8 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
   };
 
 
-  var hideLoadingDialog = function() {
-    $rootScope.$broadcast('song:hideLoadingDialog');
+  var hideLoadingDialog = function(errored) {
+    $rootScope.$broadcast('song:hideLoadingDialog', errored);
   };
 
 
