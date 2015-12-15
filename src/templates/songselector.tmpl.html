@@ -1,26 +1,47 @@
-<md-dialog>
-  <md-toolbar>
-    <md-icon md-font-library="material-icons">queue_music</md-icon>
+<md-dialog class="song-selector">
+  <md-toolbar
+      layout="row"
+      layout-align="start center"
+      class="toolbar"
+      >
+    <md-icon
+        class="toolbar__icon"
+        md-font-library="material-icons"
+        >
+        queue_music
+    </md-icon>
     <h2>Select Song</h2>
+    <div class="toolbar__space"></div>
+    <md-button class="toolbar__close md-icon-button" ng-click="close()">
+      <md-icon md-font-library="material-icons">
+        close
+      </md-icon>
+    </md-button>
   </md-toolbar>
-  <md-dialog-content>
+  <md-dialog-content class="song-selector__content">
     <md-list>
-      <md-list-item 
-          class="md-3-line"
+      <md-button
+          class="md-list-item-text song-selector__content__button"
+          target="_blank"
           ng-repeat="song in songs"
+          ng-click="answer(song.idx)"
           >
-          <md-icon 
-              md-font-library="material-icons"
-              class="md-avatar"
-              >
-              music_note
-          </md-icon>
-          <div class="md-list-item-text" layout="column">
-            <h3>{{ song.ti }}</h3>
-            <h4>{{ song.ar }}</h4>
-            <p>{{ song.al }}</p>
-          </div>
-      </md-list-item>
+        <md-list-item
+            class="md-3-line"
+            >
+            <md-icon
+                md-font-library="material-icons"
+                class="md-avatar"
+                >
+                music_note
+            </md-icon>
+            <div class="md-list-item-text">
+              <h3>{{ song.ti }}</h3>
+              <h4>{{ song.ar }}</h4>
+              <p>{{ song.al }}</p>
+            </div>
+        </md-list-item>
+      </md-button>
     </md-list>
   </md-dialog-content>
 </md-dialog>

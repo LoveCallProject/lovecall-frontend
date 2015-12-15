@@ -11,4 +11,12 @@ var mod = angular.module('lovecall/ui/song-selector', [
 
 mod.controller('SongSelectorController', function($scope, $mdDialog, Choreography) {
   $scope.songs = Choreography.getAvailableSongs();
+
+  $scope.close = function() {
+    $mdDialog.cancel();
+  }
+
+  $scope.answer = function(answer) {
+    $mdDialog.hide(answer);
+  }
 });
