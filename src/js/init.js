@@ -7,7 +7,8 @@ require('./provider/choreography');
 require('./ui/frame');
 
 var snowhare = require('./data/snowhare');
-var susutomo = require('./data/susutomo');
+// var susutomo = require('./data/susutomo');
+var startDash = require('./data/start-dash');
 
 
 var mod = angular.module('lovecall/init', [
@@ -18,7 +19,8 @@ var mod = angular.module('lovecall/init', [
 mod.run(function($window, Choreography, FrameManager) {
   // load bundled call tables
   Choreography.loadTable(snowhare);
-  Choreography.loadTable(susutomo);
+  // Choreography.loadTable(susutomo);
+  Choreography.loadTable(startDash);
 
   // frame loop
   FrameManager.startFrameLoop($window);
