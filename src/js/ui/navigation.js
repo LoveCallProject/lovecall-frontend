@@ -4,9 +4,11 @@
 require('angular');
 require('angular-material');
 
+require('../../templates/songselector.tmpl.html');
+
 var mod = angular.module('lovecall/ui/navigation', ['ngMaterial']);
 
-mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia) {
+mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $mdDialog) {
   $scope.showSide = function() {
     $mdSidenav('sidenav').open();
   };
@@ -16,4 +18,21 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia) {
   };
 
 	$scope.$mdMedia = $mdMedia;
+
+  $scope.showSongSelector = function(ev) {
+    var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+    $mdDialog.show({
+      controller: 'SongSelectorController',
+      templateUrl: 'songselector.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      clickOutsideToClose: true,
+      fullscreen: useFullScreen
+    }).then(function(answer) {
+      // TODO
+    }, function() {
+      // cancell dialog
+      // TODO
+    });
+  };
 });

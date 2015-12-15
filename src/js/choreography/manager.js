@@ -9,6 +9,7 @@ var LoveCallTableManager = function() {
   this.nextTableIdx = 0;
 
   this.hashCache = {};
+  this.songCache = {};
 };
 
 
@@ -23,6 +24,13 @@ LoveCallTableManager.prototype.registerTable = function(table) {
 
   _.extend(this.hashCache, hashMap);
 
+  this.songCache[idx] = {
+    ti: table.metadata.song.title,
+    ar: table.metadata.song.artist,
+    al: table.metadata.song.album,
+    idx: idx
+  };
+
   return idx;
 };
 
@@ -36,6 +44,12 @@ LoveCallTableManager.prototype.lookupTableByHash = function(hash) {
   var lookupKey = hash.toLowerCase();
   return this.tables[this.hashCache[lookupKey]];
 };
+
+
+LoveCallTableManager.prototype.getAvailableSongs = function() {
+  // return a copy
+  return _.extend({}, this.songCache);
+}
 
 
 module.exports = {

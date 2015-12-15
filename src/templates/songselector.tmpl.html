@@ -1,0 +1,26 @@
+<md-dialog>
+  <md-toolbar>
+    <md-icon md-font-library="material-icons">queue_music</md-icon>
+    <h2>Select Song</h2>
+  </md-toolbar>
+  <md-dialog-content>
+    <md-list>
+      <md-list-item 
+          class="md-3-line"
+          ng-repeat="song in songs"
+          >
+          <md-icon 
+              md-font-library="material-icons"
+              class="md-avatar"
+              >
+              music_note
+          </md-icon>
+          <div class="md-list-item-text" layout="column">
+            <h3>{{ song.ti }}</h3>
+            <h4>{{ song.ar }}</h4>
+            <p>{{ song.al }}</p>
+          </div>
+      </md-list-item>
+    </md-list>
+  </md-dialog-content>
+</md-dialog>

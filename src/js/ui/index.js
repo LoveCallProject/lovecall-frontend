@@ -8,6 +8,7 @@ require('./call');
 require('./frame');
 require('./metadata');
 require('./navigation');
+require('./song-selector');
 require('./transport');
 
 
@@ -17,6 +18,7 @@ angular.module('lovecall/ui/index', [
     'lovecall/ui/frame',
     'lovecall/ui/metadata',
     'lovecall/ui/navigation',
+    'lovecall/ui/song-selector',
     'lovecall/ui/transport'
 ]);
 /* @license-end */

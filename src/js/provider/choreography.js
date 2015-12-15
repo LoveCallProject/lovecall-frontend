@@ -88,6 +88,11 @@ mod.factory('Choreography', function($log) {
     return tableManager.registerTable(table);
   };
 
+  
+  var getAvailableSongs = function() {
+    return tableManager.getAvailableSongs();
+  }
+
 
   var getTempo = function() {
     return parsedData.tempo;
@@ -129,7 +134,8 @@ mod.factory('Choreography', function($log) {
     'getColors': getColors,
     'getSongMetadata': getSongMetadata,
     'getEvents': getEvents,
-    'getQueueEngine': getQueueEngine
+    'getQueueEngine': getQueueEngine,
+    'getAvailableSongs': getAvailableSongs
   };
 });
 /* @license-end */
