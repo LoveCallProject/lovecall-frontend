@@ -69,7 +69,11 @@
           layout="row" layout-align="start center"
           class="md-menu-toolbar"
           >
-        <md-button class="md-icon-button" data-ng-click="closeSide()">
+        <md-button
+            class="md-icon-button"
+            data-ng-click="closeSide()"
+            data-ng-class="{'hidden-button': $mdMedia('gt-md')}"
+            >
           <md-icon md-font-library="material-icons">arrow_back</md-icon>
         </md-button>
         <h1>LoveCall</h1>
