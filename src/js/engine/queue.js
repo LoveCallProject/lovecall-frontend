@@ -25,7 +25,7 @@ var preprocessEvents = function(engineEventList) {
 var queueEngineFactory = function(engineEventList, eventCallback, logProvider, verboseLog) {
   logProvider || (logProvider = console);
 
-  var lookaheadWindowMs = 5000;
+  var lookaheadWindowMs = 10000;
 
   var events = preprocessEvents(engineEventList);
   var eventTimeline = Object.keys(events);
