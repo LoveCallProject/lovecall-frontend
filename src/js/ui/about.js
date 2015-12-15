@@ -9,6 +9,8 @@ var mod = angular.module('lovecall/ui/about', [
 ]);
 
 mod.controller('AboutDialogController', function($scope, $mdDialog) {
+  $scope.version = __webpack_hash__;
+
   $scope.close = function() {
     $mdDialog.cancel();
   }
