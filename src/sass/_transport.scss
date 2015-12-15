@@ -23,11 +23,6 @@
 #transport__play {
   display: flex;
   margin: auto;
-  border-radius: 50%;
-  border: 3px solid rgba(black, 0.3);
-  &:hover {
-    border: 3px solid rgba(blue, 0.3);
-  }
 }
 
 .transport__volume {
@@ -39,8 +34,4 @@
   md-slider {
     width: 5rem;
   }
-}
-
-.transport__play__icon {
-  font-size: 2rem;
 }
