@@ -1,5 +1,11 @@
 <md-dialog class="about">
   <md-toolbar class="about__toolbar" layout="row" layout-align="start center">
+    <md-icon
+        md-font-library="material-icons"
+        class="about__toolbar__icon"
+        >
+        info
+    </md-icon>
     <h2>About</h2>
     <span flex></span>
     <md-button class="md-icon-button" ng-click="close()">
@@ -8,7 +14,7 @@
   </md-toolbar>
 
   <md-dialog-content>
-    <md-tabs md-dynamic-height md-border-bottom>
+    <md-tabs md-border-bottom >
       <md-tab label="版本信息" >
         <md-content class="md-padding">
           <h1 class="md-display-2">LoveCall</h1>
@@ -19,7 +25,7 @@
         <md-content>
           <md-list>
             <md-list-item 
-                class="md-2-line" 
+                class="md-2-line about__content__listitem"
                 ng-repeat="contributor in contributors"
                 >
               <md-icon class="md-avatar" md-font-library="material-icons">
