@@ -214,6 +214,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           if (index === 0) {
             drawStepLines(drawX);
           }
+          if (drawX - circleR > w || drawX + circleR < 0) {
+            return;
+          }
           if (event.type !== '跟唱') {
             ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
           }
@@ -245,6 +248,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           }
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
+          if (drawX - circleR > w || drawX + circleR < 0) {
+            return;
+          }
           if (nodeState.type !== '跟唱') {
             ctx.drawImage(taikoImages[nodeState.type], drawX - circleR, axisY - circleR);
           }
