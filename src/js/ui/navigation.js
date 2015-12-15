@@ -47,11 +47,8 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
       var songUrl = Choreography.getSongUrlByIndex(answer);
 
       // load song via Ajax
-      Song.load(songUrl, function(hash, buffer) {
-        console.log(hash, buffer);
-
-        // demo
-        Choreography.load(hash);
+      Song.load(answer, songUrl, function(idx, hash, buffer) {
+        Choreography.load(idx, hash);
 
         AudioEngine.setSourceData(buffer);
         AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());

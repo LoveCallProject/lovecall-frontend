@@ -66,11 +66,11 @@ mod.factory('Choreography', function($log) {
   };
 
 
-  var load = function(hash) {
-    var table = tableManager.lookupTableByHash(hash);
+  var load = function(idx, hash) {
+    var table = tableManager.lookupTable(idx, hash);
 
     if (!table) {
-      $log.error('no table found for hash', hash);
+      $log.error('no table found for idx', idx, 'hash', hash);
       return;
     }
 
@@ -91,7 +91,7 @@ mod.factory('Choreography', function($log) {
 
   var getSongUrlByIndex = function(idx) {
     // FIXME: refactor this
-    return tableManager.lookupTableByIndex(idx).metadata.song.url;
+    return tableManager.lookupTable(idx, "fallback:").metadata.song.url;
   };
 
 

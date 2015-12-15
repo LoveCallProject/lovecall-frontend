@@ -7,6 +7,9 @@ module.exports = {
       "album": "ススメ→トゥモロウ/START:DASH!!",
       "url": "music/start-dash.mp3",
       "sources": {
+        "fallback:": {
+          "offset": 857
+        },
         "md5:2ccf40b6bdb51eff603e7392643ea97e": {
           "offset": 857
         }
