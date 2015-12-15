@@ -302,7 +302,14 @@ var parseCall = function(data, hash) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
   var sources = songMetadata.sources;
-  var globalOffsetMs = sources[hash].offset;
+
+  var sourceData = sources[hash];
+  if (typeof(sourceData) === 'undefined') {
+    console.warn('using fallback data for hash', hash);
+    sourceData = sources['fallback:'];
+  }
+
+  var globalOffsetMs = sourceData.offset;
 
   var parsedMetadata = parseSongMetadata(songMetadata);
 
