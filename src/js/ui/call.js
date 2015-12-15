@@ -33,34 +33,16 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     callCanvas.draw(events, true);
   });
 
+  $scope.$on('call:loader', function(e) {
+    events = Choreography.getEvents();
+    $log.debug('events', events);
+  });
+
   var callFrameCallback = function(ts) {
-    if (ts - preCallDrawTime >= 0) {
-      callCanvas.draw(events, false);
-      preCallDrawTime = ts;
-    }
   };
 
 
   FrameManager.addFrameCallback(callFrameCallback);
-
-
-  var callEventCallback = function(nowevent, lookaheadEvent, prevEvent) {
-   /*
-    $log.debug(
-      'now:', nowevent[0].type, nowevent[0].ts,
-      'lookahead', lookaheadEvent, 'prev', prevEvent
-      );
-      */
-      lookaheadEvent.forEach(function(event) {
-        nowevent.push(event);
-      });
-      events = nowevent;
-      callCanvas.draw(events, true);
-  };
-
-
-  Choreography.addQueueCallback(callEventCallback);
-
 
   /* canvas */
   function CallCanvasState(containerElem) {
