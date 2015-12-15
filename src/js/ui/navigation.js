@@ -9,6 +9,7 @@ require('../provider/choreography');
 require('../provider/song');
 
 require('../../templates/songselector.tmpl.html');
+require('../../templates/about.tmpl.html');
 
 
 var mod = angular.module('lovecall/ui/navigation', [
@@ -59,4 +60,14 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
       $log.debug('cancelled song select');
     });
   };
+
+  $scope.showAboutDialog = function(ev) {
+    $mdDialog.show({
+      controller: 'AboutDialogController',
+      templateUrl: 'about.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      clickOutsideToClose: true
+    }).then(function(){}, function(){});
+  }
 });
