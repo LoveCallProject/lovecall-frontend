@@ -108,7 +108,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       'Fu!': getTaikoImage('fufu'),
       'Oh~': getTaikoImage('ppph_oh'),
       'Hi!': getTaikoImage('ppph_hi'),
-      '跟唱': getTaikoImage('gc'),
       '前挥': getTaikoImage('qh'),
       '快挥': getTaikoImage('kh'),
       '欢呼': getTaikoImage('gc')  // TODO
@@ -204,8 +203,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           if (index === 0) {
             drawStepLines(x);
           }
-          ctx.drawImage(taikoImages[event.type], x - circleR, axisY - circleR);
-          if (event.params) {
+          if (event.type !== '跟唱') {
+            ctx.drawImage(taikoImages[event.type], x - circleR, axisY - circleR);
+          } else {
             ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
             ctx.fillText(event.params, x, textBaselineY);
@@ -222,6 +222,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           });
         });
       } else {
+        // FIXME: de-duplicate this
         //console.log('move');
         preStates.nodeStates.map(function(nodeState, index) {
           var remainedTime = currentTime - preStates.preTime;
@@ -231,8 +232,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           }
           preStates.nodeStates[index].position.x = x;
           //console.log('move draw');
-          ctx.drawImage(taikoImages[nodeState.type], x - circleR, axisY - circleR);
-          if (nodeState.params) {
+          if (nodeState.type !== '跟唱') {
+            ctx.drawImage(taikoImages[nodeState.type], x - circleR, axisY - circleR);
+          } else {
             ctx.font = textH + "px sans-serif";
             ctx.textAlign = 'center';
             ctx.fillText(nodeState.params, x, textBaselineY);
