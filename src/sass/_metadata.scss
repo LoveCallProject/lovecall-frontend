@@ -21,6 +21,20 @@
   background-color: #666;
   background-size: 100%;
   box-shadow: 0 2px 5px #000;
+
+  animation-name: rotate;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+  animation-play-state: paused;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .metadata__text {

@@ -66,6 +66,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
         'playbackPosMs=',
         playbackPosMs
         );
+    $rootScope.$broadcast('audio:resume');
 
     sourceNode = audioCtx.createBufferSource();
     sourceNode.buffer = sourceBuffer;
@@ -91,6 +92,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
 
   var doPause = function() {
     $log.info('pause');
+    $rootScope.$broadcast('audio:pause');
 
     if (sourceNode) {
       sourceNode.stop();
