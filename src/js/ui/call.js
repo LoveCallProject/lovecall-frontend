@@ -207,6 +207,16 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           break;
         }
         //console.log('draw', index, event);
+
+        // fade out past events
+        if (drawX < judgementLineX) {
+          ctx.save();
+          var fadeOutValue = drawX / judgementLineX;
+          // TODO: exponential mapping or something else?
+          var alpha = fadeOutValue < 0 ? 0 : fadeOutValue;
+          ctx.globalAlpha = alpha;
+        }
+
         if (event.type !== '跟唱') {
           ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
         }
@@ -214,6 +224,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.font = textH + "px sans-serif";
           ctx.textAlign = 'center';
           ctx.fillText(event.params.msg, drawX, textBaselineY);
+        }
+
+        if (drawX < judgementLineX) {
+          ctx.restore();
         }
       }
     };
