@@ -42,8 +42,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   var callFrameCallback = function(ts) {
     //update pointer
-    while (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration() > events[pRight].ts) {
-      pRight++;
+    if (pRight < events.length - 1) {
+      while (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration() > events[pRight].ts) {
+        pRight++;
+      }
     }
 
     callCanvas.draw(events.slice(0, pRight));
