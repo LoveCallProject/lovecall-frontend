@@ -16,46 +16,38 @@ var mod = angular.module('lovecall/ui/call', [
     'lovecall/ui/frame'
 ]);
 
+
 mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
   $log.debug('$scope=', $scope);
 
-  var events = [];
+  var events = [];//TODO
   var preCallDrawTime = 0;
+
+  var pRight = 0;
 
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
+  callCanvas.draw([]);
+
   $scope.$on('audio:loaded', function(e) {
     callCanvas.setTempo(Choreography.getTempo());
-    callCanvas.draw(events, true);
+    pRight = 0;
+    FrameManager.addFrameCallback(callFrameCallback);
+  });
+
+  $scope.$on('call:loader', function(e) {
+    events = Choreography.getEvents();
+    $log.debug('events', events);
   });
 
   var callFrameCallback = function(ts) {
-    if (ts - preCallDrawTime >= 0) {
-      callCanvas.draw(events, false);
-      preCallDrawTime = ts;
+    //update pointer
+    while (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration() > events[pRight].ts) {
+      pRight++;
     }
+
+    callCanvas.draw(events.slice(0, pRight));
   };
-
-
-  FrameManager.addFrameCallback(callFrameCallback);
-
-
-  var callEventCallback = function(nowevent, lookaheadEvent, prevEvent) {
-   /*
-    $log.debug(
-      'now:', nowevent[0].type, nowevent[0].ts,
-      'lookahead', lookaheadEvent, 'prev', prevEvent
-      );
-      */
-      lookaheadEvent.forEach(function(event) {
-        nowevent.push(event);
-      });
-      events = nowevent;
-      callCanvas.draw(events, true);
-  };
-
-
-  Choreography.addQueueCallback(callEventCallback);
 
 
   /* canvas */
@@ -84,16 +76,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var textBaselineY = 0;
     var textBorderBottomY = 0;
     var currentTime = 0;
-    var preDrawTime = 0;
-    var isDrawComplete = true;
     var inResizeFallout = true;
 
     var pixPreSec = 0;
-
-    var preStates = {
-        preTime: 0,
-        nodeStates: []
-    };
 
     var getTaikoImage = function(action) {
       var img = new Image();
@@ -101,6 +86,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
       return img;
     }
+
+    this.getCanvasNodeDuration = function() {
+      return w / pixPreSec;
+    };
 
     var taikoImages = {
       '上举': getTaikoImage('sj'),
@@ -150,9 +139,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       ctx.restore();
     }
 
-    this.draw = function(events, flag) {
-      if (!isDrawComplete) return;
-      isDrawComplete = false;
+    this.draw = function(drawEvents) {
 
       if (inResizeFallout) {
         inResizeFallout = false;
@@ -176,7 +163,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       currentTime = AudioEngine.getPlaybackPosition();
 
       // background
-      {
         ctx.save();
 
         // borders
@@ -185,7 +171,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         ctx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
         ctx.fillRect(0, textBorderBottomY, w, textBorderB);
 
-        // backgrounds
+      // backgrounds
+      {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, conveyorBorderB, w, conveyorH);
 
@@ -203,66 +190,30 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         ctx.restore();
       }
 
-      // sync from events
-      if (flag) { 
-        //console.log('sync');
-        preStates.nodeStates = [];
-        events.map(function(event, index) {
-          var remainedTime = event.ts - currentTime;
-          var x = pixPreSec * remainedTime;
-          var drawX = x + judgementLineX;
-          if (index === 0) {
-            drawStepLines(drawX);
-          }
-          if (drawX - circleR > w || drawX + circleR < 0) {
-            return;
-          }
-          if (event.type !== '跟唱') {
-            ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
-          }
-          if (event.params && event.params.msg) {
-            ctx.font = textH + "px sans-serif";
-            ctx.textAlign = 'center';
-            ctx.fillText(event.params.msg, drawX, textBaselineY);
-          }
-          //console.log('sync draw');
-          preStates.nodeStates.push({
-              ts: event.ts,
-              type: event.type,
-              params: event.params,
-              position: {
-                  "x": x,
-                  "y": axisY
-              }
-          });
-        });
-      } else {
-        // FIXME: de-duplicate this
-        //console.log('move');
-        preStates.nodeStates.map(function(nodeState, index) {
-          var remainedTime = currentTime - preStates.preTime;
-          var x = nodeState.position.x - pixPreSec * remainedTime;
-          var drawX = x + judgementLineX;
-          if (index === 0) {
-            drawStepLines(drawX);
-          }
-          preStates.nodeStates[index].position.x = x;
-          //console.log('move draw');
-          if (drawX - circleR > w || drawX + circleR < 0) {
-            return;
-          }
-          if (nodeState.type !== '跟唱') {
-            ctx.drawImage(taikoImages[nodeState.type], drawX - circleR, axisY - circleR);
-          }
-          if (nodeState.params && nodeState.params.msg) {
-            ctx.font = textH + "px sans-serif";
-            ctx.textAlign = 'center';
-            ctx.fillText(nodeState.params.msg, drawX, textBaselineY);
-          }
-        });
+      var index = drawEvents.length - 1;
+      var isDrawStepLines = false;
+      for (index;index != -1;index--) {
+        var event = drawEvents[index];
+        var remainedTime = event.ts - currentTime;
+        var x = pixPreSec * remainedTime;
+        var drawX = x + judgementLineX;
+        if (!isDrawStepLines) {
+          drawStepLines(drawX);
+          isDrawStepLines = true;
+        }
+        if (drawX + circleR < 0) {
+          break;
+        }
+        //console.log('draw', index, event);
+        if (event.type !== '跟唱') {
+          ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
+        }
+        if (event.params && event.params.msg) {
+          ctx.font = textH + "px sans-serif";
+          ctx.textAlign = 'center';
+          ctx.fillText(event.params.msg, drawX, textBaselineY);
+        }
       }
-      preStates.preTime = currentTime;
-      isDrawComplete = true;
     };
 
     var onWidgetResize = function(e) {

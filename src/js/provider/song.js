@@ -1,4 +1,5 @@
 /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
+
 'use strict';
 
 require('angular');
@@ -13,9 +14,11 @@ require('../../templates/song-loading.tmpl.html');
 
 
 var mod = angular.module('lovecall/provider/song', [
+    'lovecall/provider/choreography',
+    'lovecall/engine/audio'
 ]);
 
-mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
+mod.factory('Song', function($rootScope, $http, $mdDialog, $log, Choreography, AudioEngine) {
   $log = $log.getInstance('Song');
 
   var songBuffer = null;
@@ -42,7 +45,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
   };
 
 
-  var loadSuccessCallbackFactory = function(successCallback, idx) {
+  var loadSuccessCallbackFactory = function(idx) {
     return function(response) {
       $log.debug('load success:', response);
 
@@ -53,7 +56,13 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
       extractSongImageAsync(songBuffer);
 
       hideLoadingDialog(false);
-      successCallback && successCallback(idx, songHash, response.data);
+      
+      Choreography.load(idx, songHash);
+      $rootScope.$broadcast('call:loader');
+      AudioEngine.setSourceData(response.data);
+      AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
+
+      //successCallback && successCallback(idx, songHash, response.data);
     };
   };
 
@@ -96,7 +105,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log) {
         'Content-Type': undefined
       },
       responseType: 'arraybuffer'
-    }).then(loadSuccessCallbackFactory(successCallback, idx), errorCallback);
+    }).then(loadSuccessCallbackFactory(idx), errorCallback);
   };
 
 
