@@ -104,6 +104,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var textMarginB = 8;
     var textH = 30;
     var textBorderB = 1;
+    var textExplodeRatio = 0.15;
 
     var w = 0;
     var h = 0;
@@ -253,11 +254,33 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
         // text
         if (currentEventPack[2]) {
+          var realTextX;
+          var realTextY;
+
+          if (drawX < judgementLineX) {
+            ctx.save();
+            var fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
+
+            var scale = 1 + textExplodeRatio * fadeOutValue;
+            ctx.translate(judgementLineX, textBaselineY);
+            ctx.scale(scale, scale);
+
+            realTextX = 0;
+            realTextY = 0;
+          } else {
+            realTextX = drawX;
+            realTextY = textBaselineY;
+          }
+
           ctx.font = textH + "px sans-serif";
           ctx.textAlign = 'center';
           for (var i = 0; i < currentEventPack[2].length; i++) {
             var msg = currentEventPack[2][i].params.msg;
-            ctx.fillText(msg, drawX, textBaselineY);
+            ctx.fillText(msg, realTextX, realTextY);
+          }
+
+          if (drawX < judgementLineX) {
+            ctx.restore();
           }
         }
 
