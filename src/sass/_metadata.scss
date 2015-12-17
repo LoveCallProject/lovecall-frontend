@@ -13,14 +13,22 @@
   padding-left: 8px + $md-sidenav-locked-open-width;
 }
 
+.metadata__image-container,
 .metadata__image {
   width: $metadata-height;
   height: $metadata-height;
+}
+
+.metadata__image-container {
   border-radius: 50%;
+  overflow: hidden;
 
   background-color: #666;
-  background-size: 100%;
   box-shadow: 0 2px 5px #000;
+}
+
+.metadata__image {
+  background-size: 100%;
 
   animation-name: rotate;
   animation-iteration-count: infinite;
