@@ -137,13 +137,18 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     playbackPos = AudioEngine.getPlaybackPosition();
 
     if (prevIsPlaying != isPlaying) {
+      transportState.setIsPlaying(isPlaying);
       $scope.isPlaying = isPlaying;
       $scope.$digest();
     }
 
     // chromium thinks i'm causing jank by delibrately limiting the refresh
     // rate... so here's the full 60fps someone wanted
-    updateTransport(playbackPos, duration);
+    // but for conserving energy, let's only refresh if playing; otherwise
+    // refreshing at mouse events seems great.
+    if (isPlaying) {
+      updateTransport(playbackPos, duration);
+    }
 
     prevIsPlaying = isPlaying;
   };
@@ -170,6 +175,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var tickBoxMarginTB = 8;
 
     // ui states
+    var isPlaying = false;
     var position = 0;
     var durationMs = 0;
     var indicatorHovered = true;
@@ -222,6 +228,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var tickBoxGapWidth = 0;
     var tickBoxStartX = 0;
     var tickBoxStartY = 0;
+
+
+    var setIsPlaying = function(v) {
+      isPlaying = v;
+    };
 
 
     var update = function(pos, duration, skipDraw) {
@@ -682,6 +693,10 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var onWidgetResize = function(e) {
       // $log.debug('widget/window resized, scheduling canvas re-size on next draw');
       inResizeFallout = true;
+
+      if (!isPlaying) {
+        draw();
+      }
     };
 
 
@@ -697,6 +712,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     containerElem.appendChild(elem);
 
     return {
+      setIsPlaying: setIsPlaying,
       update: update,
       updateTick: updateTick,
       updateSongForm: updateSongForm,
