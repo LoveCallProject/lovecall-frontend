@@ -23,7 +23,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
   // scope states
   $scope.isLoaded = false;
-  $scope.playbackPos = 0;
   $scope.isPlaying = false;
   $scope.playButtonIcon = 'play_arrow';
   $scope.volumePercentage = 100;
@@ -33,7 +32,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   var isPlaying = false;
   var playbackPos = 0;
   var prevIsPlaying = true;
-  var prevPlaybackPos = -1;
   var duration = 0;
   var isMuted = false;
 
@@ -147,21 +145,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     // rate... so here's the full 60fps someone wanted
     updateTransport(playbackPos, duration);
 
-    // limit update frequency
-    if (prevPlaybackPos != playbackPos && Math.abs($scope.playbackPos - playbackPos) >= 500) {
-      $scope.playbackPos = playbackPos;
-      $scope.$digest();
-    }
-
     prevIsPlaying = isPlaying;
-    prevPlaybackPos = playbackPos;
   };
 
 
   /* canvas */
-
-  var prevTransportPos = 0;
-
   var transportCanvasStateFactory = function(containerElem) {
     // parameters
     var marginL = 16;
