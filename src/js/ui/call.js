@@ -16,60 +16,90 @@ var mod = angular.module('lovecall/ui/call', [
     'lovecall/ui/frame'
 ]);
 
+
 mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
   $log.debug('$scope=', $scope);
 
-  var events = [];
+  var events = {};
+  var eventTimeline = [];
   var preCallDrawTime = 0;
+
+  var pRight = 0;
 
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
+  var isPlaying = false;
+
+  callCanvas.draw({}, [], 0);
+
+
   $scope.$on('audio:loaded', function(e) {
     callCanvas.setTempo(Choreography.getTempo());
-    callCanvas.draw(events, true);
+    FrameManager.addFrameCallback(callFrameCallback);
+    events = Choreography.getEvents();
+    eventTimeline = Object.keys(events).sort(function(a, b) {
+      return a - b;
+    });
+
+    isPlaying = false;
+    pRight = 0;
+    doUpdate();
   });
 
+
+  $scope.$on('audio:unloaded', function(e) {
+    FrameManager.removeFrameCallback(callFrameCallback);
+  });
+
+
+  $scope.$on('audio:resume', function(e) {
+    isPlaying = true;
+  });
+
+
+  $scope.$on('audio:pause', function(e) {
+    isPlaying = false;
+  });
+
+
   var callFrameCallback = function(ts) {
-    if (ts - preCallDrawTime >= 0) {
-      callCanvas.draw(events, false);
-      preCallDrawTime = ts;
+    if (!isPlaying) {
+      return;
     }
+
+    doUpdate();
+  }
+
+  var doUpdate = function() {
+    //update pointer
+    var rightmostPos = AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration();
+
+    if (pRight < eventTimeline.length - 1) {
+      while (rightmostPos > eventTimeline[pRight]) {
+        pRight++;
+      }
+    }
+
+    callCanvas.draw(events, eventTimeline, pRight);
   };
-
-
-  FrameManager.addFrameCallback(callFrameCallback);
-
-
-  var callEventCallback = function(nowevent, lookaheadEvent, prevEvent) {
-   /*
-    $log.debug(
-      'now:', nowevent[0].type, nowevent[0].ts,
-      'lookahead', lookaheadEvent, 'prev', prevEvent
-      );
-      */
-      lookaheadEvent.forEach(function(event) {
-        nowevent.push(event);
-      });
-      events = nowevent;
-      callCanvas.draw(events, true);
-  };
-
-
-  Choreography.addQueueCallback(callEventCallback);
 
 
   /* canvas */
   function CallCanvasState(containerElem) {
+    var bgElem = document.createElement('canvas');
     var elem = document.createElement('canvas');
+    var bgCtx = bgElem.getContext('2d');
     var ctx = elem.getContext('2d');
 
     var circleR = 50;
-    var circleMargin = -10;
+    var circleMargin = -40;
     var circleDistance = 2 * circleR + circleMargin;
+    var circleFadeOutDistance = 40;
+    var circleExplodeRatio = 0.25;
     var conveyorH = 150;
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
-    var judgementLineX = 150;
+    var judgementLineX = 75;
     var textMarginT = 4;
     var textMarginB = 8;
     var textH = 30;
@@ -84,16 +114,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var textBaselineY = 0;
     var textBorderBottomY = 0;
     var currentTime = 0;
-    var preDrawTime = 0;
-    var isDrawComplete = true;
     var inResizeFallout = true;
 
     var pixPreSec = 0;
-
-    var preStates = {
-        preTime: 0,
-        nodeStates: []
-    };
 
     var getTaikoImage = function(action) {
       var img = new Image();
@@ -101,6 +124,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
       return img;
     }
+
+    this.getCanvasNodeDuration = function() {
+      return w / pixPreSec;
+    };
 
     var taikoImages = {
       '上举': getTaikoImage('sj'),
@@ -121,39 +148,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
-    var drawStepLine = function(basePos) {
-      basePos = basePos|0;
-
-      ctx.beginPath();
-      ctx.moveTo(basePos, stepLineY1);
-      ctx.lineTo(basePos, stepLineY2);
-      ctx.stroke();
-    }
-
-    var drawStepLines = function(basePos) {
-      var prePos = basePos;
-      var afterPos = basePos;
-
-      ctx.save();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      while (prePos >= 0) {
-        prePos -= circleDistance;
-        drawStepLine(prePos);
-      }
-
-      while (afterPos <= w) {
-        afterPos += circleDistance;
-        drawStepLine(afterPos);
-      }
-
-      ctx.restore();
-    }
-
-    this.draw = function(events, flag) {
-      if (!isDrawComplete) return;
-      isDrawComplete = false;
-
+    this.draw = function(events, eventTimeline, limit) {
       if (inResizeFallout) {
         inResizeFallout = false;
 
@@ -162,6 +157,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         h = canvasRect.height|0;
         elem.width = w;
         elem.height = h;
+        bgElem.width = w;
+        bgElem.height = h;
 
         stepLineY1 = (conveyorBorderT)|0;
         stepLineY2 = (conveyorBorderT + conveyorH)|0;
@@ -169,94 +166,122 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
         textBaselineY = (textTopY + textMarginT + textH)|0;
         textBorderBottomY = (textBaselineY + textMarginB)|0;
+
+        // draw background once
+        {
+          bgCtx.clearRect(0, 0, w, h);
+          bgCtx.save();
+
+          // borders
+          bgCtx.fillStyle = '#111';
+          bgCtx.fillRect(0, 0, w, conveyorBorderT);
+          bgCtx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
+          bgCtx.fillRect(0, textBorderBottomY, w, textBorderB);
+
+          // backgrounds
+          bgCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          bgCtx.fillRect(0, conveyorBorderB, w, conveyorH);
+
+          bgCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          bgCtx.fillRect(0, textTopY, w, textBorderBottomY - textTopY);
+
+          // judgement line
+          bgCtx.strokeStyle = '#aaa';
+          bgCtx.lineWidth = 4;
+          bgCtx.beginPath();
+          bgCtx.moveTo(judgementLineX, conveyorBorderT);
+          bgCtx.lineTo(judgementLineX, conveyorBorderT + conveyorH);
+          bgCtx.stroke();
+
+          bgCtx.restore();
+        }
       }
 
       // draw
       ctx.clearRect(0, 0, w, h);
       currentTime = AudioEngine.getPlaybackPosition();
 
-      // background
-      {
-        ctx.save();
+      var index = limit;
+      for (; index != -1; index--) {
+        var ts = eventTimeline[index];
+        var currentEventPack = events[ts];
+        var remainedTime = ts - currentTime;
+        var x = pixPreSec * remainedTime;
+        var drawX = x + judgementLineX;
+        var realX;
+        var realY;
 
-        // borders
-        ctx.fillStyle = '#111';
-        ctx.fillRect(0, 0, w, conveyorBorderT);
-        ctx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
-        ctx.fillRect(0, textBorderBottomY, w, textBorderB);
+        if (!currentEventPack) {
+          break;
+        }
 
-        // backgrounds
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, conveyorBorderB, w, conveyorH);
+        // draw stepline
+        if (currentEventPack[0]) {
+          ctx.save();
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-        ctx.fillRect(0, textTopY, w, textBorderBottomY - textTopY);
+          for (var i = 0; i < currentEventPack[0].length; i++) {
+            var e = currentEventPack[0][i];
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
 
-        // judgement line
-        ctx.strokeStyle = '#aaa';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(judgementLineX, conveyorBorderT);
-        ctx.lineTo(judgementLineX, conveyorBorderT + conveyorH);
-        ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(drawX, stepLineY1);
+            ctx.lineTo(drawX, stepLineY2);
+            ctx.stroke();
+          }
 
-        ctx.restore();
+          ctx.restore();
+        }
+
+        // don't render invisible events
+        if (drawX < judgementLineX - circleFadeOutDistance) {
+          break;
+        }
+
+        // fade out past events
+        // alpha-only
+        if (drawX < judgementLineX) {
+          ctx.save();
+          var fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
+          fadeOutValue = 1 - fadeOutValue;
+
+          // TODO: exponential mapping or something else?
+          var alpha = fadeOutValue;
+          var scale = 1 + circleExplodeRatio * (1 - fadeOutValue);
+          ctx.globalAlpha = alpha;
+        }
+
+        // text
+        if (currentEventPack[2]) {
+          ctx.font = textH + "px sans-serif";
+          ctx.textAlign = 'center';
+          for (var i = 0; i < currentEventPack[2].length; i++) {
+            var msg = currentEventPack[2][i].params.msg;
+            ctx.fillText(msg, drawX, textBaselineY);
+          }
+        }
+
+        // apply scale
+        if (drawX < judgementLineX) {
+          ctx.translate(judgementLineX, axisY);
+          ctx.scale(scale, scale);
+
+          realX = -circleR;
+          realY = -circleR;
+        } else {
+          realX = drawX - circleR;
+          realY = axisY - circleR;
+        }
+
+        for (var i = 0; i < currentEventPack[1].length; i++) {
+          var event = currentEventPack[1][i];
+          ctx.drawImage(taikoImages[event.type], realX, realY);
+        }
+
+        if (drawX < judgementLineX) {
+          ctx.restore();
+        }
       }
-
-      // sync from events
-      if (flag) { 
-        //console.log('sync');
-        preStates.nodeStates = [];
-        events.map(function(event, index) {
-          var remainedTime = event.ts - currentTime;
-          var x = pixPreSec * remainedTime;
-          var drawX = x + judgementLineX;
-          if (index === 0) {
-            drawStepLines(drawX);
-          }
-          if (event.type !== '跟唱') {
-            ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
-          }
-          if (event.params && event.params.msg) {
-            ctx.font = textH + "px sans-serif";
-            ctx.textAlign = 'center';
-            ctx.fillText(event.params.msg, drawX, textBaselineY);
-          }
-          //console.log('sync draw');
-          preStates.nodeStates.push({
-              ts: event.ts,
-              type: event.type,
-              params: event.params,
-              position: {
-                  "x": x,
-                  "y": axisY
-              }
-          });
-        });
-      } else {
-        // FIXME: de-duplicate this
-        //console.log('move');
-        preStates.nodeStates.map(function(nodeState, index) {
-          var remainedTime = currentTime - preStates.preTime;
-          var x = nodeState.position.x - pixPreSec * remainedTime;
-          var drawX = x + judgementLineX;
-          if (index === 0) {
-            drawStepLines(drawX);
-          }
-          preStates.nodeStates[index].position.x = x;
-          //console.log('move draw');
-          if (nodeState.type !== '跟唱') {
-            ctx.drawImage(taikoImages[nodeState.type], drawX - circleR, axisY - circleR);
-          }
-          if (nodeState.params && nodeState.params.msg) {
-            ctx.font = textH + "px sans-serif";
-            ctx.textAlign = 'center';
-            ctx.fillText(nodeState.params.msg, drawX, textBaselineY);
-          }
-        });
-      }
-      preStates.preTime = currentTime;
-      isDrawComplete = true;
     };
 
     var onWidgetResize = function(e) {
@@ -266,6 +291,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     // $window.addEventListener('resize', onWidgetResize);
     ResizeDetector.listenTo(containerElem, onWidgetResize);
 
+    containerElem.appendChild(bgElem);
     containerElem.appendChild(elem);
   };
 });

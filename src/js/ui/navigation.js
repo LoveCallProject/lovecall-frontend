@@ -4,8 +4,6 @@
 require('angular');
 require('angular-material');
 
-require('../engine/audio');
-require('../provider/choreography');
 require('../provider/song');
 
 require('../../templates/song-selector.tmpl.html');
@@ -14,12 +12,11 @@ require('../../templates/about.tmpl.html');
 
 var mod = angular.module('lovecall/ui/navigation', [
     'ngMaterial',
-    'lovecall/engine/audio',
-    'lovecall/provider/choreography',
-    'lovecall/provider/song'
+    'lovecall/provider/song',
+    'lovecall/provider/choreography'
 ]);
 
-mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $mdDialog, $log, AudioEngine, Choreography, Song) {
+mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $mdDialog, $log, Choreography, Song) {
   $log = $log.getInstance('NavigationController');
 
   $scope.showSide = function() {
@@ -47,12 +44,7 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
       var songUrl = Choreography.getSongUrlByIndex(answer);
 
       // load song via Ajax
-      Song.load(answer, songUrl, function(idx, hash, buffer) {
-        Choreography.load(idx, hash);
-
-        AudioEngine.setSourceData(buffer);
-        AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
-      });
+      Song.load(answer, songUrl);
     }, function() {
       $log.debug('cancelled song select');
     });

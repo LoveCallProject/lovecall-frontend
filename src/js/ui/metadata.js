@@ -17,6 +17,7 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
   $scope.album = '';
   $scope.songImage = 'none';
 
+  var metadataImg = document.querySelector('.metadata__image');
 
   var setSongImage = function(imageBlob) {
     if (!imageBlob) {
@@ -39,9 +40,23 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
 
   $scope.$on('audio:loaded', function(e) {
     var songMetadata = Choreography.getSongMetadata();
+    var tempo = Choreography.getTempo();
+
     $scope.title = songMetadata.ti;
     $scope.artist = songMetadata.ar;
     $scope.album = songMetadata.al;
+
+    //TODO: change BPM
+    var rotateDuration = (tempo.stepToTime(20, 0) - tempo.stepToTime(0, 0)) / 1000;
+    metadataImg.style.animationDuration = rotateDuration + 's';
+  });
+
+  $scope.$on('audio:resume', function(e) {
+    metadataImg.style.animationPlayState = 'running';
+  });
+
+  $scope.$on('audio:pause', function(e) {
+    metadataImg.style.animationPlayState = 'paused';
   });
 
 
