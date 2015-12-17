@@ -527,8 +527,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       }
 
       // measure number
+      // don't draw if box is too small
       // TODO: performance
-      {
+      if (tickBoxSize >= 16) {
         ctx.save();
         ctx.fillStyle = '#000';
         ctx.font = '12px monospace';
