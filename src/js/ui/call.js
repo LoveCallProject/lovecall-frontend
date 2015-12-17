@@ -215,10 +215,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           break;
         }
 
-        if (drawX < judgementLineX - circleFadeOutDistance) {
-          break;
-        }
-
         // draw stepline
         if (currentEventPack[0]) {
           ctx.save();
@@ -237,18 +233,36 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.restore();
         }
 
+        // don't render invisible events
+        if (drawX < judgementLineX - circleFadeOutDistance) {
+          break;
+        }
+
         // fade out past events
+        // alpha-only
         if (drawX < judgementLineX) {
           ctx.save();
           var fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
-          fadeOutValue = fadeOutValue < 0 ? 1 : 1 - fadeOutValue;
+          fadeOutValue = 1 - fadeOutValue;
 
           // TODO: exponential mapping or something else?
           var alpha = fadeOutValue;
           var scale = 1 + circleExplodeRatio * (1 - fadeOutValue);
           ctx.globalAlpha = alpha;
+        }
 
-          ctx.save();
+        // text
+        if (currentEventPack[2]) {
+          ctx.font = textH + "px sans-serif";
+          ctx.textAlign = 'center';
+          for (var i = 0; i < currentEventPack[2].length; i++) {
+            var msg = currentEventPack[2][i].params.msg;
+            ctx.fillText(msg, drawX, textBaselineY);
+          }
+        }
+
+        // apply scale
+        if (drawX < judgementLineX) {
           ctx.translate(judgementLineX, axisY);
           ctx.scale(scale, scale);
 
@@ -262,21 +276,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         for (var i = 0; i < currentEventPack[1].length; i++) {
           var event = currentEventPack[1][i];
           ctx.drawImage(taikoImages[event.type], realX, realY);
-        }
-
-        if (drawX < judgementLineX) {
-          // restore everything except alpha for text rendering
-          ctx.restore();
-        }
-
-        // text
-        if (currentEventPack[2]) {
-          ctx.font = textH + "px sans-serif";
-          ctx.textAlign = 'center';
-          for (var i = 0; i < currentEventPack[2].length; i++) {
-            var msg = currentEventPack[2][i].params.msg;
-            ctx.fillText(msg, drawX, textBaselineY);
-          }
         }
 
         if (drawX < judgementLineX) {
