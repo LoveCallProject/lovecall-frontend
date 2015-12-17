@@ -114,35 +114,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
-    var drawStepLine = function(basePos) {
-      basePos = basePos|0;
-
-      ctx.beginPath();
-      ctx.moveTo(basePos, stepLineY1);
-      ctx.lineTo(basePos, stepLineY2);
-      ctx.stroke();
-    }
-
-    var drawStepLines = function(basePos) {
-      var prePos = basePos;
-      var afterPos = basePos;
-
-      ctx.save();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      while (prePos >= 0) {
-        prePos -= circleDistance;
-        drawStepLine(prePos);
-      }
-
-      while (afterPos <= w) {
-        afterPos += circleDistance;
-        drawStepLine(afterPos);
-      }
-
-      ctx.restore();
-    }
-
     this.draw = function(drawEvents) {
 
       if (inResizeFallout) {
@@ -195,16 +166,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       }
 
       var index = drawEvents.length - 1;
-      var isDrawStepLines = false;
       for (index;index != -1;index--) {
         var event = drawEvents[index];
         var remainedTime = event.ts - currentTime;
         var x = pixPreSec * remainedTime;
         var drawX = x + judgementLineX;
-        if (!isDrawStepLines) {
-          drawStepLines(drawX);
-          isDrawStepLines = true;
-        }
 
         if (drawX < judgementLineX - circleFadeOutDistance) {
           break;
