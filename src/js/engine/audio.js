@@ -22,6 +22,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var timingNode = audioCtx.createScriptProcessor(2048);
 
   var isPlaying = false;
+  var seekPosMs = null;
+  var isPlayingBeforeSeek = false;
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
   var playbackPosMs = 0;
@@ -36,9 +38,13 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
 
 
   var onEndedCallback = function(e) {
-    $log.debug('onEndedCallback');
-
-    pause();
+    if (seekPosMs !== null) {
+      $log.debug('onEndedCallback: seeking to', seekPosMs);
+      doSeek();
+    } else {
+      $log.debug('onEndedCallback: pausing');
+      pause();
+    }
   };
 
 
@@ -109,18 +115,39 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
 
 
   var doSeek = function(newPositionMs) {
+    // in case of coming from onEndedCallback
+    newPositionMs = typeof(newPositionMs) !== 'undefined' ? newPositionMs : seekPosMs;
+
     $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
     playbackPosMs = newPositionMs;
     currentQueueEngine.update(newPositionMs, false);
     currentMetronome.tick(newPositionMs);
     $rootScope.$broadcast('audio:seek', newPositionMs);
+
+    // reset playing status
+    isPlaying = isPlayingBeforeSeek;
     isPlaying && doResume();
+
+    // clear seeking information
+    seekPosMs = null;
   };
 
 
   var seek = function(newPositionMs) {
-    isPlaying && doPause();
-    return doSeek(newPositionMs);
+    if (seekPosMs !== null) {
+      $log.warn('seek: another seek already in progress! pos', seekPosMs);
+      return;
+    }
+
+    if (isPlaying) {
+      // record seek information and pause, waiting for onEndedCallback to continue
+      // seeking
+      seekPosMs = newPositionMs;
+      isPlayingBeforeSeek = isPlaying;
+      doPause();
+    } else {
+      doSeek(newPositionMs);
+    }
   };
 
 
