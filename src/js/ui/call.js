@@ -27,23 +27,49 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
+  var isPlaying = false;
+
   callCanvas.draw([]);
+
 
   $scope.$on('audio:loaded', function(e) {
     callCanvas.setTempo(Choreography.getTempo());
-    pRight = 0;
     FrameManager.addFrameCallback(callFrameCallback);
+
+    isPlaying = false;
+    pRight = 0;
+    doUpdate();
   });
+
+  $scope.$on('audio:resume', function(e) {
+    isPlaying = true;
+  });
+
+
+  $scope.$on('audio:pause', function(e) {
+    isPlaying = false;
+  });
+
 
   $scope.$on('call:loader', function(e) {
     events = Choreography.getEvents();
     $log.debug('events', events);
   });
 
+
   var callFrameCallback = function(ts) {
+    if (!isPlaying) {
+      return;
+    }
+
+    doUpdate();
+  }
+
+  var doUpdate = function() {
     //update pointer
     if (pRight < events.length - 1) {
-      while (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration() > events[pRight].ts) {
+      var rightmostPos = (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration())|0;
+      while (rightmostPos > events[pRight].ts) {
         pRight++;
       }
     }
