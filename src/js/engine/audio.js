@@ -113,6 +113,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     playbackPosMs = newPositionMs;
     currentQueueEngine.update(newPositionMs, false);
     currentMetronome.tick(newPositionMs);
+    $rootScope.$broadcast('audio:seek', newPositionMs);
     isPlaying && doResume();
   };
 
