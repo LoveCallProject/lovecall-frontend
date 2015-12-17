@@ -58,7 +58,6 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, Choreography, A
       hideLoadingDialog(false);
       
       Choreography.load(idx, songHash);
-      $rootScope.$broadcast('call:loader');
       AudioEngine.setSourceData(response.data);
       AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
 

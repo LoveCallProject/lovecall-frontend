@@ -20,35 +20,44 @@ var mod = angular.module('lovecall/ui/call', [
 mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
   $log.debug('$scope=', $scope);
 
-  var events = [];//TODO
+  var events = {};
+  var eventTimeline = [];
   var preCallDrawTime = 0;
 
   var pRight = 0;
 
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
-  callCanvas.draw([]);
+  callCanvas.draw({}, [], 0);
+
 
   $scope.$on('audio:loaded', function(e) {
     callCanvas.setTempo(Choreography.getTempo());
     pRight = 0;
     FrameManager.addFrameCallback(callFrameCallback);
+    events = Choreography.getEvents();
+    eventTimeline = Object.keys(events).sort(function(a, b) {
+      return a - b;
+    });
   });
 
-  $scope.$on('call:loader', function(e) {
-    events = Choreography.getEvents();
-    $log.debug('events', events);
+
+  $scope.$on('audio:unloaded', function(e) {
+    FrameManager.removeFrameCallback(callFrameCallback);
   });
+
 
   var callFrameCallback = function(ts) {
     //update pointer
-    if (pRight < events.length - 1) {
-      while (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration() > events[pRight].ts) {
+    var rightmostPos = AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration();
+
+    if (pRight < eventTimeline.length - 1) {
+      while (rightmostPos > eventTimeline[pRight]) {
         pRight++;
       }
     }
 
-    callCanvas.draw(events.slice(0, pRight));
+    callCanvas.draw(events, eventTimeline, pRight);
   };
 
 
@@ -114,8 +123,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
-    this.draw = function(drawEvents) {
-
+    this.draw = function(events, eventTimeline, limit) {
       if (inResizeFallout) {
         inResizeFallout = false;
 
@@ -138,6 +146,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       currentTime = AudioEngine.getPlaybackPosition();
 
       // background
+      {
         ctx.save();
 
         // borders
@@ -146,8 +155,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         ctx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
         ctx.fillRect(0, textBorderBottomY, w, textBorderB);
 
-      // backgrounds
-      {
+        // backgrounds
         ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.fillRect(0, conveyorBorderB, w, conveyorH);
 
@@ -165,19 +173,41 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         ctx.restore();
       }
 
-      var index = drawEvents.length - 1;
-      for (index;index != -1;index--) {
-        var event = drawEvents[index];
-        var remainedTime = event.ts - currentTime;
+      var index = limit;
+      for (; index != -1; index--) {
+        var ts = eventTimeline[index];
+        var currentEventPack = events[ts];
+        var remainedTime = ts - currentTime;
         var x = pixPreSec * remainedTime;
         var drawX = x + judgementLineX;
+        var realX;
+        var realY;
+
+        if (!currentEventPack) {
+          break;
+        }
 
         if (drawX < judgementLineX - circleFadeOutDistance) {
           break;
         }
 
-        var realX;
-        var realY;
+        // draw stepline
+        if (currentEventPack[0]) {
+          ctx.save();
+
+          for (var i = 0; i < currentEventPack[0].length; i++) {
+            var e = currentEventPack[0][i];
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(drawX, stepLineY1);
+            ctx.lineTo(drawX, stepLineY2);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
 
         // fade out past events
         if (drawX < judgementLineX) {
@@ -201,7 +231,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           realY = axisY - circleR;
         }
 
-        if (event.type !== '跟唱') {
+        for (var i = 0; i < currentEventPack[1].length; i++) {
+          var event = currentEventPack[1][i];
           ctx.drawImage(taikoImages[event.type], realX, realY);
         }
 
@@ -211,10 +242,13 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         }
 
         // text
-        if (event.params && event.params.msg) {
+        if (currentEventPack[2]) {
           ctx.font = textH + "px sans-serif";
           ctx.textAlign = 'center';
-          ctx.fillText(event.params.msg, drawX, textBaselineY);
+          for (var i = 0; i < currentEventPack[2].length; i++) {
+            var msg = currentEventPack[2][i].params.msg;
+            ctx.fillText(msg, drawX, textBaselineY);
+          }
         }
 
         if (drawX < judgementLineX) {
