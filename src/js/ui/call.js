@@ -60,6 +60,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var circleR = 50;
     var circleMargin = -40;
     var circleDistance = 2 * circleR + circleMargin;
+    var circleFadeOutDistance = 40;
+    var circleExplodeRatio = 0.25;
     var conveyorH = 150;
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
@@ -203,23 +205,46 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           drawStepLines(drawX);
           isDrawStepLines = true;
         }
-        if (drawX + circleR < 0) {
+
+        if (drawX < judgementLineX - circleFadeOutDistance) {
           break;
         }
-        //console.log('draw', index, event);
+
+        var realX;
+        var realY;
 
         // fade out past events
         if (drawX < judgementLineX) {
           ctx.save();
-          var fadeOutValue = drawX / judgementLineX;
+          var fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
+          fadeOutValue = fadeOutValue < 0 ? 1 : 1 - fadeOutValue;
+
           // TODO: exponential mapping or something else?
-          var alpha = fadeOutValue < 0 ? 0 : fadeOutValue;
+          var alpha = fadeOutValue;
+          var scale = 1 + circleExplodeRatio * (1 - fadeOutValue);
           ctx.globalAlpha = alpha;
+
+          ctx.save();
+          ctx.translate(judgementLineX, axisY);
+          ctx.scale(scale, scale);
+
+          realX = -circleR;
+          realY = -circleR;
+        } else {
+          realX = drawX - circleR;
+          realY = axisY - circleR;
         }
 
         if (event.type !== '跟唱') {
-          ctx.drawImage(taikoImages[event.type], drawX - circleR, axisY - circleR);
+          ctx.drawImage(taikoImages[event.type], realX, realY);
         }
+
+        if (drawX < judgementLineX) {
+          // restore everything except alpha for text rendering
+          ctx.restore();
+        }
+
+        // text
         if (event.params && event.params.msg) {
           ctx.font = textH + "px sans-serif";
           ctx.textAlign = 'center';
