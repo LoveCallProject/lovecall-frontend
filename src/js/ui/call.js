@@ -62,6 +62,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
   });
 
 
+  $scope.$on('audio:seek', function(e, newPosition) {
+    doUpdate();
+  });
+
+
   var callFrameCallback = function(ts) {
     if (!isPlaying) {
       return;
