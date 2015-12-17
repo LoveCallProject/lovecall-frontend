@@ -80,7 +80,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   /* canvas */
   function CallCanvasState(containerElem) {
+    var bgElem = document.createElement('canvas');
     var elem = document.createElement('canvas');
+    var bgCtx = bgElem.getContext('2d');
     var ctx = elem.getContext('2d');
 
     var circleR = 50;
@@ -170,7 +172,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     }
 
     this.draw = function(drawEvents) {
-
       if (inResizeFallout) {
         inResizeFallout = false;
 
@@ -179,6 +180,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         h = canvasRect.height|0;
         elem.width = w;
         elem.height = h;
+        bgElem.width = w;
+        bgElem.height = h;
 
         stepLineY1 = (conveyorBorderT)|0;
         stepLineY2 = (conveyorBorderT + conveyorH)|0;
@@ -186,39 +189,40 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
         textBaselineY = (textTopY + textMarginT + textH)|0;
         textBorderBottomY = (textBaselineY + textMarginB)|0;
+
+        // draw background once
+        {
+          bgCtx.clearRect(0, 0, w, h);
+          bgCtx.save();
+
+          // borders
+          bgCtx.fillStyle = '#111';
+          bgCtx.fillRect(0, 0, w, conveyorBorderT);
+          bgCtx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
+          bgCtx.fillRect(0, textBorderBottomY, w, textBorderB);
+
+          // backgrounds
+          bgCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          bgCtx.fillRect(0, conveyorBorderB, w, conveyorH);
+
+          bgCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          bgCtx.fillRect(0, textTopY, w, textBorderBottomY - textTopY);
+
+          // judgement line
+          bgCtx.strokeStyle = '#aaa';
+          bgCtx.lineWidth = 4;
+          bgCtx.beginPath();
+          bgCtx.moveTo(judgementLineX, conveyorBorderT);
+          bgCtx.lineTo(judgementLineX, conveyorBorderT + conveyorH);
+          bgCtx.stroke();
+
+          bgCtx.restore();
+        }
       }
 
       // draw
       ctx.clearRect(0, 0, w, h);
       currentTime = AudioEngine.getPlaybackPosition();
-
-      // background
-        ctx.save();
-
-        // borders
-        ctx.fillStyle = '#111';
-        ctx.fillRect(0, 0, w, conveyorBorderT);
-        ctx.fillRect(0, conveyorBorderT + conveyorH, w, conveyorBorderB);
-        ctx.fillRect(0, textBorderBottomY, w, textBorderB);
-
-      // backgrounds
-      {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, conveyorBorderB, w, conveyorH);
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
-        ctx.fillRect(0, textTopY, w, textBorderBottomY - textTopY);
-
-        // judgement line
-        ctx.strokeStyle = '#aaa';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(judgementLineX, conveyorBorderT);
-        ctx.lineTo(judgementLineX, conveyorBorderT + conveyorH);
-        ctx.stroke();
-
-        ctx.restore();
-      }
 
       var index = drawEvents.length - 1;
       var isDrawStepLines = false;
@@ -290,6 +294,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     // $window.addEventListener('resize', onWidgetResize);
     ResizeDetector.listenTo(containerElem, onWidgetResize);
 
+    containerElem.appendChild(bgElem);
     containerElem.appendChild(elem);
   };
 });
