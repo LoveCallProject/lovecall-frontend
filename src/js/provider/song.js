@@ -59,7 +59,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, Choreography, A
       
       Choreography.load(idx, songHash);
       AudioEngine.setSourceData(response.data);
-      AudioEngine.initEvents(Choreography.getTempo(), Choreography.getQueueEngine());
+      AudioEngine.initEvents(Choreography.getTempo());
 
       //successCallback && successCallback(idx, songHash, response.data);
     };
