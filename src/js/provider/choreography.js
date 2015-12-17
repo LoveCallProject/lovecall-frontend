@@ -17,6 +17,7 @@ mod.factory('Choreography', function($log) {
 
   var tableManager = new manager.LoveCallTableManager();
   var parsedData = null;
+  var mergedEvents = [];
   var queueEngine = null;
 
   var queueCallbacks = [];
@@ -66,6 +67,51 @@ mod.factory('Choreography', function($log) {
   };
 
 
+  var generateStepLineEvents = function(duration) {
+    $log.debug('generateStepLineEvents: parsedData', parsedData);
+    var tempo = getTempo();
+    var startStep = tempo.timeToStep(0);
+    var endStep = tempo.timeToStep(duration);
+
+    var startMeasureIdx = startStep.m - 1;
+    var endMeasureIdx = endStep.m;
+
+    var stepLineEvents = [];
+    for (var i = startMeasureIdx; i <= endMeasureIdx; i++) {
+      stepLineEvents.push(parser.makeEngineEvent([{m: i, s: 0}, 'stepLine', null], tempo));
+    }
+
+    var mergedEventsList = _.flatten([parsedData.events, stepLineEvents]);
+    mergedEvents = {};
+    for (var i = 0; i < mergedEventsList.length; i++) {
+      var e = mergedEventsList[i];
+      var ts = e.ts;
+
+      if (!mergedEvents.hasOwnProperty(ts)) {
+        mergedEvents[ts] = [[], [], []];
+      }
+
+      if (e.type === 'stepLine') {
+        mergedEvents[ts][0].push(e);
+        continue;
+      }
+
+      if (e.type === '跟唱') {
+        mergedEvents[ts][2].push(e);
+        continue;
+      }
+
+      if (e.params && e.params.msg) {
+        mergedEvents[ts][2].push(e);
+      }
+
+      mergedEvents[ts][1].push(e);
+    }
+
+    $log.debug('generateStepLineEvents: mergedEvents', mergedEvents);
+  };
+
+
   var load = function(idx, hash) {
     var table = tableManager.lookupTable(idx, hash);
 
@@ -73,8 +119,9 @@ mod.factory('Choreography', function($log) {
       $log.error('no table found for idx', idx, 'hash', hash);
       return;
     }
-
+;
     parsedData = parser.parseCall(table, hash);
+    mergedEvents = {};
     queueEngine = queue.queueEngineFactory(
         parsedData.events,
         queueEventCallback,
@@ -111,7 +158,7 @@ mod.factory('Choreography', function($log) {
 
 
   var getEvents = function() {
-    return parsedData.events;
+    return mergedEvents;
   };
 
 
@@ -133,6 +180,7 @@ mod.factory('Choreography', function($log) {
   return {
     'addQueueCallback': addQueueCallback,
     'removeQueueCallback': removeQueueCallback,
+    'generateStepLineEvents': generateStepLineEvents,
     'load': load,
     'loadTable': loadTable,
     'getSongUrlByIndex': getSongUrlByIndex,

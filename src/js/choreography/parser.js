@@ -336,6 +336,7 @@ var parseCall = function(data, hash) {
 
 
 module.exports = {
+  'makeEngineEvent': makeEngineEvent,
   'parseCall': parseCall
 };
 /* @license-end */

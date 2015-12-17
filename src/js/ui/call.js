@@ -20,7 +20,8 @@ var mod = angular.module('lovecall/ui/call', [
 mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
   $log.debug('$scope=', $scope);
 
-  var events = [];//TODO
+  var events = {};
+  var eventTimeline = [];
   var preCallDrawTime = 0;
 
   var pRight = 0;
@@ -29,17 +30,27 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   var isPlaying = false;
 
-  callCanvas.draw([]);
+  callCanvas.draw({}, [], 0);
 
 
   $scope.$on('audio:loaded', function(e) {
     callCanvas.setTempo(Choreography.getTempo());
     FrameManager.addFrameCallback(callFrameCallback);
+    events = Choreography.getEvents();
+    eventTimeline = Object.keys(events).sort(function(a, b) {
+      return a - b;
+    });
 
     isPlaying = false;
     pRight = 0;
     doUpdate();
   });
+
+
+  $scope.$on('audio:unloaded', function(e) {
+    FrameManager.removeFrameCallback(callFrameCallback);
+  });
+
 
   $scope.$on('audio:resume', function(e) {
     isPlaying = true;
@@ -48,12 +59,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   $scope.$on('audio:pause', function(e) {
     isPlaying = false;
-  });
-
-
-  $scope.$on('call:loader', function(e) {
-    events = Choreography.getEvents();
-    $log.debug('events', events);
   });
 
 
@@ -67,14 +72,15 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
   var doUpdate = function() {
     //update pointer
-    if (pRight < events.length - 1) {
-      var rightmostPos = (AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration())|0;
-      while (rightmostPos > events[pRight].ts) {
+    var rightmostPos = AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration();
+
+    if (pRight < eventTimeline.length - 1) {
+      while (rightmostPos > eventTimeline[pRight]) {
         pRight++;
       }
     }
 
-    callCanvas.draw(events.slice(0, pRight));
+    callCanvas.draw(events, eventTimeline, pRight);
   };
 
 
@@ -142,36 +148,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
-    var drawStepLine = function(basePos) {
-      basePos = basePos|0;
-
-      ctx.beginPath();
-      ctx.moveTo(basePos, stepLineY1);
-      ctx.lineTo(basePos, stepLineY2);
-      ctx.stroke();
-    }
-
-    var drawStepLines = function(basePos) {
-      var prePos = basePos;
-      var afterPos = basePos;
-
-      ctx.save();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-      while (prePos >= 0) {
-        prePos -= circleDistance;
-        drawStepLine(prePos);
-      }
-
-      while (afterPos <= w) {
-        afterPos += circleDistance;
-        drawStepLine(afterPos);
-      }
-
-      ctx.restore();
-    }
-
-    this.draw = function(drawEvents) {
+    this.draw = function(events, eventTimeline, limit) {
       if (inResizeFallout) {
         inResizeFallout = false;
 
@@ -224,37 +201,68 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       ctx.clearRect(0, 0, w, h);
       currentTime = AudioEngine.getPlaybackPosition();
 
-      var index = drawEvents.length - 1;
-      var isDrawStepLines = false;
-      for (index;index != -1;index--) {
-        var event = drawEvents[index];
-        var remainedTime = event.ts - currentTime;
+      var index = limit;
+      for (; index != -1; index--) {
+        var ts = eventTimeline[index];
+        var currentEventPack = events[ts];
+        var remainedTime = ts - currentTime;
         var x = pixPreSec * remainedTime;
         var drawX = x + judgementLineX;
-        if (!isDrawStepLines) {
-          drawStepLines(drawX);
-          isDrawStepLines = true;
+        var realX;
+        var realY;
+
+        if (!currentEventPack) {
+          break;
         }
 
+        // draw stepline
+        if (currentEventPack[0]) {
+          ctx.save();
+
+          for (var i = 0; i < currentEventPack[0].length; i++) {
+            var e = currentEventPack[0][i];
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(drawX, stepLineY1);
+            ctx.lineTo(drawX, stepLineY2);
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
+
+        // don't render invisible events
         if (drawX < judgementLineX - circleFadeOutDistance) {
           break;
         }
 
-        var realX;
-        var realY;
-
         // fade out past events
+        // alpha-only
         if (drawX < judgementLineX) {
           ctx.save();
           var fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
-          fadeOutValue = fadeOutValue < 0 ? 1 : 1 - fadeOutValue;
+          fadeOutValue = 1 - fadeOutValue;
 
           // TODO: exponential mapping or something else?
           var alpha = fadeOutValue;
           var scale = 1 + circleExplodeRatio * (1 - fadeOutValue);
           ctx.globalAlpha = alpha;
+        }
 
-          ctx.save();
+        // text
+        if (currentEventPack[2]) {
+          ctx.font = textH + "px sans-serif";
+          ctx.textAlign = 'center';
+          for (var i = 0; i < currentEventPack[2].length; i++) {
+            var msg = currentEventPack[2][i].params.msg;
+            ctx.fillText(msg, drawX, textBaselineY);
+          }
+        }
+
+        // apply scale
+        if (drawX < judgementLineX) {
           ctx.translate(judgementLineX, axisY);
           ctx.scale(scale, scale);
 
@@ -265,20 +273,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           realY = axisY - circleR;
         }
 
-        if (event.type !== '跟唱') {
+        for (var i = 0; i < currentEventPack[1].length; i++) {
+          var event = currentEventPack[1][i];
           ctx.drawImage(taikoImages[event.type], realX, realY);
-        }
-
-        if (drawX < judgementLineX) {
-          // restore everything except alpha for text rendering
-          ctx.restore();
-        }
-
-        // text
-        if (event.params && event.params.msg) {
-          ctx.font = textH + "px sans-serif";
-          ctx.textAlign = 'center';
-          ctx.fillText(event.params.msg, drawX, textBaselineY);
         }
 
         if (drawX < judgementLineX) {

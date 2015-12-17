@@ -4,14 +4,16 @@
 require('angular');
 var metronomeMod = require('../choreography/metronome');
 
+require('../provider/choreography');
 require('../ui/frame');
 
 
 var mod = angular.module('lovecall/engine/audio', [
+    'lovecall/provider/choreography',
     'lovecall/ui/frame'
 ]);
 
-mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
+mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, FrameManager) {
   var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
 
   var sourceBuffer = null;
@@ -185,6 +187,9 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, FrameManager) {
     $log.debug('finishSetSourceData: buffer=', buffer);
 
     sourceBuffer = buffer;
+
+    // generate step line events and merge into event stream
+    Choreography.generateStepLineEvents(getDuration());
 
     // trigger initial state updates for queue engine and metronome
     doSeek(0);
