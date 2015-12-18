@@ -1,0 +1,43 @@
+<md-dialog class="about">
+  <md-toolbar class="about__toolbar" layout="row" layout-align="start center">
+    <md-icon
+        md-font-library="material-icons"
+        class="about__toolbar__icon"
+        >
+        info
+    </md-icon>
+    <h2>关于</h2>
+    <span flex></span>
+    <md-button class="md-icon-button" ng-click="close()">
+      <md-icon md-font-library>close</md-icon>
+    </md-button>
+  </md-toolbar>
+
+  <md-dialog-content>
+    <md-tabs md-border-bottom >
+      <md-tab label="版本信息" >
+        <md-content class="md-padding">
+          <h1 class="md-display-2">LoveCall</h1>
+          <p>Version:{{version}}</p>
+        </md-content>
+      </md-tab>
+      <md-tab label="开发人员">
+        <md-content>
+          <md-list>
+            <md-list-item 
+                class="md-2-line about__content__listitem"
+                ng-repeat="contributor in contributors"
+                >
+              <md-icon class="md-avatar" md-font-library="material-icons">
+                person
+              </md-icon>
+              <div class="md-list-item-text">
+                <h3>{{ contributor.name }}</h3>
+              </div>
+            </md-list-item>
+          </md-list>
+        </md-content>
+      </md-tab>
+    </md-tabs>
+  </md-dialog-content>
+</md-dialog>

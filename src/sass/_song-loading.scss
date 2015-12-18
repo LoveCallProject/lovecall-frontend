@@ -1,0 +1,19 @@
+.song-loading {
+  align-items: center;
+}
+
+.song-loading__progress {
+  flex: 0 0 auto;
+}
+
+.song-loading__message {
+  flex: 1;
+
+  font-weight: normal;
+  font-size: 1rem;
+}
+
+.song-loading__actions {
+  // XXX: why the f**k is this necessary
+  order: 2;
+}

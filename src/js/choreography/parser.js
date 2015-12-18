@@ -25,12 +25,14 @@ var parseFuFuAction = function(startStep, params) {
 };
 
 
-var parsePeriodicAction = function(startStep, endStep, type, offset, increment) {
+var parsePeriodicAction = function(startStep, endStep, type, offset, increment, params) {
+  params = params || null;
+
   var result = [];
   var currentStep = stepAdd(startStep, offset);
 
   while (stepCompare(currentStep, endStep) < 0) {
-    result.push([currentStep, type, null]);
+    result.push([currentStep, type, params]);
     currentStep = stepAdd(currentStep, increment);
   }
 
@@ -49,18 +51,27 @@ var parseLDAction = function(startStep, endStep, params) {
 
 
 var parseLTAction = function(startStep, endStep, params) {
-  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: 4}, {m: 0, s: 8});
+  var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var actionParams = withHi ? {msg: 'Hi!'} : null;
+  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: 4}, {m: 0, s: 8}, actionParams);
 };
 
 
 var parseQHAction = function(startStep, endStep, params) {
-  return parsePeriodicAction(startStep, endStep, "前挥", {m: 0, s: 0}, {m: 0, s: 8});
+  var interval = params[0] ? params[0]|0 : 8;
+  return parsePeriodicAction(startStep, endStep, "前挥", {m: 0, s: 0}, {m: 0, s: interval});
 };
 
 
 var parseKHAction = function(startStep, endStep, params) {
-  return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: 4});
-}
+  var interval = params[0] ? params[0]|0 : 4;
+  return parsePeriodicAction(startStep, endStep, "快挥", {m: 0, s: 0}, {m: 0, s: interval});
+};
+
+
+var parseFuwaAction = function(startStep, endStep, params) {
+  return parsePeriodicAction(startStep, endStep, "fuwa", {m: 0, s: 0}, {m: 0, s: 4});
+};
 
 
 var parseAlarmAction = function(startStep, endStep, params) {
@@ -103,7 +114,7 @@ var parseFollowAction = function(startStep, endStep, params) {
   var content = params[0];
 
   return [
-    [startStep, "跟唱", content]
+    [startStep, "跟唱", {msg: content}]
   ];
 };
 
@@ -128,19 +139,21 @@ var LONG_ACTION_PARSERS = {
   '里跳': parseLTAction,
   '前挥': parseQHAction,
   '快挥': parseKHAction,
+  'fuwa': parseFuwaAction,
   '跟唱': parseFollowAction,
   '欢呼': parseCelebrateAction
 };
 
 
-var parsePointAction = function(actionData) {
+var parsePointAction = function(actionData, refStep) {
   var actionStartStep = {m: actionData[0], s: actionData[1]};
+  var realStartStep = refStep ? stepAdd(actionStartStep, refStep) : actionStartStep;
   var actionType = actionData[2];
   var actionParams = actionData.slice(3);
 
   var parseFn = POINT_ACTION_PARSERS[actionType];
   if (parseFn) {
-    return parseFn(actionStartStep, actionParams);
+    return parseFn(realStartStep, actionParams);
   }
 
   console.error('unrecognized point action', actionData);
@@ -148,15 +161,17 @@ var parsePointAction = function(actionData) {
 };
 
 
-var parseLongAction = function(actionData) {
+var parseLongAction = function(actionData, refStep) {
   var actionStartStep = {m: actionData[0], s: actionData[1]};
   var actionEndStep = {m: actionData[2], s: actionData[3]};
+  var realStartStep = refStep ? stepAdd(actionStartStep, refStep) : actionStartStep;
+  var realEndStep = refStep ? stepAdd(actionEndStep, refStep) : actionEndStep;
   var actionType = actionData[4];
   var actionParams = actionData.slice(5);
 
   var parseFn = LONG_ACTION_PARSERS[actionType];
   if (parseFn) {
-    return parseFn(actionStartStep, actionEndStep, actionParams);
+    return parseFn(realStartStep, realEndStep, actionParams);
   }
 
   console.error('unrecognized long action', actionData);
@@ -164,14 +179,36 @@ var parseLongAction = function(actionData) {
 };
 
 
-var parseTimelineAction = function(action) {
+var parseSequenceAction = function(actionData, seqs, refStep) {
+  var actionStartStep = {m: actionData[0], s: actionData[1]};
+  var realStartStep = refStep ? stepAdd(actionStartStep, refStep) : actionStartStep;
+  var name = actionData[2];
+
+  var seq = seqs[name];
+
+  if (typeof(seq) === 'undefined') {
+    console.error('unrecognized sequence', seq);
+    return [];
+  }
+
+  var result = _.flatten(seq.map(function(v) {
+    return parseTimelineAction(v, seqs, realStartStep);
+  }));
+
+  return result;
+};
+
+
+var parseTimelineAction = function(action, seqs, refStep) {
   var actionFlag = action[0];
   var actionData = action.slice(1);
   switch (actionFlag) {
     case 0:
-      return parsePointAction(actionData);
+      return parsePointAction(actionData, refStep);
     case 1:
-      return parseLongAction(actionData);
+      return parseLongAction(actionData, refStep);
+    case 2:
+      return parseSequenceAction(actionData, seqs, refStep);
   }
 
   console.error('unrecognized action', action);
@@ -179,10 +216,10 @@ var parseTimelineAction = function(action) {
 };
 
 
-var parseTimeline = function(timeline, tempo) {
+var parseTimeline = function(timeline, seqs, tempo) {
   var result = _(timeline)
     .map(function(v) {
-      return parseTimelineAction(v);
+      return parseTimelineAction(v, seqs, null);
     })
     .flatten()
     .map(function(elem) {
@@ -265,7 +302,14 @@ var parseCall = function(data, hash) {
   var metadata = data.metadata;
   var songMetadata = metadata.song;
   var sources = songMetadata.sources;
-  var globalOffsetMs = sources[hash].offset;
+
+  var sourceData = sources[hash];
+  if (typeof(sourceData) === 'undefined') {
+    console.warn('using fallback data for hash', hash);
+    sourceData = sources['fallback:'];
+  }
+
+  var globalOffsetMs = sourceData.offset;
 
   var parsedMetadata = parseSongMetadata(songMetadata);
 
@@ -273,7 +317,9 @@ var parseCall = function(data, hash) {
   var tempo = tempoMod.tempoFactory(songMetadata.timing, globalOffsetMs ? globalOffsetMs : 0);
 
   var form = parseForm(data.form, tempo);
-  var events = parseTimeline(data.timeline, tempo);
+
+  var seqs = data.sequences || {};
+  var events = parseTimeline(data.timeline, seqs, tempo);
 
   var parsedPalette = parsePalette(metadata.palette);
   var colors = parseColors(parsedPalette, data.colors, tempo);
@@ -290,6 +336,7 @@ var parseCall = function(data, hash) {
 
 
 module.exports = {
+  'makeEngineEvent': makeEngineEvent,
   'parseCall': parseCall
 };
 /* @license-end */

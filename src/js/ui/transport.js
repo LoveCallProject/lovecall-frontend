@@ -23,7 +23,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
   // scope states
   $scope.isLoaded = false;
-  $scope.playbackPos = 0;
   $scope.isPlaying = false;
   $scope.playButtonIcon = 'play_arrow';
   $scope.volumePercentage = 100;
@@ -33,21 +32,23 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
   var isPlaying = false;
   var playbackPos = 0;
   var prevIsPlaying = true;
-  var prevPlaybackPos = -1;
   var duration = 0;
   var isMuted = false;
 
 
   // actions
   var play = function() {
-    $scope.playButtonIcon = 'pause';
     AudioEngine.resume();
   };
 
 
   var pause = function() {
-    $scope.playButtonIcon = 'play_arrow';
     AudioEngine.pause();
+  };
+
+
+  var updatePlayIcon = function() {
+    $scope.playButtonIcon = isPlaying ? 'pause' : 'play_arrow';
   };
 
 
@@ -139,29 +140,25 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     playbackPos = AudioEngine.getPlaybackPosition();
 
     if (prevIsPlaying != isPlaying) {
+      transportState.setIsPlaying(isPlaying);
       $scope.isPlaying = isPlaying;
+      updatePlayIcon();
       $scope.$digest();
     }
 
     // chromium thinks i'm causing jank by delibrately limiting the refresh
     // rate... so here's the full 60fps someone wanted
-    updateTransport(playbackPos, duration);
-
-    // limit update frequency
-    if (prevPlaybackPos != playbackPos && Math.abs($scope.playbackPos - playbackPos) >= 500) {
-      $scope.playbackPos = playbackPos;
-      $scope.$digest();
+    // but for conserving energy, let's only refresh if playing; otherwise
+    // refreshing at mouse events seems great.
+    if (isPlaying) {
+      updateTransport(playbackPos, duration);
     }
 
     prevIsPlaying = isPlaying;
-    prevPlaybackPos = playbackPos;
   };
 
 
   /* canvas */
-
-  var prevTransportPos = 0;
-
   var transportCanvasStateFactory = function(containerElem) {
     // parameters
     var marginL = 16;
@@ -182,6 +179,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var tickBoxMarginTB = 8;
 
     // ui states
+    var isPlaying = false;
     var position = 0;
     var durationMs = 0;
     var indicatorHovered = true;
@@ -234,6 +232,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var tickBoxGapWidth = 0;
     var tickBoxStartX = 0;
     var tickBoxStartY = 0;
+
+
+    var setIsPlaying = function(v) {
+      isPlaying = v;
+    };
 
 
     var update = function(pos, duration, skipDraw) {
@@ -308,7 +311,13 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var fillRectWithRGBA = function(ctx, x, y, w, h, rgb, a) {
-      var colorStr = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+      var colorStr;
+
+      if (!rgb) {
+        colorStr = 'transparent';
+      } else {
+        colorStr = 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')';
+      }
       ctx.fillStyle = colorStr;
       ctx.fillRect(x, y, w, h);
     };
@@ -447,14 +456,14 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         ctx.save();
         ctx.lineWidth = sliderLineWidth;
         // played parts
-        ctx.strokeStyle = '#666666';
+        ctx.strokeStyle = '#111';
         ctx.beginPath();
         ctx.moveTo(sliderX1, sliderY);
         ctx.lineTo(indicatorX, sliderY);
         ctx.stroke();
 
         // unplayed parts
-        ctx.strokeStyle = '#eeeeee';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
         ctx.beginPath();
         ctx.moveTo(indicatorX, sliderY);
         ctx.lineTo(sliderX2, sliderY);
@@ -470,7 +479,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
             return;
           }
 
-          ctx.strokeStyle = separatorX <= indicatorX ? '#666666' : '#eeeeee';
+          ctx.strokeStyle = separatorX <= indicatorX ? '#111' : 'rgba(255, 255, 255, 0.75)';
           ctx.beginPath();
           ctx.moveTo(separatorX, sliderY - partSeparatorHeightT);
           ctx.lineTo(separatorX, sliderY + partSeparatorHeightB);
@@ -492,7 +501,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           ctx.fill();
         }
 
-        ctx.fillStyle = "#666666";
+        ctx.fillStyle = "#111";
         ctx.beginPath();
         ctx.arc(indicatorX, indicatorY, indicatorR, 0, 2 * Math.PI);
         ctx.fill();
@@ -518,8 +527,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       }
 
       // measure number
+      // don't draw if box is too small
       // TODO: performance
-      {
+      if (tickBoxSize >= 16) {
         ctx.save();
         ctx.fillStyle = '#000';
         ctx.font = '12px monospace';
@@ -688,6 +698,10 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var onWidgetResize = function(e) {
       // $log.debug('widget/window resized, scheduling canvas re-size on next draw');
       inResizeFallout = true;
+
+      if (!isPlaying) {
+        draw();
+      }
     };
 
 
@@ -703,6 +717,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     containerElem.appendChild(elem);
 
     return {
+      setIsPlaying: setIsPlaying,
       update: update,
       updateTick: updateTick,
       updateSongForm: updateSongForm,

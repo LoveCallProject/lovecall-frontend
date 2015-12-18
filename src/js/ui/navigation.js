@@ -4,9 +4,21 @@
 require('angular');
 require('angular-material');
 
-var mod = angular.module('lovecall/ui/navigation', ['ngMaterial']);
+require('../provider/song');
 
-mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia) {
+require('../../templates/song-selector.tmpl.html');
+require('../../templates/about.tmpl.html');
+
+
+var mod = angular.module('lovecall/ui/navigation', [
+    'ngMaterial',
+    'lovecall/provider/song',
+    'lovecall/provider/choreography'
+]);
+
+mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $mdDialog, $log, Choreography, Song) {
+  $log = $log.getInstance('NavigationController');
+
   $scope.showSide = function() {
     $mdSidenav('sidenav').open();
   };
@@ -16,4 +28,35 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia) {
   };
 
 	$scope.$mdMedia = $mdMedia;
+
+  $scope.showSongSelector = function(ev) {
+    var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+    $mdDialog.show({
+      controller: 'SongSelectorController',
+      templateUrl: 'song-selector.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      clickOutsideToClose: true,
+      fullscreen: useFullScreen
+    }).then(function(answer) {
+      $log.debug('selected song index', answer);
+
+      var songUrl = Choreography.getSongUrlByIndex(answer);
+
+      // load song via Ajax
+      Song.load(answer, songUrl);
+    }, function() {
+      $log.debug('cancelled song select');
+    });
+  };
+
+  $scope.showAboutDialog = function(ev) {
+    $mdDialog.show({
+      controller: 'AboutDialogController',
+      templateUrl: 'about.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      clickOutsideToClose: true
+    }).then(function(){}, function(){});
+  }
 });

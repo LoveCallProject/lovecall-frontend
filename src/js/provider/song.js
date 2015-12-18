@@ -1,18 +1,24 @@
 /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
+
 'use strict';
 
 require('angular');
+require('angular-material');
 
 var SparkMD5 = require('spark-md5');
 
 // XXX: upstream is broken
 var id3 = require('../vendored/id3');
 
+require('../../templates/song-loading.tmpl.html');
+
 
 var mod = angular.module('lovecall/provider/song', [
+    'lovecall/provider/choreography',
+    'lovecall/engine/audio'
 ]);
 
-mod.factory('Song', function($rootScope, $http, $log) {
+mod.factory('Song', function($rootScope, $http, $mdDialog, $log, Choreography, AudioEngine) {
   $log = $log.getInstance('Song');
 
   var songBuffer = null;
@@ -39,17 +45,23 @@ mod.factory('Song', function($rootScope, $http, $log) {
   };
 
 
-  var loadSuccessCallbackFactory = function(successCallback) {
+  var loadSuccessCallbackFactory = function(idx) {
     return function(response) {
       $log.debug('load success:', response);
 
       songStatus = 'loaded';
       songBuffer = response.data;
-      songHash = SparkMD5.ArrayBuffer.hash(response.data);
+      songHash = 'md5:' + SparkMD5.ArrayBuffer.hash(response.data).toLowerCase();
 
       extractSongImageAsync(songBuffer);
 
-      successCallback && successCallback(songHash, response.data);
+      hideLoadingDialog(false);
+      
+      Choreography.load(idx, songHash);
+      AudioEngine.setSourceData(response.data);
+      AudioEngine.initEvents(Choreography.getTempo());
+
+      //successCallback && successCallback(idx, songHash, response.data);
     };
   };
 
@@ -58,15 +70,33 @@ mod.factory('Song', function($rootScope, $http, $log) {
     songStatus = 'errored';
 
     return function(response) {
+      hideLoadingDialog(true);
       errorCallback && errorCallback(response);
     };
   };
 
 
-  var load = function(url, successCallback, errorCallback) {
-    $log.debug('load request: url', url);
+  var showLoadingDialog = function() {
+    $mdDialog.show({
+      controller: 'SongLoadingController',
+      templateUrl: 'song-loading.tmpl.html',
+      parent: angular.element(document.body),
+      clickOutsideToClose: false
+    });
+  };
+
+
+  var hideLoadingDialog = function(errored) {
+    $rootScope.$broadcast('song:hideLoadingDialog', errored);
+  };
+
+
+  var load = function(idx, url, successCallback, errorCallback) {
+    $log.debug('load request: idx', idx, 'url', url);
 
     songStatus = 'loading';
+
+    showLoadingDialog();
     $http({
       method: 'GET',
       url: url,
@@ -74,7 +104,7 @@ mod.factory('Song', function($rootScope, $http, $log) {
         'Content-Type': undefined
       },
       responseType: 'arraybuffer'
-    }).then(loadSuccessCallbackFactory(successCallback), errorCallback);
+    }).then(loadSuccessCallbackFactory(idx), errorCallback);
   };
 
 

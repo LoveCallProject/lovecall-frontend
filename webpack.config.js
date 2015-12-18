@@ -14,6 +14,7 @@ module.exports = {
     ]
   },
   plugins: [
+    new webpack.ExtendedAPIPlugin(),
     new webpack.ResolverPlugin(
         new webpack.ResolverPlugin.DirectoryDescriptionFilePlugin("bower.json", ["main"])
     ),
@@ -22,7 +23,6 @@ module.exports = {
     })
   ],
 
-  devtool: '#cheap-module-eval-source-map',
   devServer: {
     contentBase: './build',
   },
@@ -37,6 +37,7 @@ module.exports = {
     loaders: [
       { test: /\.scss$/, loader: "style!css!sass" },
       { test: /\.css$/, loader: "style!css" },
+      { test: /\.tmpl\.html$/, loader: "ng-cache" },
     ]
   }
 };

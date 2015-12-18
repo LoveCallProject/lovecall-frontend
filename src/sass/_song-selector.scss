@@ -1,0 +1,28 @@
+.song-selector {
+  width: 50rem;
+  max-height: 80rem;
+}
+
+.toolbar__icon {
+  margin: 1rem;
+}
+
+.toolbar__space {
+  flex: 1;
+}
+
+.song-selector__content {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.song-selector__content__button {
+  text-align: start;
+  text-transform: none;
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  .md-ripple-container {
+    border-radius: 0;
+  }
+}
