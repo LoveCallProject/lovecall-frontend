@@ -28,6 +28,7 @@
     "angular-material": "^1.0.0",
     "css-loader": "^0.23.0",
     "element-resize-detector": "^1.0.3",
+    "html-webpack-plugin": "^1.7.0",
     "lodash": "^3.10.1",
     "ng-annotate-webpack-plugin": "^0.1.2",
     "ng-cache-loader": "0.0.14",
