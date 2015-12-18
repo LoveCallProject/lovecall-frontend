@@ -5,7 +5,7 @@ module.exports = {
       "title": "Snow halation",
       "artist": "μ's",
       "album": "Snow halation",
-      "url": "music/snowhare.mp3",
+      "url": "snowhare.mp3",
       "sources": {
         "fallback:": {
           "offset": 401

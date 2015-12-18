@@ -3,6 +3,8 @@
 
 require('angular');
 
+var siteConf = require('../../lovecall.config');
+
 
 var mod = angular.module('lovecall/conf', [
 ]);
@@ -33,6 +35,7 @@ mod.factory('LCConfig', function() {
   return {
     VERSION: VERSION,
     HASH: HASH,
+    REMOTE_MUSIC_PREFIX: siteConf.remoteMusicPrefix,
     getAudioBufferSize: getAudioBufferSize,
     getGlobalOffsetMs: getGlobalOffsetMs,
     getKnownLocalSongs: getKnownLocalSongs,
