@@ -125,7 +125,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     var getTaikoImage = function(action) {
       var img = new Image();
-      img.src = '/images/' + action + '.png';
+      img.src = 'images/' + action + '.png';
 
       return img;
     }

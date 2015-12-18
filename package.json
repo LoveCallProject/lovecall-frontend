@@ -36,6 +36,8 @@
     "sass-loader": "^3.1.2",
     "spark-md5": "^2.0.0",
     "style-loader": "^0.13.0",
-    "webpack": "^1.12.9"
+    "url-loader": "^0.5.7",
+    "webpack": "^1.12.9",
+    "webpack-cordova-plugin": "^0.1.5"
   }
 }
