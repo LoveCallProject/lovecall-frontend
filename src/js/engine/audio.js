@@ -19,7 +19,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var sourceBuffer = null;
   var sourceNode = null;
   var gainNode = audioCtx.createGain();
-  var timingNode = audioCtx.createScriptProcessor(2048);
+  var timingNode = audioCtx.createScriptProcessor(4096);
 
   var isPlaying = false;
   var seekPosMs = null;
