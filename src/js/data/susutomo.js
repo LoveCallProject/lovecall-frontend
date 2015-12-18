@@ -5,7 +5,7 @@ module.exports = {
       "title": "ススメ→トゥモロウ",
       "artist": "μ's",
       "album": "START:DASH!!",
-      "url": "music/susutomo.mp3",
+      "url": "susutomo.mp3",
       "sources": {
         "md5:c58b2892e24d0239a6f31b769c230dac": {
           "offset": 5134

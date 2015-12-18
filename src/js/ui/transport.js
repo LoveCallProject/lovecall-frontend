@@ -38,14 +38,17 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
   // actions
   var play = function() {
-    $scope.playButtonIcon = 'pause';
     AudioEngine.resume();
   };
 
 
   var pause = function() {
-    $scope.playButtonIcon = 'play_arrow';
     AudioEngine.pause();
+  };
+
+
+  var updatePlayIcon = function() {
+    $scope.playButtonIcon = isPlaying ? 'pause' : 'play_arrow';
   };
 
 
@@ -139,6 +142,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     if (prevIsPlaying != isPlaying) {
       transportState.setIsPlaying(isPlaying);
       $scope.isPlaying = isPlaying;
+      updatePlayIcon();
       $scope.$digest();
     }
 
@@ -523,8 +527,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
       }
 
       // measure number
+      // don't draw if box is too small
       // TODO: performance
-      {
+      if (tickBoxSize >= 16) {
         ctx.save();
         ctx.fillStyle = '#000';
         ctx.font = '12px monospace';

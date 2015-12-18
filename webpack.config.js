@@ -4,6 +4,7 @@
 var path = require('path');
 var webpack = require('webpack');
 var ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
+var htmlWebpackPlugin = require('html-webpack-plugin');
 
 
 module.exports = {
@@ -20,7 +21,17 @@ module.exports = {
     ),
     new ngAnnotatePlugin({
       add: true
-    })
+    }),
+    new htmlWebpackPlugin({
+      template: 'public/lovecall.html',
+      hash: true,
+      inject: 'body',
+      minify: {
+        removeComments: true,
+        collapseWhitespace: true,
+        caseSensitive: true,
+      },
+    }),
   ],
 
   devServer: {
@@ -30,8 +41,7 @@ module.exports = {
   entry: "./src/js/main.js",
   output: {
     path: path.join(__dirname, 'build'),
-    publicPath: '/assets/',
-    filename: "bundle.js"
+    filename: "assets/bundle.js",
   },
   module: {
     loaders: [

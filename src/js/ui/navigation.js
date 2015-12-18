@@ -59,4 +59,10 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
       clickOutsideToClose: true
     }).then(function(){}, function(){});
   }
+
+
+  // close navigation drawer when song loading ends
+  $scope.$on('song:hideLoadingDialog', function(e, errored) {
+    $scope.closeSide();
+  });
 });
