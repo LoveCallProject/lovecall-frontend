@@ -30,6 +30,9 @@
 .metadata__image {
   background-size: 100%;
 
+  // very weird bug of Chromium
+  border-radius: 50%;
+
   animation-name: rotate;
   animation-iteration-count: infinite;
   animation-timing-function: linear;
