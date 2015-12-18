@@ -10,15 +10,17 @@ var SparkMD5 = require('spark-md5');
 // XXX: upstream is broken
 var id3 = require('../vendored/id3');
 
+require('../conf');
 require('../../templates/song-loading.tmpl.html');
 
 
 var mod = angular.module('lovecall/provider/song', [
+    'lovecall/conf',
     'lovecall/provider/choreography',
     'lovecall/engine/audio'
 ]);
 
-mod.factory('Song', function($rootScope, $http, $mdDialog, $log, Choreography, AudioEngine) {
+mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Choreography, AudioEngine) {
   $log = $log.getInstance('Song');
 
   var songBuffer = null;
@@ -99,7 +101,7 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, Choreography, A
     showLoadingDialog();
     $http({
       method: 'GET',
-      url: url,
+      url: LCConfig.REMOTE_MUSIC_PREFIX + url,
       headers: {
         'Content-Type': undefined
       },
