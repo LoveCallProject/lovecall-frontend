@@ -14,7 +14,17 @@ var mod = angular.module('lovecall/engine/audio', [
 ]);
 
 mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, FrameManager) {
-  var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
+  var contextClass = (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.mozAudioContext ||
+      window.oAudioContext ||
+      window.msAudioContext);
+
+  if (contextClass) {
+    var audioCtx = new contextClass();
+  } else {
+    console.log("You Device Can't Support AudioContext!!");
+  }
 
   var sourceBuffer = null;
   var sourceNode = null;
