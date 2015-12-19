@@ -45,6 +45,10 @@ mod.factory('MouseEvent', function($window) {
   var mouseDownHandler = mouseEventCallbackHandlerFactory('mousedown');
   var mouseUpHandler = mouseEventCallbackHandlerFactory('mouseup');
 
+  var touchMoveHandler = mouseEventCallbackHandlerFactory('touchmove');
+  var touchEndHandler = mouseEventCallbackHandlerFactory('touchend');
+  var touchCancelHandler = mouseEventCallbackHandlerFactory('touchcancel');
+
 
   return {
     addMouseMoveListener: mouseMoveHandler.add,
@@ -52,7 +56,13 @@ mod.factory('MouseEvent', function($window) {
     addMouseDownListener: mouseDownHandler.add,
     removeMouseDownListener: mouseDownHandler.remove,
     addMouseUpListener: mouseUpHandler.add,
-    removeMouseUpListener: mouseUpHandler.remove
+    removeMouseUpListener: mouseUpHandler.remove,
+    addTouchMoveListener: touchMoveHandler.add,
+    removeTouchMoveListener: touchMoveHandler.remove,
+    addTouchEndListener: touchEndHandler.add,
+    removeTouchEndListener: touchEndHandler.remove,
+    addTouchCancelListener: touchCancelHandler.add,
+    removeTouchCancelListener: touchCancelHandler.remove,
   };
 });
 /* @license-end */
