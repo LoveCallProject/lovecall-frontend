@@ -700,7 +700,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var onmousedown = function(e) {
-      if (!(e.button !== 0)) {
+      if (!(e.buttons & 0x01)) {
         // only process left click for now
         return;
       }
