@@ -13,8 +13,10 @@ require('./song-loading');
 require('./song-selector');
 require('./transport');
 
+require('../../templates/index.tmpl.html');
 
-angular.module('lovecall/ui/index', [
+
+var mod = angular.module('lovecall/ui/index', [
     'lovecall/ui/about',
     'lovecall/ui/container',
     'lovecall/ui/call',
@@ -25,6 +27,13 @@ angular.module('lovecall/ui/index', [
     'lovecall/ui/song-selector',
     'lovecall/ui/transport'
 ]);
+
+mod.directive('lovecallApp', function() {
+  return {
+    restrict: 'EA',
+    templateUrl: 'index.tmpl.html',
+  };
+});
 /* @license-end */
 
 // vim:set ai et ts=2 sw=2 sts=2 fenc=utf-8:
