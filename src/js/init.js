@@ -11,6 +11,7 @@ var wr = require('./data/wr');
 var susutomo = require('./data/susutomo');
 var startDash = require('./data/start-dash');
 var nbg = require('./data/nbg');
+var kiseki = require('./data/kiseki');
 
 
 var mod = angular.module('lovecall/init', [
@@ -22,6 +23,7 @@ mod.run(function($window, Choreography, FrameManager) {
   // load bundled call tables
   Choreography.loadTable(snowhare);
   Choreography.loadTable(wr);
+  Choreography.loadTable(kiseki);
   Choreography.loadTable(susutomo);
   Choreography.loadTable(startDash);
   Choreography.loadTable(nbg);
