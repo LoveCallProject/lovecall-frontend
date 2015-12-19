@@ -146,7 +146,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       '前挥': getTaikoImage('qh'),
       '快挥': getTaikoImage('kh'),
       '欢呼': getTaikoImage('hh'),
-      'fuwa': getTaikoImage('fw')
+      'fuwa': getTaikoImage('fw'),
+      '跳': getTaikoImage('jump')
     };
 
 
