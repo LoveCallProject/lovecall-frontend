@@ -24,6 +24,12 @@ var parseFuFuAction = function(startStep, params) {
   ];
 };
 
+var parseJumpAction = function(startStep, params) {
+  return [
+    [startStep, "跳", null]
+  ];
+}
+
 
 var parsePeriodicAction = function(startStep, endStep, type, offset, increment, params) {
   params = params || null;
@@ -128,7 +134,8 @@ var parseCelebrateAction = function(startStep, endStep, params) {
 
 // action type lookup maps
 var POINT_ACTION_PARSERS = {
-  'fufu': parseFuFuAction
+  'fufu': parseFuFuAction,
+  '跳': parseJumpAction,
 };
 
 var LONG_ACTION_PARSERS = {
