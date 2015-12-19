@@ -700,7 +700,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var onmousedown = function(e) {
-      if (!(e.buttons & 0x01)) {
+      if (!(e.button !== 0)) {
         // only process left click for now
         return;
       }
@@ -737,7 +737,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var onmouseup = function(e) {
-      if (e.buttons & 0x01) {
+      if (e.button !== 0) {
         // left button still down, don't release yet
         return;
       }
