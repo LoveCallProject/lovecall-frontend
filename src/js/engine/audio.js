@@ -22,7 +22,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var timingNode = audioCtx.createScriptProcessor(2048);
 
   var isPlaying = false;
-  var seekPosMs = null;
+  var inSeeking = false;
   var isPlayingBeforeSeek = false;
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
@@ -37,13 +37,18 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
 
 
   var onEndedCallback = function(e) {
-    if (seekPosMs !== null) {
-      $log.debug('onEndedCallback: seeking to', seekPosMs);
-      doSeek();
-    } else {
-      $log.debug('onEndedCallback: pausing');
-      pause();
+    // Firefox Nightly fires ended events for all stopping, so don't let that
+    // disturb seeking.
+    if (inSeeking) {
+      $log.debug('onEndedCallback: NOT executing pause due to seek in progress');
+
+      // reset the seeking flag
+      inSeeking = false;
+      return;
     }
+
+    $log.debug('onEndedCallback: pausing');
+    pause();
   };
 
 
@@ -114,9 +119,6 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
 
 
   var doSeek = function(newPositionMs) {
-    // in case of coming from onEndedCallback
-    newPositionMs = typeof(newPositionMs) !== 'undefined' ? newPositionMs : seekPosMs;
-
     $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
     playbackPosMs = newPositionMs;
     currentMetronome.tick(newPositionMs);
@@ -125,27 +127,18 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     // reset playing status
     isPlaying = isPlayingBeforeSeek;
     isPlaying && doResume();
-
-    // clear seeking information
-    seekPosMs = null;
   };
 
 
   var seek = function(newPositionMs) {
-    if (seekPosMs !== null) {
-      $log.warn('seek: another seek already in progress! pos', seekPosMs);
-      return;
-    }
-
     if (isPlaying) {
-      // record seek information and pause, waiting for onEndedCallback to continue
-      // seeking
-      seekPosMs = newPositionMs;
+      // record status, pause and workaround Nightly
+      inSeeking = true;
       isPlayingBeforeSeek = isPlaying;
       doPause();
-    } else {
-      doSeek(newPositionMs);
     }
+
+    doSeek(newPositionMs);
   };
 
 
