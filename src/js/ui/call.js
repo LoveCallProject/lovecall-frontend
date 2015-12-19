@@ -7,17 +7,19 @@ require('../engine/audio');
 require('../provider/choreography');
 require('../provider/resize-detector');
 require('./frame');
+require('./dpi');
 
 
 var mod = angular.module('lovecall/ui/call', [
     'lovecall/engine/audio',
     'lovecall/provider/choreography',
     'lovecall/provider/resize-detector',
-    'lovecall/ui/frame'
+    'lovecall/ui/frame',
+    'lovecall/ui/dpi',
 ]);
 
 
-mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
+mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector) {
   $log.debug('$scope=', $scope);
 
   var events = {};
@@ -160,10 +162,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var canvasRect = elem.getBoundingClientRect();
         w = canvasRect.width|0;
         h = canvasRect.height|0;
-        elem.width = w;
-        elem.height = h;
-        bgElem.width = w;
-        bgElem.height = h;
+        DPIManager.scaleCanvas(elem, ctx, w, h);
+        DPIManager.scaleCanvas(bgElem, bgCtx, w, h);
 
         stepLineY1 = (conveyorBorderT)|0;
         stepLineY2 = (conveyorBorderT + conveyorH)|0;
