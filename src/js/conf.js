@@ -10,7 +10,7 @@ var mod = angular.module('lovecall/conf', [
 ]);
 
 mod.factory('LCConfig', function() {
-  var VERSION = '20151219-dev';
+  var VERSION = '20151219';
   var HASH = __webpack_hash__;
 
 
