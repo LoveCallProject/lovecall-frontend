@@ -8,6 +8,7 @@ require('../provider/choreography');
 require('../provider/resize-detector');
 require('../provider/mouseevent');
 require('./frame');
+require('./dpi');
 
 
 var mod = angular.module('lovecall/ui/transport', [
@@ -15,10 +16,11 @@ var mod = angular.module('lovecall/ui/transport', [
     'lovecall/provider/choreography',
     'lovecall/provider/resize-detector',
     'lovecall/provider/mouseevent',
-    'lovecall/ui/frame'
+    'lovecall/ui/frame',
+    'lovecall/ui/dpi',
 ]);
 
-mod.controller('TransportController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector, MouseEvent) {
+mod.controller('TransportController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector, MouseEvent) {
   $log = $log.getInstance('TransportController');
 
   // scope states
@@ -197,6 +199,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     // draw states
     var elem = document.createElement('canvas');
     var ctx = elem.getContext('2d');
+
     var inResizeFallout = true;
     var elemOffsetX = 0;
     var elemOffsetY = 0;
@@ -341,8 +344,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         w = canvasRect.width|0;
         h = canvasRect.height|0;
         if (prevW != w || prevH != h) {
-          elem.width = w;
-          elem.height = h;
+          DPIManager.scaleCanvas(elem, ctx, w, h);
           prevW = w;
           prevH = h;
           halfH = (h / 2)|0;
