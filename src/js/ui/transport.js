@@ -185,6 +185,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorHovered = true;
     var indicatorActive = false;
     var positionBeforeIndicatorActive = 0;
+    var firstTouchId = null;
 
     var songForm = null;
     var songColors = null;
@@ -648,22 +649,41 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
-    var onmousemove = function(e) {
-      pointerX = e.pageX - elemOffsetX;
-      pointerY = e.pageY - elemOffsetY;
+    var onPointerMove = function(pageX, pageY) {
+      pointerX = pageX - elemOffsetX;
+      pointerY = pageY - elemOffsetY;
       // console.log(elemOffsetX, elemOffsetY, pointerX, pointerY);
       updatePointer(false);
     };
 
 
-    var onmousedown = function(e) {
-      pointerX = e.pageX - elemOffsetX;
-      pointerY = e.pageY - elemOffsetY;
+    var onmousemove = function(e) {
+      onPointerMove(e.pageX, e.pageY);
+    };
 
-      if (!(e.buttons & 0x01)) {
-        // only process left click for now
-        return;
+
+    var ontouchmove = function(e) {
+      // we don't need mousemove event any more if touch is supported
+      // e.preventDefault();
+
+      var touches = e.changedTouches;
+      for (var i = 0; i < touches.length; i++) {
+        var touch = touches[i];
+
+        if (touch.identifier !== firstTouchId) {
+          // only process the first touch
+          continue;
+        }
+
+        onPointerMove(touch.pageX, touch.pageY);
+        break;
       }
+    };
+
+
+    var onPointerDown = function(pageX, pageY) {
+      pointerX = pageX - elemOffsetX;
+      pointerY = pageY - elemOffsetY;
 
       var sliderHitResult = sliderHitTest(pointerX, pointerY, false);
 
@@ -677,14 +697,33 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
-    var onmouseup = function(e) {
-      pointerX = e.pageX - elemOffsetX;
-      pointerY = e.pageY - elemOffsetY;
-
-      if (e.buttons & 0x01) {
-        // left button still down, don't release yet
+    var onmousedown = function(e) {
+      if (!(e.buttons & 0x01)) {
+        // only process left click for now
         return;
       }
+
+      onPointerDown(e.pageX, e.pageY);
+    };
+
+
+    var ontouchstart = function(e) {
+      if (firstTouchId !== null) {
+        // only process the first touch
+        return;
+      }
+
+      // XXX: is it possible that a single touchstart event could contain
+      // >1 touches?
+      var touch = e.changedTouches[0];
+      firstTouchId = touch.identifier;
+      onPointerDown(touch.pageX, touch.pageY);
+    };
+
+
+    var onPointerUp = function(pageX, pageY) {
+      pointerX = pageX - elemOffsetX;
+      pointerY = pageY - elemOffsetY;
 
       if (indicatorActive) {
         // send seek event
@@ -692,6 +731,40 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         indicatorActive = false;
         draw();
       }
+    };
+
+
+    var onmouseup = function(e) {
+      if (e.buttons & 0x01) {
+        // left button still down, don't release yet
+        return;
+      }
+
+      onPointerUp(e.pageX, e.pageY);
+    };
+
+
+    var ontouchend = function(e) {
+      var touches = e.changedTouches;
+      for (var i = 0; i < touches.length; i++) {
+        // TODO: properly track all touches instead of one?
+        var touch = touches[i];
+
+        if (touch.identifier !== firstTouchId) {
+          continue;
+        }
+
+        onPointerUp(touch.pageX, touch.pageY);
+        firstTouchId = null;
+        break;
+      }
+    };
+
+
+    var ontouchcancel = function(e) {
+      // TODO: actually cancel the touch instead of treating it the same as
+      // ending
+      ontouchend(e);
     };
 
 
@@ -709,6 +782,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     MouseEvent.addMouseMoveListener(onmousemove);
     elem.addEventListener('mousedown', onmousedown);
     MouseEvent.addMouseUpListener(onmouseup);
+
+    MouseEvent.addTouchMoveListener(ontouchmove);
+    elem.addEventListener('touchstart', ontouchstart);
+    MouseEvent.addTouchEndListener(ontouchend);
+    MouseEvent.addTouchCancelListener(ontouchcancel);
 
     $window.addEventListener('resize', onWidgetResize);
     ResizeDetector.listenTo(containerElem, onWidgetResize);
