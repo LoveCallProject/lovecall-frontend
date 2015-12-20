@@ -1,0 +1,22 @@
+.config {
+  min-width: 500px;
+}
+
+.config__toolbar__icon {
+  margin: 0px 10px 0px 10px;
+}
+
+.config__content {
+  padding: 10px;
+  hr {
+    opacity: 0.3;
+  }
+}
+
+.config__content__value {
+  font-weight: bold;
+}
+
+.config__submit {
+  float: right;
+}
