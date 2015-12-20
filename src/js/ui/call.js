@@ -222,7 +222,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         }
 
         // draw stepline
-        if (currentEventPack[0]) {
+        if (currentEventPack[0].length > 0) {
           ctx.save();
 
           for (var i = 0; i < currentEventPack[0].length; i++) {
@@ -258,7 +258,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         }
 
         // text
-        if (currentEventPack[2]) {
+        if (currentEventPack[2].length > 0) {
           ctx.font = textH + "px sans-serif";
           ctx.textAlign = 'center';
           for (var i = 0; i < currentEventPack[2].length; i++) {
