@@ -5,6 +5,7 @@ require('angular');
 
 require('./about');
 require('./container');
+require('./config.js');
 require('./call');
 require('./frame');
 require('./metadata');
@@ -19,6 +20,7 @@ require('../../templates/index.tmpl.html');
 var mod = angular.module('lovecall/ui/index', [
     'lovecall/ui/about',
     'lovecall/ui/container',
+    'lovecall/ui/config',
     'lovecall/ui/call',
     'lovecall/ui/frame',
     'lovecall/ui/metadata',
