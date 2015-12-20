@@ -1,0 +1,9 @@
+[submodule "emscripten-src/vendored/libogg"]
+	path = emscripten-src/vendored/libogg
+	url = https://git.xiph.org/mirrors/ogg.git
+[submodule "emscripten-src/vendored/libopus"]
+	path = emscripten-src/vendored/libopus
+	url = https://git.xiph.org/opus.git
+[submodule "emscripten-src/vendored/opus-tools"]
+	path = emscripten-src/vendored/opus-tools
+	url = https://git.xiph.org/opus-tools.git
