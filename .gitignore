@@ -9,6 +9,8 @@
 
 # build intermediates
 /build
+/emscripten-src/build
+/emscripten-src/vendored
 
 # dependencies
 /bower_components
