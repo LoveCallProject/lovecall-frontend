@@ -107,6 +107,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
     var judgementLineX = 75;
+    var followMarkerR = 6;
     var textMarginT = 4;
     var textMarginB = 8;
     var textH = 30;
@@ -117,6 +118,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var stepLineY1 = 0;
     var stepLineY2 = 0;
     var axisY = 0;
+    var followMarkerY = 0;
     var textTopY = 0;
     var textBaselineY = 0;
     var textBorderBottomY = 0;
@@ -169,6 +171,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         stepLineY1 = (conveyorBorderT)|0;
         stepLineY2 = (conveyorBorderT + conveyorH)|0;
         axisY = (conveyorBorderT + conveyorH / 2)|0;
+        followMarkerY = (stepLineY2 + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
         textBaselineY = (textTopY + textMarginT + textH)|0;
         textBorderBottomY = (textBaselineY + textMarginB)|0;
@@ -257,8 +260,25 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.globalAlpha = alpha;
         }
 
-        // text
         if (currentEventPack[2].length > 0) {
+          // follow marker
+          ctx.save();
+          ctx.fillStyle = '#eee';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = conveyorBorderB;
+          ctx.beginPath();
+          ctx.arc(
+              drawX,
+              followMarkerY,
+              followMarkerR,
+              0,
+              2 * Math.PI
+              );
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // text
           ctx.font = textH + "px sans-serif";
           ctx.textAlign = 'center';
           for (var i = 0; i < currentEventPack[2].length; i++) {
