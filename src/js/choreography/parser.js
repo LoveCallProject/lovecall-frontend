@@ -17,12 +17,20 @@ var makeEngineEvent = function(a, tempo) {
 };
 
 
+var parseFuAction = function(startStep, params) {
+  return [
+    [startStep, "Fu!", null]
+  ];
+};
+
+
 var parseFuFuAction = function(startStep, params) {
   return [
     [startStep, "Fu!", null],
     [stepAdd(startStep, {m: 0, s: 2}), "Fu!", null]
   ];
 };
+
 
 var parseJumpAction = function(startStep, params) {
   return [
@@ -134,6 +142,7 @@ var parseCelebrateAction = function(startStep, endStep, params) {
 
 // action type lookup maps
 var POINT_ACTION_PARSERS = {
+  'fu': parseFuAction,
   'fufu': parseFuFuAction,
   '跳': parseJumpAction,
 };
