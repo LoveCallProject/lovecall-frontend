@@ -1,0 +1,55 @@
+diff --git a/Makefile.am b/Makefile.am
+index 2f1ac76..c08d95d 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -8,8 +8,8 @@ SUBDIRS = .
+ AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_srcdir)/win32 -D_FORTIFY_SOURCE=2
+ AM_CFLAGS = $(OPUS_CFLAGS) $(OGG_CFLAGS)
+ 
+-bin_PROGRAMS = opusenc opusdec opusinfo
+-noinst_PROGRAMS = opusrtp
++lib_LTLIBRARIES = libopusdec.la
++noinst_PROGRAMS = opusenc opusinfo opusrtp
+ 
+ noinst_HEADERS = src/arch.h \
+                  src/diag_range.h \
+@@ -57,10 +57,10 @@ opusenc_CFLAGS = $(AM_CFLAGS) $(FLAC_CFLAGS)
+ opusenc_LDADD = $(OPUS_LIBS) $(FLAC_LIBS) $(OGG_LIBS) $(LIBM)
+ opusenc_MANS = man/opusenc.1
+ 
+-opusdec_SOURCES = src/opus_header.c src/wav_io.c src/wave_out.c src/opusdec.c src/resample.c src/diag_range.c win32/unicode_support.c
+-opusdec_CPPFLAGS = $(AM_CPPFLAGS) $(resampler_CPPFLAGS)
+-opusdec_LDADD = $(OPUS_LIBS) $(OGG_LIBS) $(LIBM)
+-opusdec_MANS = man/opusdec.1
++libopusdec_la_SOURCES = src/opus_header.c src/wav_io.c src/wave_out.c src/opusdec.c src/resample.c src/diag_range.c win32/unicode_support.c
++libopusdec_la_CPPFLAGS = $(AM_CPPFLAGS) $(resampler_CPPFLAGS)
++libopusdec_la_LIBADD = $(OPUS_LIBS) $(OGG_LIBS) $(LIBM)
++libopusdec_la_MANS = man/opusdec.1
+ 
+ opusinfo_SOURCES = src/opus_header.c src/opusinfo.c src/info_opus.c src/picture.c win32/unicode_support.c
+ opusinfo_CPPFLAGS = $(AM_CPPFLAGS) -DOPUSTOOLS
+diff --git a/configure.ac b/configure.ac
+index edff53f..0c9b37f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -23,6 +23,7 @@ AM_INIT_AUTOMAKE([1.11 foreign no-define])
+ AM_MAINTAINER_MODE([enable])
+ 
+ AC_CANONICAL_HOST
++AM_PROG_LIBTOOL
+ AM_PROG_CC_C_O
+ 
+ AC_PROG_CC_C99
+diff --git a/src/opusdec.c b/src/opusdec.c
+index d085f04..1ce1984 100644
+--- a/src/opusdec.c
++++ b/src/opusdec.c
+@@ -629,7 +629,7 @@ opus_int64 audio_write(float *pcm, int channels, int frame_size, FILE *fout, Spe
+    return sampout;
+ }
+ 
+-int main(int argc, char **argv)
++int opusdec_main(int argc, char **argv)
+ {
+    int c;
+    int option_index = 0;
