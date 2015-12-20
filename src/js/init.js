@@ -13,8 +13,6 @@ var startDash = require('./data/start-dash');
 // var nbg = require('./data/nbg');
 // var kiseki = require('./data/kiseki');
 
-var test = require('./prebuilt/test');
-
 
 var mod = angular.module('lovecall/init', [
     'lovecall/provider/choreography',
@@ -32,8 +30,6 @@ mod.run(function($window, Choreography, FrameManager) {
 
   // frame loop
   FrameManager.startFrameLoop($window);
-
-  console.log(test);
 });
 /* @license-end */
 

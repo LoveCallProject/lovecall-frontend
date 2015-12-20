@@ -4,15 +4,15 @@
 extern "C" {
 #endif
 
-int opusdec_main(int argc, char **argv);
+int opusdec_main(int argc, const char *argv[]);
 
 #ifdef __cplusplus
 }
 #endif
 
 
-int test_opusdec(void)
+int opusdec_decode(const char *infile, const char *outfile)
 {
-	char *argv[] = {"opusdec", "--help", NULL};
-	return opusdec_main(2, argv);
+	const char *argv[] = {"opusdec", "--quiet", infile, outfile, NULL};
+	return opusdec_main(4, argv);
 }

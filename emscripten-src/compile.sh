@@ -11,7 +11,6 @@ EMCC_FAST_COMPILER=1 emcc \
   -s ASM_JS=1 \
   -s VERBOSE=1 \
   -s ERROR_ON_UNDEFINED_SYMBOLS=1 \
-  -s NO_FILESYSTEM=1 \
   -s NO_BROWSER=1 \
   -s INVOKE_RUN=0 \
   -s NO_EXIT_RUNTIME=1 \
@@ -19,17 +18,19 @@ EMCC_FAST_COMPILER=1 emcc \
   -s EXPORTED_FUNCTIONS="`< test-exports.json`" \
   -Ibuild/js/root/include \
   -Lbuild/js/root/lib \
-  --pre-js module-pre.js \
+  --post-js test.js \
   build/js/root/lib/libogg.$suffix \
   build/js/root/lib/libopus.$suffix \
   build/js/root/lib/libopusdec.$suffix \
   test.c \
-  -o test.js
+  -o build/test.js
 
-sed -i 's/require("fs")/null/g' test.js
+#  --pre-js module-pre.js \
 
-#  --post-js src/ogv-demuxer.js \
+sed -i 's/require("fs")/null/g' build/test.js
+
 #  -s EXPORT_NAME="'TestModule'" \
+#  -s NO_FILESYSTEM=1 \
 #  build/js/root/lib/liboggz.$suffix \
 #  build/js/root/lib/libskeleton.$suffix \
 #  --js-library src/ogv-demuxer-callbacks.js \
