@@ -33,8 +33,10 @@ var parseFuFuAction = function(startStep, params) {
 
 
 var parseJumpAction = function(startStep, params) {
+  var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var actionParams = withHi ? {msg: 'Hi!'} : null;
   return [
-    [startStep, "跳", null]
+    [startStep, "跳", actionParams]
   ];
 }
 
