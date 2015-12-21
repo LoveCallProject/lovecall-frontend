@@ -1,6 +1,8 @@
 /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
 'use strict';
 
+var _ = require('lodash');
+
 require('angular');
 
 require('../engine/audio');
@@ -45,6 +47,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     isPlaying = false;
     pRight = 0;
+    callCanvas.refreshTextCache(events);
     doUpdate();
   });
 
@@ -107,6 +110,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
     var judgementLineX = 75;
+    var followMarkerR = 6;
     var textMarginT = 4;
     var textMarginB = 8;
     var textH = 30;
@@ -115,11 +119,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var w = 0;
     var h = 0;
     var stepLineY1 = 0;
-    var stepLineY2 = 0;
     var axisY = 0;
+    var followMarkerY = 0;
     var textTopY = 0;
-    var textBaselineY = 0;
     var textBorderBottomY = 0;
+    var textCache = {};
     var currentTime = 0;
     var inResizeFallout = true;
 
@@ -156,6 +160,54 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
+    this.refreshTextCache = function(events) {
+      textCache = {};
+
+      var uniqueTexts = _(events)
+        .values()
+        .map(function(v) { return v[2]; })
+        .flatten()
+        .map(function(v) { return v.params.msg; })
+        .unique()
+        .value();
+
+      ctx.save();
+      // TODO: dedup this code
+      ctx.font = textH + 'px sans-serif';
+      var textWidths = _(uniqueTexts)
+        .map(function(v) { return ctx.measureText(v).width; })
+        .value();
+      ctx.restore();
+
+      // build the cache
+      for (var i = 0; i < uniqueTexts.length; i++) {
+        // XXX: Some text like "Jump" seems to be wider than measured, but
+        // without access to advanced text metrics (feature-gated in Chrome and
+        // unavailable in Firefox) we can't really do much about it.
+        // Just allocate some more width for now...
+        // Also make it multiple of 16 for hopefully nicer memory accesses.
+        var textW = textWidths[i];
+        var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
+        var canvasCenterX = canvasW >> 1;
+        var text = uniqueTexts[i];
+
+        var tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasW;
+        tempCanvas.height = textMarginT + textH + textMarginB;
+        var tempCtx = tempCanvas.getContext('2d');
+        tempCtx.font = textH + 'px sans-serif';
+        tempCtx.textAlign = 'center';
+
+        tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
+
+        textCache[text] = {
+          src: tempCanvas,
+          sX: canvasCenterX
+        };
+      }
+    };
+
+
     this.draw = function(events, eventTimeline, limit) {
       if (inResizeFallout) {
         inResizeFallout = false;
@@ -167,11 +219,10 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         DPIManager.scaleCanvas(bgElem, bgCtx, w, h);
 
         stepLineY1 = (conveyorBorderT)|0;
-        stepLineY2 = (conveyorBorderT + conveyorH)|0;
         axisY = (conveyorBorderT + conveyorH / 2)|0;
+        followMarkerY = (stepLineY1 + conveyorH + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
-        textBaselineY = (textTopY + textMarginT + textH)|0;
-        textBorderBottomY = (textBaselineY + textMarginB)|0;
+        textBorderBottomY = (textTopY + textMarginT + textH + textMarginB)|0;
 
         // draw background once
         {
@@ -213,7 +264,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var currentEventPack = events[ts];
         var remainedTime = ts - currentTime;
         var x = pixPreSec * remainedTime;
-        var drawX = x + judgementLineX;
+        var drawX = (x + judgementLineX)|0;
         var realX;
         var realY;
 
@@ -222,21 +273,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         }
 
         // draw stepline
-        if (currentEventPack[0]) {
-          ctx.save();
-
-          for (var i = 0; i < currentEventPack[0].length; i++) {
-            var e = currentEventPack[0][i];
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1;
-
-            ctx.beginPath();
-            ctx.moveTo(drawX, stepLineY1);
-            ctx.lineTo(drawX, stepLineY2);
-            ctx.stroke();
-          }
-
-          ctx.restore();
+        // actually there can only ever be 1 stepline per pack so we can
+        // optimize
+        if (currentEventPack[0].length > 0) {
+          ctx.fillStyle = '#ccc';
+          ctx.fillRect(drawX, stepLineY1, 1, conveyorH);
         }
 
         // don't render invisible events
@@ -257,13 +298,28 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.globalAlpha = alpha;
         }
 
-        // text
-        if (currentEventPack[2]) {
-          ctx.font = textH + "px sans-serif";
-          ctx.textAlign = 'center';
+        if (currentEventPack[2].length > 0) {
+          // follow marker
+          ctx.save();
+          ctx.fillStyle = '#eee';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = conveyorBorderB;
+          ctx.beginPath();
+          ctx.arc(
+              drawX,
+              followMarkerY,
+              followMarkerR,
+              0,
+              2 * Math.PI
+              );
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // text
           for (var i = 0; i < currentEventPack[2].length; i++) {
-            var msg = currentEventPack[2][i].params.msg;
-            ctx.fillText(msg, drawX, textBaselineY);
+            var cachedText = textCache[currentEventPack[2][i].params.msg];
+            ctx.drawImage(cachedText.src, drawX - cachedText.sX, textTopY);
           }
         }
 

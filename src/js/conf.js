@@ -2,21 +2,48 @@
 'use strict';
 
 require('angular');
+require('angular-local-storage');
 
 var siteConf = require('../../lovecall.config');
 
 
 var mod = angular.module('lovecall/conf', [
+    'LocalStorageModule',
 ]);
 
-mod.factory('LCConfig', function() {
-  var VERSION = '20151219';
+mod.factory('LCConfig', function($rootScope, localStorageService) {
+  var VERSION = '20151221';
   var HASH = __webpack_hash__;
 
 
+  var getAudioBufferSizeOrder = function() {
+    var storedSizeOrder = parseInt(localStorageService.get('audioBufferSizeOrder'));
+    if (isNaN(storedSizeOrder) || storedSizeOrder < 8 || storedSizeOrder > 14) {
+      storedSizeOrder = 11;
+      doSetAudioBufferSizeOrder(storedSizeOrder, false);
+    }
+
+    return storedSizeOrder;
+  };
+
+
   var getAudioBufferSize = function() {
-    // TODO: make this configurable
-    return 2048;
+    return 1 << getAudioBufferSizeOrder();
+  };
+
+
+  var setAudioBufferSizeOrder = function(order) {
+    return doSetAudioBufferSizeOrder(order, true);
+  };
+
+
+  var doSetAudioBufferSizeOrder = function(order, fireEvent) {
+    var newSizeOrder = order < 8 ? 8 : order > 14 ? 14 : order;
+    localStorageService.set('audioBufferSizeOrder', '' + newSizeOrder);
+
+    if (fireEvent) {
+      $rootScope.$broadcast('config:audioBufferSizeChanged', 1 << order);
+    }
   };
 
 
@@ -37,6 +64,8 @@ mod.factory('LCConfig', function() {
     HASH: HASH,
     REMOTE_MUSIC_PREFIX: siteConf.remoteMusicPrefix,
     getAudioBufferSize: getAudioBufferSize,
+    getAudioBufferSizeOrder: getAudioBufferSizeOrder,
+    setAudioBufferSizeOrder: setAudioBufferSizeOrder,
     getGlobalOffsetMs: getGlobalOffsetMs,
     getKnownLocalSongs: getKnownLocalSongs,
   };

@@ -17,6 +17,13 @@ var makeEngineEvent = function(a, tempo) {
 };
 
 
+var parseFuAction = function(startStep, params) {
+  return [
+    [startStep, "Fu!", null]
+  ];
+};
+
+
 var parseFuFuAction = function(startStep, params) {
   return [
     [startStep, "Fu!", null],
@@ -24,9 +31,12 @@ var parseFuFuAction = function(startStep, params) {
   ];
 };
 
+
 var parseJumpAction = function(startStep, params) {
+  var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var actionParams = withHi ? {msg: 'Hi!'} : null;
   return [
-    [startStep, "跳", null]
+    [startStep, "跳", actionParams]
   ];
 }
 
@@ -134,6 +144,7 @@ var parseCelebrateAction = function(startStep, endStep, params) {
 
 // action type lookup maps
 var POINT_ACTION_PARSERS = {
+  'fu': parseFuAction,
   'fufu': parseFuFuAction,
   '跳': parseJumpAction,
 };

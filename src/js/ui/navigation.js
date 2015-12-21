@@ -8,6 +8,7 @@ require('../provider/song');
 
 require('../../templates/song-selector.tmpl.html');
 require('../../templates/about.tmpl.html');
+require('../../templates/config.tmpl.html');
 
 
 var mod = angular.module('lovecall/ui/navigation', [
@@ -60,6 +61,17 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
     }).then(function(){}, function(){});
   }
 
+  $scope.showConfigDialog = function(ev) {
+    var useFullScreen = ($mdMedia('sm') || $mdMedia('xs'));
+    $mdDialog.show({
+      controller: 'ConfigDialogController',
+      templateUrl: 'config.tmpl.html',
+      parent: angular.element(document.body),
+      targetEvent: ev,
+      fullscreen: useFullScreen,
+      clickOutsideToClose: true
+    }).then(function() {}, function(){});
+  }
 
   // close navigation drawer when song loading ends
   $scope.$on('song:hideLoadingDialog', function(e, errored) {
