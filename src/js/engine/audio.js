@@ -33,10 +33,25 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
   var currentVolume = 1;
   var isMuted = false;
 
+  // formats
+  var haveMP3 = false;
+  var haveOpus = false;
+  var preferredFormat = '';
+
   var currentMetronome = null;
 
   var $metronomeLog = $log.getInstance('Metronome');
   $log = $log.getInstance('AudioEngine');
+
+
+  var probeFormats = function() {
+    var elem = document.createElement('audio');
+    haveMP3 = elem.canPlayType('audio/mp3') !== '';
+    haveOpus = elem.canPlayType('audio/ogg; codecs="opus"') !== '';
+
+    $log.info('formats: opus', haveOpus, 'mp3', haveMP3);
+    preferredFormat = haveOpus ? 'opus' : 'mp3';
+  };
 
 
   var initTimingNode = function() {
@@ -268,7 +283,13 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
   };
 
 
+  var getPreferredFormat = function() {
+    return preferredFormat;
+  };
+
+
   // initialize
+  probeFormats();
   initTimingNode();
 
 
@@ -282,6 +303,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
     'setMuted': setMuted,
     'setSourceData': setSourceData,
     'initEvents': initEvents,
+    'getPreferredFormat': getPreferredFormat,
     'resume': resume,
     'pause': pause,
     'seek': seek
