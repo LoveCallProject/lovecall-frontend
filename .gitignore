@@ -3,6 +3,8 @@
 *.ogg
 *.wav
 
+/public/music/cover/
+
 # site config
 /lovecall.config.js
 
