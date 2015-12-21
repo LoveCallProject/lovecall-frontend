@@ -1,6 +1,6 @@
 .call__canvas-container {
   width: 100%;
-  height: 250px;
+  height: 201px;  // keep this in sync with dimensions in js/ui/call.js
   position: relative;
 
   > canvas {
