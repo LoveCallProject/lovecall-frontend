@@ -124,6 +124,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var followMarkerY = 0;
     var textTopY = 0;
     var textBorderBottomY = 0;
+    var textExplodeCenterY = 0;
+    var textExplodeDrawRefY = 0;
     var textCache = {};
     var currentTime = 0;
     var inResizeFallout = true;
@@ -226,6 +228,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         followMarkerY = (stepLineY1 + conveyorH + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
         textBorderBottomY = (textTopY + textMarginT + textH + textMarginB)|0;
+        textExplodeCenterY = (textTopY + 2 * textH)|0;
+        textExplodeDrawRefY = (-2 * textH)|0;
 
         // draw background once
         {
@@ -335,11 +339,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
             if (drawX < judgementLineX) {
               ctx.save();
-              ctx.translate(judgementLineX, (textTopY + textH)|0);
+              ctx.translate(judgementLineX, textExplodeCenterY);
               ctx.scale(scale, scale);
 
               realTextX = -cachedText.sX;
-              realTextY = (-textH)|0;
+              realTextY = textExplodeDrawRefY;
             } else {
               realTextX = drawX - cachedText.sX;
               realTextY = textTopY;
