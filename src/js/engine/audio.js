@@ -231,6 +231,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
     currentMetronome = null;
     $rootScope.$broadcast('audio:unloaded');
     audioCtx.decodeAudioData(data, finishSetSourceData);
+    $rootScope.$broadcast('audio:decoding');
   };
 
 
