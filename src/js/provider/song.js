@@ -7,9 +7,6 @@ require('angular-material');
 
 var SparkMD5 = require('spark-md5');
 
-// XXX: upstream is broken
-var id3 = require('../vendored/id3');
-
 require('../conf');
 require('../../templates/song-loading.tmpl.html');
 
@@ -28,25 +25,14 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
   var songStatus = 'unloaded';
 
 
-  var id3Callback = function(err, tags) {
-    $log.debug('id3Callback: err', err, 'tags', tags);
-
-    var songImage = err ? null : makeSongImage(tags.v2.image.data, tags.v2.image.mime);
-    $rootScope.$broadcast('song:imageLoaded', songImage);
-  };
-
-
+  // not used for now, but may have its use after supporting local music files
   var makeSongImage = function(buffer, mime) {
     return new Blob([new Uint8Array(buffer)], { type: mime || 'image/jpeg' });
+    // someone do $rootScope.$broadcast('song:imageLoaded', songImage); plz
   };
 
 
-  var extractSongImageAsync = function(data) {
-    id3({ file: new Blob([data]), type: id3.OPEN_FILE }, id3Callback);
-  };
-
-
-  var loadSuccessCallbackFactory = function(idx) {
+  var loadSuccessCallbackFactory = function(idx, basename) {
     return function(response) {
       $log.debug('load success:', response);
 
@@ -54,15 +40,14 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
       songBuffer = response.data;
       songHash = 'md5:' + SparkMD5.ArrayBuffer.hash(response.data).toLowerCase();
 
-      if (AudioEngine.getPreferredFormat() === 'mp3') {
-        extractSongImageAsync(songBuffer);
-      }
-
       hideLoadingDialog(false);
-      
+
       Choreography.load(idx, songHash);
       AudioEngine.setSourceData(response.data);
       AudioEngine.initEvents(Choreography.getTempo());
+
+      // cover art
+      loadCoverArt(basename);
 
       //successCallback && successCallback(idx, songHash, response.data);
     };
@@ -107,7 +92,14 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
         'Content-Type': undefined
       },
       responseType: 'arraybuffer'
-    }).then(loadSuccessCallbackFactory(idx), errorCallback);
+    }).then(loadSuccessCallbackFactory(idx, basename), errorCallback);
+  };
+
+
+  var loadCoverArt = function(basename) {
+    // TODO: support other formats?
+    var coverArtUrl = LCConfig.REMOTE_COVER_ART_PREFIX + basename + '.jpg';
+    $rootScope.$broadcast('song:remoteCoverArtRequest', coverArtUrl);
   };
 
 

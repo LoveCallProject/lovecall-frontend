@@ -4,6 +4,8 @@
 *.wav
 *.opus
 
+/public/music/cover/
+
 # site config
 /lovecall.config.js
 
