@@ -12,8 +12,11 @@ var mod = angular.module('lovecall/ui/config', [
     'lovecall/conf',
 ]);
 
-mod.controller('ConfigDialogController', function($scope, $mdDialog) {
-  $scope.submit = function(size) {
-    $mdDialog.hide(size);
+mod.controller('ConfigDialogController', function($scope, $mdDialog, LCConfig) {
+  $scope.bufferSizeOrder = LCConfig.getAudioBufferSizeOrder();
+
+  $scope.submit = function(sizeOrder) {
+    LCConfig.setAudioBufferSizeOrder(sizeOrder);
+    $mdDialog.hide();
   }
 });
