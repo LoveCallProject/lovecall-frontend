@@ -247,6 +247,10 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
     doSeek(0);
 
     $rootScope.$broadcast('audio:loaded');
+
+    // it seems the $broadcast is not enough to refresh all angular states,
+    // so
+    $rootScope.$digest();
   };
 
 
