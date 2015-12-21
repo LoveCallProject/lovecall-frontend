@@ -5,7 +5,7 @@ module.exports = {
       "title": "ススメ→トゥモロウ",
       "artist": "μ's",
       "album": "ススメ→トゥモロウ/START:DASH!!",
-      "url": "susutomo.mp3",
+      "remoteBasename": "susutomo",
       "sources": {
         "fallback:": {
           "offset": 5134

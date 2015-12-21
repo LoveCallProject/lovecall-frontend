@@ -5,7 +5,7 @@ module.exports = {
       "title": "No brand girls",
       "artist": "μ's",
       "album": "No brand girls/START:DASH!!",
-      "url": "nbg.mp3",
+      "remoteBasename": "nbg",
       "sources": {
         "fallback:": {
           "offset": 446

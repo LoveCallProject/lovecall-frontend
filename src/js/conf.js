@@ -63,6 +63,7 @@ mod.factory('LCConfig', function($rootScope, localStorageService) {
     VERSION: VERSION,
     HASH: HASH,
     REMOTE_MUSIC_PREFIX: siteConf.remoteMusicPrefix,
+    REMOTE_COVER_ART_PREFIX: siteConf.remoteCoverArtPrefix,
     getAudioBufferSize: getAudioBufferSize,
     getAudioBufferSizeOrder: getAudioBufferSizeOrder,
     setAudioBufferSizeOrder: setAudioBufferSizeOrder,

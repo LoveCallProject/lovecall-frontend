@@ -5,7 +5,7 @@ module.exports = {
       "title": "Wonderful Rush",
       "artist": "μ's",
       "album": "Wonderful Rush",
-      "url": "wr.mp3",
+      "remoteBasename": "wr",
       "sources": {
         "fallback:": {
           "offset": 6345
