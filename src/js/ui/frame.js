@@ -11,8 +11,6 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
   var frameCallbacks = [];
   var playbackPosMeasure = 0;
   var playbackPosStep = 0;
-  var prevFrameMeasure = -1;
-  var prevFrameStep = -1;
 
   $log = $log.getInstance('FrameManager');
 
@@ -31,23 +29,6 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
 
   var frameCallback = function(ts) {
     requestAnimFrame(frameCallback);
-
-    var shouldBroadcastStep = false;
-
-    if (prevFrameMeasure != playbackPosMeasure) {
-      shouldBroadcastStep = true;
-      prevFrameMeasure = playbackPosMeasure;
-    }
-
-    if (prevFrameStep != playbackPosStep) {
-      shouldBroadcastStep = true;
-      prevFrameStep = playbackPosStep;
-    }
-
-    if (shouldBroadcastStep) {
-      $rootScope.$broadcast('frame:playbackPosStep', playbackPosMeasure, playbackPosStep);
-      $rootScope.$digest();
-    }
 
     var i = 0;
     for (; i < frameCallbacks.length; i++) {
@@ -88,11 +69,24 @@ mod.factory('FrameManager', function($rootScope, $window, $log) {
     playbackPosStep = beat.s;
   }
 
+
+  var getMeasure = function() {
+    return playbackPosMeasure;
+  };
+
+
+  var getStep = function() {
+    return playbackPosStep;
+  };
+
+
   return {
     'addFrameCallback': addFrameCallback,
     'removeFrameCallback': removeFrameCallback,
     'startFrameLoop': startFrameLoop,
-    'tickCallback': tickCallback
+    'tickCallback': tickCallback,
+    'getMeasure': getMeasure,
+    'getStep': getStep,
   };
 });
 /* @license-end */

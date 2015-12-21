@@ -38,7 +38,7 @@ LoveCallTableManager.prototype.registerTable = function(table) {
 LoveCallTableManager.prototype.lookupTable = function(idx, hash) {
   var lookupKey = hash.toLowerCase();
 
-  if (hash.startsWith('fallback:')) {
+  if (hash === 'fallback:') {
     return this.tables[idx];
   }
 

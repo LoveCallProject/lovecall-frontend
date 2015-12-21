@@ -3,6 +3,9 @@
 *.ogg
 *.wav
 
+# site config
+/lovecall.config.js
+
 # build intermediates
 /build
 

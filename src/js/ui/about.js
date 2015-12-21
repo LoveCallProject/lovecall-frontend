@@ -4,12 +4,16 @@
 require('angular');
 require('angular-material');
 
+require('../conf');
+
+
 var mod = angular.module('lovecall/ui/about', [
     'ngMaterial',
+    'lovecall/conf',
 ]);
 
-mod.controller('AboutDialogController', function($scope, $mdDialog) {
-  $scope.version = __webpack_hash__;
+mod.controller('AboutDialogController', function($scope, $mdDialog, LCConfig) {
+  $scope.version = LCConfig.VERSION + ' (' + LCConfig.HASH + ')';
 
   $scope.contributors = [
     {

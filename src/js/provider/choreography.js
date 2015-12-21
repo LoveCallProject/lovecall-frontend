@@ -5,66 +5,17 @@ require('angular');
 
 var parser = require('../choreography/parser');
 var manager = require('../choreography/manager');
-var queue = require('../engine/queue');
 
 
 var mod = angular.module('lovecall/provider/choreography', [
 ]);
 
 mod.factory('Choreography', function($log) {
-  var $queueEngineLog = $log.getInstance('QueueEngine');
   $log = $log.getInstance('Choreography');
 
   var tableManager = new manager.LoveCallTableManager();
   var parsedData = null;
   var mergedEvents = [];
-  var queueEngine = null;
-
-  var queueCallbacks = [];
-
-
-  var queueEventCallback = function(nextEvents, lookaheadEvents, prevEvents) {
-    // actually log inside audio callback is bad
-    // TODO: implement global setting provider
-    if (0) {
-      $log.debug(
-          'queue event: nextEvents=',
-          nextEvents,
-          'lookaheadEvents=',
-          lookaheadEvents,
-          'prevEvents=',
-          prevEvents
-          );
-      nextEvents.map(function(v) {
-        $log.debug('queue event:', v);
-      });
-    }
-
-    queueCallbacks.forEach(function(callback) {
-      callback(nextEvents, lookaheadEvents, prevEvents);
-    });
-  }
-
-
-  var addQueueCallback = function(callback) {
-    queueCallbacks.push(callback);
-  };
-
-
-  var removeQueueCallback = function(callback) {
-    var i = 0;
-    var found = false;
-    for (i = 0; i < queueCallbacks.length; i++) {
-      if (queueCallbacks[i] == callback) {
-        found = true;
-        break;
-      }
-    }
-
-    if (found) {
-      queueCallbacks.splice(i, 1);
-    }
-  };
 
 
   var generateStepLineEvents = function(duration) {
@@ -119,15 +70,9 @@ mod.factory('Choreography', function($log) {
       $log.error('no table found for idx', idx, 'hash', hash);
       return;
     }
-;
+
     parsedData = parser.parseCall(table, hash);
     mergedEvents = {};
-    queueEngine = queue.queueEngineFactory(
-        parsedData.events,
-        queueEventCallback,
-        $queueEngineLog,
-        false
-        );
   };
 
 
@@ -162,11 +107,6 @@ mod.factory('Choreography', function($log) {
   };
 
 
-  var getQueueEngine = function() {
-    return queueEngine;
-  };
-
-
   var getColors = function() {
     return parsedData ? parsedData.colors : null;
   };
@@ -178,8 +118,6 @@ mod.factory('Choreography', function($log) {
 
 
   return {
-    'addQueueCallback': addQueueCallback,
-    'removeQueueCallback': removeQueueCallback,
     'generateStepLineEvents': generateStepLineEvents,
     'load': load,
     'loadTable': loadTable,
@@ -189,7 +127,6 @@ mod.factory('Choreography', function($log) {
     'getColors': getColors,
     'getSongMetadata': getSongMetadata,
     'getEvents': getEvents,
-    'getQueueEngine': getQueueEngine,
     'getAvailableSongs': getAvailableSongs
   };
 });

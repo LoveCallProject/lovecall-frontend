@@ -4,24 +4,29 @@
 require('angular');
 var metronomeMod = require('../choreography/metronome');
 
+require('../conf');
 require('../provider/choreography');
 require('../ui/frame');
 
 
 var mod = angular.module('lovecall/engine/audio', [
+    'lovecall/conf',
     'lovecall/provider/choreography',
     'lovecall/ui/frame'
 ]);
 
-mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, FrameManager) {
+mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreography, FrameManager) {
   var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
 
   var sourceBuffer = null;
   var sourceNode = null;
   var gainNode = audioCtx.createGain();
-  var timingNode = audioCtx.createScriptProcessor(2048);
+  var timingNode = null;
+  var bufferSize = 0;
 
   var isPlaying = false;
+  var inSeeking = false;
+  var isPlayingBeforeSeek = false;
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
   var playbackPosMs = 0;
@@ -29,15 +34,38 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var isMuted = false;
 
   var currentMetronome = null;
-  var currentQueueEngine = null;
 
   var $metronomeLog = $log.getInstance('Metronome');
   $log = $log.getInstance('AudioEngine');
 
 
-  var onEndedCallback = function(e) {
-    $log.debug('onEndedCallback');
+  var initTimingNode = function() {
+    pause();
 
+    bufferSize = LCConfig.getAudioBufferSize();
+    $log.info('creating timing node with buffer size', bufferSize);
+    timingNode = audioCtx.createScriptProcessor(bufferSize);
+    timingNode.onaudioprocess = audioCallback;
+  };
+
+
+  $rootScope.$on('config:audioBufferSizeChanged', function(e) {
+    initTimingNode();
+  });
+
+
+  var onEndedCallback = function(e) {
+    // Firefox Nightly fires ended events for all stopping, so don't let that
+    // disturb seeking.
+    if (inSeeking) {
+      $log.debug('onEndedCallback: NOT executing pause due to seek in progress');
+
+      // reset the seeking flag
+      inSeeking = false;
+      return;
+    }
+
+    $log.debug('onEndedCallback: pausing');
     pause();
   };
 
@@ -111,15 +139,24 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var doSeek = function(newPositionMs) {
     $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
     playbackPosMs = newPositionMs;
-    currentQueueEngine.update(newPositionMs, false);
     currentMetronome.tick(newPositionMs);
+    $rootScope.$broadcast('audio:seek', newPositionMs);
+
+    // reset playing status
+    isPlaying = isPlayingBeforeSeek;
     isPlaying && doResume();
   };
 
 
   var seek = function(newPositionMs) {
-    isPlaying && doPause();
-    return doSeek(newPositionMs);
+    if (isPlaying) {
+      // record status, pause and workaround Nightly
+      inSeeking = true;
+      isPlayingBeforeSeek = isPlaying;
+      doPause();
+    }
+
+    doSeek(newPositionMs);
   };
 
 
@@ -177,7 +214,6 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     doPause();
     playbackPosMs = 0;
     currentMetronome = null;
-    currentQueueEngine = null;
     $rootScope.$broadcast('audio:unloaded');
     audioCtx.decodeAudioData(data, finishSetSourceData);
   };
@@ -203,7 +239,6 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     var posMs = (playbackReferenceMs + ctxMs - ctxLastReferenceMs)|0;
     playbackPosMs = posMs;
 
-    currentQueueEngine && currentQueueEngine.update(posMs, true);
     currentMetronome && currentMetronome.tick(posMs);
 
     // just pass through
@@ -221,8 +256,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   };
 
 
-  var initEvents = function(tempo, queueEngine) {
-    $log.debug('initEvents: tempo=', tempo, 'queueEngine=', queueEngine);
+  var initEvents = function(tempo) {
+    $log.debug('initEvents: tempo', tempo);
 
     currentMetronome = metronomeMod.metronomeFactory(
         tempo,
@@ -230,10 +265,11 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
         $metronomeLog,
         false
         );
-    currentQueueEngine = queueEngine;
-
-    timingNode.onaudioprocess = audioCallback;
   };
+
+
+  // initialize
+  initTimingNode();
 
 
   return {
