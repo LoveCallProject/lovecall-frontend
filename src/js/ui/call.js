@@ -115,6 +115,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var textMarginB = 8;
     var textH = 30;
     var textBorderB = 1;
+    var textExplodeRatio = 0.15;
 
     var w = 0;
     var h = 0;
@@ -123,6 +124,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var followMarkerY = 0;
     var textTopY = 0;
     var textBorderBottomY = 0;
+    var textExplodeCenterY = 0;
+    var textExplodeDrawRefY = 0;
     var textCache = {};
     var currentTime = 0;
     var inResizeFallout = true;
@@ -225,6 +228,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         followMarkerY = (stepLineY1 + conveyorH + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
         textBorderBottomY = (textTopY + textMarginT + textH + textMarginB)|0;
+        textExplodeCenterY = (textTopY + 2 * textH)|0;
+        textExplodeDrawRefY = (-2 * textH)|0;
 
         // draw background once
         {
@@ -318,16 +323,43 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.stroke();
           ctx.restore();
 
+          var realTextX;
+          var realTextY;
+          var fadeOutValue;
+          var scale;
+
+          if (drawX < judgementLineX) {
+            fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
+            scale = 1 + textExplodeRatio * fadeOutValue;
+          }
+
           // text
           for (var i = 0; i < currentEventPack[2].length; i++) {
             var cachedText = textCache[currentEventPack[2][i].params.msg];
+
+            if (drawX < judgementLineX) {
+              ctx.save();
+              ctx.translate(judgementLineX, textExplodeCenterY);
+              ctx.scale(scale, scale);
+
+              realTextX = -cachedText.sX;
+              realTextY = textExplodeDrawRefY;
+            } else {
+              realTextX = drawX - cachedText.sX;
+              realTextY = textTopY;
+            }
+
             ctx.drawImage(
                 cachedText.src,
-                drawX - cachedText.sX,
-                textTopY,
+                realTextX,
+                realTextY,
                 cachedText.sW,
                 cachedText.sH
                 );
+
+            if (drawX < judgementLineX) {
+              ctx.restore();
+            }
           }
         }
 
