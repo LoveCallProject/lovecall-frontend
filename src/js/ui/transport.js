@@ -110,6 +110,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     $scope.isLoaded = true;
     pause();
     playbackPos = 0;
+    refreshTick(false);
     updateTransport(0.0, duration);
     transportState.updateSongForm(Choreography.getForm());
     transportState.updateSongColors(Choreography.getColors());
@@ -127,13 +128,17 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     $log.info('seek: newPlaybackPos=', newPlaybackPos);
 
     AudioEngine.seek(newPlaybackPos);
+    refreshTick(false);
   });
 
 
-  $scope.$on('frame:playbackPosStep', function(evt, m, v) {
-    // don't draw immediately as frame callback will take care of that
-    transportState.updateTick(m, v >> 2, true);
-  });
+  var refreshTick = function(skipDraw) {
+    transportState.updateTick(
+        FrameManager.getMeasure(),
+        FrameManager.getStep() >> 2,
+        skipDraw
+        );
+  };
 
 
   // frame callback
@@ -153,6 +158,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     // but for conserving energy, let's only refresh if playing; otherwise
     // refreshing at mouse events seems great.
     if (isPlaying) {
+      refreshTick(true);
       updateTransport(playbackPos, duration);
     }
 
@@ -193,8 +199,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var songColors = null;
 
     var totalTicks = 4;  // TODO
-    var currentMeasure = 0;
-    var currentTick = 0;
+    var currentMeasure = -1;
+    var currentTick = -1;
 
     // draw states
     var elem = document.createElement('canvas');
@@ -223,8 +229,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var indicatorR = 0;
 
     var cachedSongPartPointsX = [];
-    var cachedSongPartGeneration = 0;
-    var prevCachedSongPartGeneration = -1;
 
     var cachedSongColorsSegments = [];
     var cachedSongColorsRGB = [];
@@ -256,23 +260,26 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var updateTick = function(measure, tick, skipDraw) {
+      if (measure !== currentMeasure || tick !== currentTick) {
+        skipDraw || draw();
+      }
+
       currentMeasure = measure;
       currentTick = tick;
-      skipDraw || draw();
     };
 
 
     var updateSongForm = function(form, skipDraw) {
       songForm = form;
       refreshSongPartCache();
-      skipDraw || draw();
+      skipDraw || draw(true);
     };
 
 
     var updateSongColors = function(colors, skipDraw) {
       songColors = colors;
       refreshSongColorsCache();
-      skipDraw || draw();
+      skipDraw || draw(true);
     };
 
 
@@ -295,8 +302,6 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
           return a - b;
         });
       }
-
-      cachedSongPartGeneration += 1;
     };
 
 
@@ -327,10 +332,11 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     };
 
 
-    var draw = function() {
-      var isCompleteRedraw = true;  // inResizeFallout;
+    var draw = function(forceCompleteRedraw) {
+      var isCompleteRedraw = inResizeFallout || forceCompleteRedraw;
       var prevIndicatorX = indicatorX;
       var clearRectX;
+      var clearRectX2;
       var clearRectY;
       var clearRectW;
       var clearRectH;
@@ -396,20 +402,39 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
         clearRectW = w;
         clearRectH = h;
       } else {
-        // clear the area around previous position of indicator
-        clearRectX = prevIndicatorX - indicatorActiveCircleRadius;
+        var dirtyAreaX1;
+        var dirtyAreaX2;
+        if (prevIndicatorX < indicatorX) {
+          dirtyAreaX1 = prevIndicatorX;
+          dirtyAreaX2 = indicatorX;
+        } else {
+          dirtyAreaX1 = indicatorX;
+          dirtyAreaX2 = prevIndicatorX;
+        }
+
+        clearRectX = (dirtyAreaX1 - indicatorActiveCircleRadius)|0;
         clearRectY = 0;
-        clearRectW = indicatorActiveCircleRadius * 2;
+        clearRectW = (indicatorActiveCircleRadius * 2 + dirtyAreaX2 - dirtyAreaX1)|0;
         clearRectH = h;
       }
 
+      clearRectX2 = (clearRectX + clearRectW)|0;
       ctx.clearRect(clearRectX, clearRectY, clearRectW, clearRectH);
 
       // colors
       {
         ctx.save();
-        cachedSongColorsSegments.forEach(function(segment, idx) {
+        for (var idx = 0; idx < cachedSongColorsSegments.length; idx++) {
+          var segment = cachedSongColorsSegments[idx];
           var color = cachedSongColorsRGB[idx];
+
+          // only draw in dirty region
+          if (segment[0] > clearRectX2 || segment[1] < clearRectX) {
+            continue;
+          }
+
+          var segStartX = clearRectX < segment[0] ? segment[0] : clearRectX;
+          var segEndX = clearRectX2 > segment[1] ? segment[1] : clearRectX2;
 
           // TODO: support color stripes
           var colorUsed = color[0];
@@ -417,9 +442,9 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
             // indicator inside
             fillRectWithRGBA(
                 ctx,
-                segment[0],
+                segStartX,
                 colorRectY,
-                indicatorX - segment[0],
+                indicatorX - segStartX,
                 colorRectH,
                 colorUsed,
                 colorRectAlphaPlayed
@@ -428,7 +453,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
                 ctx,
                 indicatorX,
                 colorRectY,
-                segment[1] - indicatorX,
+                segEndX - indicatorX,
                 colorRectH,
                 colorUsed,
                 colorRectAlphaNotPlayed
@@ -442,55 +467,75 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
                 );
             fillRectWithRGBA(
                 ctx,
-                segment[0],
+                segStartX,
                 colorRectY,
-                segment[1] - segment[0],
+                segEndX - segStartX,
                 colorRectH,
                 colorUsed,
                 opacity
                 );
           }
-        });
+        }
+
         ctx.restore();
       }
 
       // slider body
       {
+        var sliderStartX = sliderX1 < clearRectX ? clearRectX : sliderX1;
+        var sliderEndX = sliderX2 > clearRectX2 ? clearRectX2 : sliderX2;
+
         ctx.save();
         ctx.lineWidth = sliderLineWidth;
-        // played parts
-        ctx.strokeStyle = '#111';
-        ctx.beginPath();
-        ctx.moveTo(sliderX1, sliderY);
-        ctx.lineTo(indicatorX, sliderY);
-        ctx.stroke();
 
-        // unplayed parts
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-        ctx.beginPath();
-        ctx.moveTo(indicatorX, sliderY);
-        ctx.lineTo(sliderX2, sliderY);
-        ctx.stroke();
+        if (sliderStartX <= indicatorX && indicatorX <= sliderEndX) {
+          // played parts
+          ctx.strokeStyle = '#111';
+          ctx.beginPath();
+          ctx.moveTo(sliderStartX, sliderY);
+          ctx.lineTo(indicatorX, sliderY);
+          ctx.stroke();
+
+          // unplayed parts
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+          ctx.beginPath();
+          ctx.moveTo(indicatorX, sliderY);
+          ctx.lineTo(sliderEndX, sliderY);
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = sliderEndX < indicatorX ? '#111' : 'rgba(255, 255, 255, 0.75)';
+          ctx.beginPath();
+          ctx.moveTo(sliderStartX, sliderY);
+          ctx.lineTo(sliderEndX, sliderY);
+          ctx.stroke();
+        }
+
         // song part separators
-        // TODO: don't draw unaffected points over and over
-        cachedSongPartPointsX.forEach(function(separatorX) {
+        for (var i = 0; i < cachedSongPartPointsX.length; i++) {
+          var separatorX = cachedSongPartPointsX[i];
+          var separatorX1 = (separatorX - sliderLineWidth / 2)|0;
+          var separatorX2 = (separatorX1 + sliderLineWidth)|0;
+
           if (
               !isCompleteRedraw &&
-              prevCachedSongPartGeneration == cachedSongPartGeneration &&
-              (separatorX < clearRectX || separatorX > clearRectX + clearRectW)
+              (separatorX2 < clearRectX || separatorX1 > clearRectX2)
               ) {
-            return;
+            continue;
           }
 
-          ctx.strokeStyle = separatorX <= indicatorX ? '#111' : 'rgba(255, 255, 255, 0.75)';
-          ctx.beginPath();
-          ctx.moveTo(separatorX, sliderY - partSeparatorHeightT);
-          ctx.lineTo(separatorX, sliderY + partSeparatorHeightB);
-          ctx.stroke();
-        });
-        ctx.restore();
+          separatorX1 = separatorX1 < clearRectX ? clearRectX : separatorX1;
+          separatorX2 = separatorX2 > clearRectX2 ? clearRectX2 : separatorX2;
 
-        prevCachedSongPartGeneration = cachedSongPartGeneration;
+          ctx.fillStyle = separatorX <= indicatorX ? '#111' : 'rgba(255, 255, 255, 0.75)';
+          ctx.fillRect(
+              separatorX1,
+              sliderY - partSeparatorHeightT,
+              separatorX2 - separatorX1,
+              partSeparatorHeightT + partSeparatorHeightB
+              );
+        }
+
+        ctx.restore();
       }
 
       // slider indicator

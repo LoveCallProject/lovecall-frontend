@@ -1,6 +1,8 @@
 /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
 'use strict';
 
+var _ = require('lodash');
+
 require('angular');
 
 require('../engine/audio');
@@ -45,6 +47,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     isPlaying = false;
     pRight = 0;
+    callCanvas.refreshTextCache(events);
     doUpdate();
   });
 
@@ -120,8 +123,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var axisY = 0;
     var followMarkerY = 0;
     var textTopY = 0;
-    var textBaselineY = 0;
     var textBorderBottomY = 0;
+    var textCache = {};
     var currentTime = 0;
     var inResizeFallout = true;
 
@@ -158,6 +161,54 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
+    this.refreshTextCache = function(events) {
+      textCache = {};
+
+      var uniqueTexts = _(events)
+        .values()
+        .map(function(v) { return v[2]; })
+        .flatten()
+        .map(function(v) { return v.params.msg; })
+        .unique()
+        .value();
+
+      ctx.save();
+      // TODO: dedup this code
+      ctx.font = textH + 'px sans-serif';
+      var textWidths = _(uniqueTexts)
+        .map(function(v) { return ctx.measureText(v).width; })
+        .value();
+      ctx.restore();
+
+      // build the cache
+      for (var i = 0; i < uniqueTexts.length; i++) {
+        // XXX: Some text like "Jump" seems to be wider than measured, but
+        // without access to advanced text metrics (feature-gated in Chrome and
+        // unavailable in Firefox) we can't really do much about it.
+        // Just allocate some more width for now...
+        // Also make it multiple of 16 for hopefully nicer memory accesses.
+        var textW = textWidths[i];
+        var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
+        var canvasCenterX = canvasW >> 1;
+        var text = uniqueTexts[i];
+
+        var tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasW;
+        tempCanvas.height = textMarginT + textH + textMarginB;
+        var tempCtx = tempCanvas.getContext('2d');
+        tempCtx.font = textH + 'px sans-serif';
+        tempCtx.textAlign = 'center';
+
+        tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
+
+        textCache[text] = {
+          src: tempCanvas,
+          sX: canvasCenterX
+        };
+      }
+    };
+
+
     this.draw = function(events, eventTimeline, limit) {
       if (inResizeFallout) {
         inResizeFallout = false;
@@ -173,8 +224,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         axisY = (conveyorBorderT + conveyorH / 2)|0;
         followMarkerY = (stepLineY2 + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
-        textBaselineY = (textTopY + textMarginT + textH)|0;
-        textBorderBottomY = (textBaselineY + textMarginB)|0;
+        textBorderBottomY = (textTopY + textMarginT + textH + textMarginB)|0;
 
         // draw background once
         {
@@ -279,11 +329,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.restore();
 
           // text
-          ctx.font = textH + "px sans-serif";
-          ctx.textAlign = 'center';
           for (var i = 0; i < currentEventPack[2].length; i++) {
-            var msg = currentEventPack[2][i].params.msg;
-            ctx.fillText(msg, drawX, textBaselineY);
+            var cachedText = textCache[currentEventPack[2][i].params.msg];
+            ctx.drawImage(cachedText.src, drawX - cachedText.sX, textTopY);
           }
         }
 
