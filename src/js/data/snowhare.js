@@ -5,7 +5,7 @@ module.exports = {
       "title": "Snow halation",
       "artist": "μ's",
       "album": "Snow halation",
-      "url": "snowhare.mp3",
+      "remoteBasename": "snowhare",
       "sources": {
         "fallback:": {
           "offset": 401

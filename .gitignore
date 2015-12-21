@@ -2,6 +2,7 @@
 *.mp3
 *.ogg
 *.wav
+*.opus
 
 /public/music/cover/
 
