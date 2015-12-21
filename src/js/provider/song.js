@@ -7,9 +7,6 @@ require('angular-material');
 
 var SparkMD5 = require('spark-md5');
 
-// XXX: upstream is broken
-var id3 = require('../vendored/id3');
-
 require('../conf');
 require('../../templates/song-loading.tmpl.html');
 
@@ -29,21 +26,9 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
   var songStatus = 'unloaded';
 
 
-  var id3Callback = function(err, tags) {
-    $log.debug('id3Callback: err', err, 'tags', tags);
-
-    var songImage = err ? null : makeSongImage(tags.v2.image.data, tags.v2.image.mime);
-    $rootScope.$broadcast('song:imageLoaded', songImage);
-  };
-
-
   var makeSongImage = function(buffer, mime) {
     return new Blob([new Uint8Array(buffer)], { type: mime || 'image/jpeg' });
-  };
-
-
-  var extractSongImageAsync = function(data) {
-    id3({ file: new Blob([data]), type: id3.OPEN_FILE }, id3Callback);
+    // TODO: someone do $rootScope.$broadcast('song:imageLoaded', songImage); plz
   };
 
 
@@ -54,8 +39,6 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
       songStatus = 'loaded';
       songBuffer = response.data;
       songHash = 'md5:' + SparkMD5.ArrayBuffer.hash(response.data).toLowerCase();
-
-      extractSongImageAsync(songBuffer);
 
       hideLoadingDialog(false);
       
