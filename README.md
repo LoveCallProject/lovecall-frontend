@@ -1,5 +1,7 @@
 # LoveCall
 
+[![devDependency Status](https://david-dm.org/LoveCallProject/lovecall-frontend/dev-status.svg)](https://david-dm.org/LoveCallProject/lovecall-frontend#info=devDependencies)
+
 TODO
 
 
