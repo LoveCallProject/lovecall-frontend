@@ -110,6 +110,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     $scope.isLoaded = true;
     pause();
     playbackPos = 0;
+    refreshTick(false);
     updateTransport(0.0, duration);
     transportState.updateSongForm(Choreography.getForm());
     transportState.updateSongColors(Choreography.getColors());
@@ -127,13 +128,17 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     $log.info('seek: newPlaybackPos=', newPlaybackPos);
 
     AudioEngine.seek(newPlaybackPos);
+    refreshTick(false);
   });
 
 
-  $scope.$on('frame:playbackPosStep', function(evt, m, v) {
-    // don't draw immediately as frame callback will take care of that
-    transportState.updateTick(m, v >> 2, true);
-  });
+  var refreshTick = function(skipDraw) {
+    transportState.updateTick(
+        FrameManager.getMeasure(),
+        FrameManager.getStep() >> 2,
+        skipDraw
+        );
+  };
 
 
   // frame callback
@@ -153,6 +158,7 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     // but for conserving energy, let's only refresh if playing; otherwise
     // refreshing at mouse events seems great.
     if (isPlaying) {
+      refreshTick(true);
       updateTransport(playbackPos, duration);
     }
 
@@ -193,8 +199,8 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
     var songColors = null;
 
     var totalTicks = 4;  // TODO
-    var currentMeasure = 0;
-    var currentTick = 0;
+    var currentMeasure = -1;
+    var currentTick = -1;
 
     // draw states
     var elem = document.createElement('canvas');
@@ -256,9 +262,12 @@ mod.controller('TransportController', function($scope, $window, $log, AudioEngin
 
 
     var updateTick = function(measure, tick, skipDraw) {
+      if (measure !== currentMeasure || tick !== currentTick) {
+        skipDraw || draw();
+      }
+
       currentMeasure = measure;
       currentTick = tick;
-      skipDraw || draw();
     };
 
 
