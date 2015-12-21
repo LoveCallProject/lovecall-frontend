@@ -4,22 +4,25 @@
 require('angular');
 var metronomeMod = require('../choreography/metronome');
 
+require('../conf');
 require('../provider/choreography');
 require('../ui/frame');
 
 
 var mod = angular.module('lovecall/engine/audio', [
+    'lovecall/conf',
     'lovecall/provider/choreography',
     'lovecall/ui/frame'
 ]);
 
-mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, FrameManager) {
+mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreography, FrameManager) {
   var audioCtx = new ($window.AudioContext || $window.webkitAudioContext)();
 
   var sourceBuffer = null;
   var sourceNode = null;
   var gainNode = audioCtx.createGain();
-  var timingNode = audioCtx.createScriptProcessor(2048);
+  var timingNode = null;
+  var bufferSize = 0;
 
   var isPlaying = false;
   var inSeeking = false;
@@ -34,6 +37,21 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
 
   var $metronomeLog = $log.getInstance('Metronome');
   $log = $log.getInstance('AudioEngine');
+
+
+  var initTimingNode = function() {
+    pause();
+
+    bufferSize = LCConfig.getAudioBufferSize();
+    $log.info('creating timing node with buffer size', bufferSize);
+    timingNode = audioCtx.createScriptProcessor(bufferSize);
+    timingNode.onaudioprocess = audioCallback;
+  };
+
+
+  $rootScope.$on('config:audioBufferSizeChanged', function(e) {
+    initTimingNode();
+  });
 
 
   var onEndedCallback = function(e) {
@@ -247,9 +265,11 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
         $metronomeLog,
         false
         );
-
-    timingNode.onaudioprocess = audioCallback;
   };
+
+
+  // initialize
+  initTimingNode();
 
 
   return {

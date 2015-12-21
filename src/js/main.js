@@ -6,6 +6,7 @@ require('angular-animate');
 require('angular-aria');
 require('angular-material');
 require('angular-logex');
+require('angular-local-storage');
 
 require('./ui/index');
 require('./init');
@@ -16,7 +17,8 @@ require('../sass/index.scss');
 var mod = angular.module('lovecall/main', [
     'lovecall/init',
     'lovecall/ui/index',
-    'log.ex.uo'
+    'log.ex.uo',
+    'LocalStorageModule',
 ]);
 
 mod.config(function(logExProvider) {
@@ -28,6 +30,10 @@ mod.config(function(logExProvider) {
 
     return timeFrag + classFrag;
   });
+});
+
+mod.config(function(localStorageServiceProvider) {
+  localStorageServiceProvider.setPrefix('lovecall.');
 });
 
 angular.bootstrap(angular.element(document.getElementById('appmount')), ['lovecall/main', 'ngMaterial']);

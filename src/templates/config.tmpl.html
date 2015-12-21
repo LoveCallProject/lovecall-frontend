@@ -15,15 +15,15 @@
 
   <md-dialog-content class="config__content">
   <form>
-    <p>音频缓冲区大小<span class="config__content__value">   {{ bufferSize }}</span></p>
-    <md-radio-group ng-model="bufferSize">
-      <md-radio-button value="512">512</md-radio-button>
-      <md-radio-button value="1024">1024</md-radio-button>
-      <md-radio-button value="2048">2048</md-radio-button>
-      <md-radio-button value="4096">4096</md-radio-button>
+    <p>音频缓冲区大小<span class="config__content__value">{{ bufferSize }}</span></p>
+    <md-radio-group ng-model="bufferSizeOrder">
+      <md-radio-button value="9">512</md-radio-button>
+      <md-radio-button value="10">1024</md-radio-button>
+      <md-radio-button value="11">2048</md-radio-button>
+      <md-radio-button value="12">4096</md-radio-button>
     </md-radio-group>
     <hr />
-    <md-button class="config__submit md-raised md-primary" ng-click="submit(bufferSize)">
+    <md-button class="config__submit md-raised md-primary" ng-click="submit(bufferSizeOrder)">
       确定 
     </md-button>
   </form>

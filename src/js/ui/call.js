@@ -119,7 +119,6 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var w = 0;
     var h = 0;
     var stepLineY1 = 0;
-    var stepLineY2 = 0;
     var axisY = 0;
     var followMarkerY = 0;
     var textTopY = 0;
@@ -220,9 +219,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         DPIManager.scaleCanvas(bgElem, bgCtx, w, h);
 
         stepLineY1 = (conveyorBorderT)|0;
-        stepLineY2 = (conveyorBorderT + conveyorH)|0;
         axisY = (conveyorBorderT + conveyorH / 2)|0;
-        followMarkerY = (stepLineY2 + conveyorBorderB / 2)|0;
+        followMarkerY = (stepLineY1 + conveyorH + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
         textBorderBottomY = (textTopY + textMarginT + textH + textMarginB)|0;
 
@@ -266,7 +264,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var currentEventPack = events[ts];
         var remainedTime = ts - currentTime;
         var x = pixPreSec * remainedTime;
-        var drawX = x + judgementLineX;
+        var drawX = (x + judgementLineX)|0;
         var realX;
         var realY;
 
@@ -275,21 +273,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         }
 
         // draw stepline
+        // actually there can only ever be 1 stepline per pack so we can
+        // optimize
         if (currentEventPack[0].length > 0) {
-          ctx.save();
-
-          for (var i = 0; i < currentEventPack[0].length; i++) {
-            var e = currentEventPack[0][i];
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1;
-
-            ctx.beginPath();
-            ctx.moveTo(drawX, stepLineY1);
-            ctx.lineTo(drawX, stepLineY2);
-            ctx.stroke();
-          }
-
-          ctx.restore();
+          ctx.fillStyle = '#ccc';
+          ctx.fillRect(drawX, stepLineY1, 1, conveyorH);
         }
 
         // don't render invisible events

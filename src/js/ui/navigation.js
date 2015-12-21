@@ -70,9 +70,7 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
       targetEvent: ev,
       fullscreen: useFullScreen,
       clickOutsideToClose: true
-    }).then(function(size) {
-      //TODO: change buffer size
-    }, function(){});
+    }).then(function() {}, function(){});
   }
 
   // close navigation drawer when song loading ends
