@@ -188,13 +188,13 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         // Also make it multiple of 16 for hopefully nicer memory accesses.
         var textW = textWidths[i];
         var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
+        var canvasH = textMarginT + textH + textMarginB;
         var canvasCenterX = canvasW >> 1;
         var text = uniqueTexts[i];
 
         var tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvasW;
-        tempCanvas.height = textMarginT + textH + textMarginB;
         var tempCtx = tempCanvas.getContext('2d');
+        DPIManager.scaleCanvas(tempCanvas, tempCtx, canvasW, canvasH);
         tempCtx.font = textH + 'px sans-serif';
         tempCtx.textAlign = 'center';
 
@@ -202,7 +202,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
         textCache[text] = {
           src: tempCanvas,
-          sX: canvasCenterX
+          sX: canvasCenterX,
+          sW: canvasW,
+          sH: canvasH,
         };
       }
     };
@@ -319,7 +321,13 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           // text
           for (var i = 0; i < currentEventPack[2].length; i++) {
             var cachedText = textCache[currentEventPack[2][i].params.msg];
-            ctx.drawImage(cachedText.src, drawX - cachedText.sX, textTopY);
+            ctx.drawImage(
+                cachedText.src,
+                drawX - cachedText.sX,
+                textTopY,
+                cachedText.sW,
+                cachedText.sH
+                );
           }
         }
 
