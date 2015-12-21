@@ -25,13 +25,14 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
   var songStatus = 'unloaded';
 
 
+  // not used for now, but may have its use after supporting local music files
   var makeSongImage = function(buffer, mime) {
     return new Blob([new Uint8Array(buffer)], { type: mime || 'image/jpeg' });
-    // TODO: someone do $rootScope.$broadcast('song:imageLoaded', songImage); plz
+    // someone do $rootScope.$broadcast('song:imageLoaded', songImage); plz
   };
 
 
-  var loadSuccessCallbackFactory = function(idx) {
+  var loadSuccessCallbackFactory = function(idx, basename) {
     return function(response) {
       $log.debug('load success:', response);
 
@@ -44,6 +45,9 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
       Choreography.load(idx, songHash);
       AudioEngine.setSourceData(response.data);
       AudioEngine.initEvents(Choreography.getTempo());
+
+      // cover art
+      loadCoverArt(basename);
 
       //successCallback && successCallback(idx, songHash, response.data);
     };
@@ -88,7 +92,14 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
         'Content-Type': undefined
       },
       responseType: 'arraybuffer'
-    }).then(loadSuccessCallbackFactory(idx), errorCallback);
+    }).then(loadSuccessCallbackFactory(idx, basename), errorCallback);
+  };
+
+
+  var loadCoverArt = function(basename) {
+    // TODO: support other formats?
+    var coverArtUrl = LCConfig.REMOTE_COVER_ART_PREFIX + basename + '.jpg';
+    $rootScope.$broadcast('song:remoteCoverArtRequest', coverArtUrl);
   };
 
 
