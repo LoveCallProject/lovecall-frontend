@@ -81,9 +81,9 @@ mod.factory('Choreography', function($log) {
   };
 
 
-  var getSongUrlByIndex = function(idx) {
+  var getSongRemoteBasenameByIndex = function(idx) {
     // FIXME: refactor this
-    return tableManager.lookupTable(idx, "fallback:").metadata.song.url;
+    return tableManager.lookupTable(idx, "fallback:").metadata.song.remoteBasename;
   };
 
 
@@ -121,7 +121,7 @@ mod.factory('Choreography', function($log) {
     'generateStepLineEvents': generateStepLineEvents,
     'load': load,
     'loadTable': loadTable,
-    'getSongUrlByIndex': getSongUrlByIndex,
+    'getSongRemoteBasenameByIndex': getSongRemoteBasenameByIndex,
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,

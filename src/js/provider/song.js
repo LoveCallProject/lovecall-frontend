@@ -24,7 +24,6 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
   $log = $log.getInstance('Song');
 
   var songBuffer = null;
-  var songUrl = null;
   var songHash = null;
   var songStatus = 'unloaded';
 
@@ -55,7 +54,9 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
       songBuffer = response.data;
       songHash = 'md5:' + SparkMD5.ArrayBuffer.hash(response.data).toLowerCase();
 
-      extractSongImageAsync(songBuffer);
+      if (AudioEngine.getPreferredFormat() === 'mp3') {
+        extractSongImageAsync(songBuffer);
+      }
 
       hideLoadingDialog(false);
       
@@ -93,15 +94,15 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
   };
 
 
-  var load = function(idx, url, successCallback, errorCallback) {
-    $log.debug('load request: idx', idx, 'url', url);
+  var load = function(idx, basename, successCallback, errorCallback) {
+    $log.debug('load request: idx', idx, 'basename', basename);
 
     songStatus = 'loading';
 
     showLoadingDialog();
     $http({
       method: 'GET',
-      url: LCConfig.REMOTE_MUSIC_PREFIX + url,
+      url: LCConfig.REMOTE_MUSIC_PREFIX + basename + '.' + AudioEngine.getPreferredFormat(),
       headers: {
         'Content-Type': undefined
       },
