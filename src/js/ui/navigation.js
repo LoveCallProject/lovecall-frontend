@@ -42,10 +42,10 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
     }).then(function(answer) {
       $log.debug('selected song index', answer);
 
-      var songUrl = Choreography.getSongUrlByIndex(answer);
+      var basename = Choreography.getSongRemoteBasenameByIndex(answer);
 
       // load song via Ajax
-      Song.load(answer, songUrl);
+      Song.load(answer, basename);
     }, function() {
       $log.debug('cancelled song select');
     });

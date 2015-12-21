@@ -5,7 +5,7 @@ module.exports = {
       "title": "それは僕たちの奇跡",
       "artist": "μ's",
       "album": "それは僕たちの奇跡",
-      "url": "kiseki.mp3",
+      "remoteBasename": "kiseki",
       "sources": {
         "fallback:": {
           "offset": 2798
