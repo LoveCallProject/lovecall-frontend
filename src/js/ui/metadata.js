@@ -61,6 +61,10 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
     //TODO: change BPM
     var rotateDuration = (tempo.stepToTime(20, 0) - tempo.stepToTime(0, 0)) / 1000;
     metadataImg.style.animationDuration = rotateDuration + 's';
+
+    // don't know exactly why this is even needed, but without this the display
+    // wouldn't get updated at first load. really weird...
+    $scope.$digest();
   });
 
   $scope.$on('audio:resume', function(e) {
