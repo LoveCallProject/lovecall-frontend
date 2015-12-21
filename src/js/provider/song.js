@@ -40,8 +40,6 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
       songBuffer = response.data;
       songHash = 'md5:' + SparkMD5.ArrayBuffer.hash(response.data).toLowerCase();
 
-      hideLoadingDialog(false);
-
       Choreography.load(idx, songHash);
       AudioEngine.setSourceData(response.data);
       AudioEngine.initEvents(Choreography.getTempo());
@@ -106,6 +104,11 @@ mod.factory('Song', function($rootScope, $http, $mdDialog, $log, LCConfig, Chore
   var getStatus = function() {
     return songStatus;
   };
+
+
+  $rootScope.$on('audio:loaded', function(e) {
+    hideLoadingDialog(false);
+  });
 
 
   return {
