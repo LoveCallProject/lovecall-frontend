@@ -19,6 +19,12 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
 
   var metadataImg = document.querySelector('.metadata__image');
 
+
+  var setCoverArtUrl = function(url) {
+    $scope.songImage = 'url(' + url + ')';
+  };
+
+
   var setSongImage = function(imageBlob) {
     if (!imageBlob) {
       $scope.songImage = 'none';
@@ -26,8 +32,14 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
     }
 
     var url = $window.URL || $window.webkitURL;
-    $scope.songImage = 'url(' + url.createObjectURL(imageBlob) + ')';
+    setCoverArtUrl(url.createObjectURL(imageBlob));
   };
+
+
+  $scope.$on('song:remoteCoverArtRequest', function(e, url) {
+    $log.debug('using remote cover art', url);
+    setCoverArtUrl(url);
+  });
 
 
   $scope.$on('audio:unloaded', function(e) {
