@@ -48,7 +48,7 @@ module.exports = {
       { test: /\.scss$/, loader: "style!css!sass" },
       { test: /\.css$/, loader: "style!css" },
       { test: /\.tmpl\.html$/, loader: "ng-cache" },
-      { test: /\.svg$/, loader: "url-loader?limit=100000" },
+      { test: /\.(svg|opus)$/, loader: "url-loader?limit=100000" },
     ]
   }
 };
