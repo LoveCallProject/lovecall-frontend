@@ -345,7 +345,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           ctx.lineWidth = conveyorBorderB;
           ctx.beginPath();
           ctx.arc(
-              drawX,
+              drawX < judgementLineX ? judgementLineX : drawX,
               followMarkerY,
               followMarkerR,
               0,
