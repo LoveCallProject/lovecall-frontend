@@ -8,6 +8,10 @@ require('../conf');
 require('../provider/choreography');
 require('../ui/frame');
 
+var dataHelper = require('../util/data-helper');
+
+var emptyOpusFileUri = require('../../misc/empty.opus');
+
 
 var mod = angular.module('lovecall/engine/audio', [
     'lovecall/conf',
@@ -36,6 +40,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
   // formats
   var haveMP3 = false;
   var haveOpus = false;
+  var haveUsableOpus = false;
   var preferredFormat = '';
 
   var currentMetronome = null;
@@ -50,7 +55,32 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
     haveOpus = elem.canPlayType('audio/ogg; codecs="opus"') !== '';
 
     $log.info('formats: opus', haveOpus, 'mp3', haveMP3);
-    preferredFormat = haveOpus ? 'opus' : 'mp3';
+    updatePreferredFormat();
+    checkOpusUsability();
+  };
+
+
+  var updatePreferredFormat = function() {
+    preferredFormat = haveOpus && haveUsableOpus ? 'opus' : 'mp3';
+  };
+
+
+  var checkOpusUsability = function() {
+    var emptyOpusArray = dataHelper.dataUriToArray(emptyOpusFileUri);
+
+    audioCtx.decodeAudioData(
+        emptyOpusArray.buffer,
+        function(buf) {
+          $log.info('this Opus impl is actually usable');
+          haveUsableOpus = true;
+          updatePreferredFormat();
+        },
+        function(err) {
+          $log.warn('this Opus impl is borked, falling back to MP3; err', err);
+          haveUsableOpus = false;
+          updatePreferredFormat();
+        }
+        );
   };
 
 
