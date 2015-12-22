@@ -260,7 +260,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
     playbackPosMs = 0;
     currentMetronome = null;
     $rootScope.$broadcast('audio:unloaded');
-    audioCtx.decodeAudioData(data, finishSetSourceData);
+    audioCtx.decodeAudioData(data, finishSetSourceData, erroredSetSourceData);
     $rootScope.$broadcast('audio:decoding');
   };
 
@@ -280,6 +280,14 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
 
     // it seems the $broadcast is not enough to refresh all angular states,
     // so
+    $rootScope.$digest();
+  };
+
+
+  var erroredSetSourceData = function(err) {
+    $log.error('erroredSetSourceData:', err);
+
+    $rootScope.$broadcast('audio:loadFailed');
     $rootScope.$digest();
   };
 
