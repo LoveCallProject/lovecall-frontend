@@ -11,6 +11,8 @@ require('../provider/resize-detector');
 require('./frame');
 require('./dpi');
 
+var images = require('./images');
+
 
 var mod = angular.module('lovecall/ui/call', [
     'lovecall/engine/audio',
@@ -132,29 +134,24 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     var pixPreSec = 0;
 
-    var getTaikoImage = function(action) {
-      var img = new Image();
-      img.src = '/images/' + action + '.png';
+    var taicall = images.taicall;
+    var taicallImages = {
+      '上举': taicall.sj,
+      '里打': taicall.ld,
+      '里跳': taicall.lt,
+      'Fu!': taicall.fu,
+      'Oh~': taicall.oh,
+      'Hi!': taicall.hi,
+      '前挥': taicall.qh,
+      '快挥': taicall.kh,
+      '欢呼': taicall.hh,
+      'fuwa': taicall.fw,
+      '跳': taicall.jump,
+    };
 
-      return img;
-    }
 
     this.getCanvasNodeDuration = function() {
       return w / pixPreSec;
-    };
-
-    var taikoImages = {
-      '上举': getTaikoImage('sj'),
-      '里打': getTaikoImage('ld'),
-      '里跳': getTaikoImage('lt'),
-      'Fu!': getTaikoImage('fufu'),
-      'Oh~': getTaikoImage('ppph_oh'),
-      'Hi!': getTaikoImage('ppph_hi'),
-      '前挥': getTaikoImage('qh'),
-      '快挥': getTaikoImage('kh'),
-      '欢呼': getTaikoImage('hh'),
-      'fuwa': getTaikoImage('fw'),
-      '跳': getTaikoImage('jump')
     };
 
 
@@ -377,7 +374,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
         for (var i = 0; i < currentEventPack[1].length; i++) {
           var event = currentEventPack[1][i];
-          ctx.drawImage(taikoImages[event.type], realX, realY);
+          ctx.drawImage(taicallImages[event.type], realX, realY);
         }
 
         if (drawX < judgementLineX) {
