@@ -145,7 +145,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       '前挥': taicall.qh,
       '快挥': taicall.kh,
       '欢呼': taicall.hh,
-      'fuwa': taicall.fw,
+      'fuwa': taicall.fuwa,
       '跳': taicall.jump,
     };
 
