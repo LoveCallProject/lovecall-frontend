@@ -128,9 +128,10 @@ var parsePPPHAction = function(startStep, endStep, params) {
 
 var parseFollowAction = function(startStep, endStep, params) {
   var content = params[0];
+  var romajiContent = typeof params[1] !== 'undefined' ? params[1] : content;
 
   return [
-    [startStep, "跟唱", {msg: content}]
+    [startStep, "跟唱", {msg: content, romaji: romajiContent}]
   ];
 };
 
