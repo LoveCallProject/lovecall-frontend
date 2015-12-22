@@ -5,6 +5,7 @@ var _ = require('lodash');
 
 require('angular');
 
+require('../conf');
 require('../engine/audio');
 require('../provider/choreography');
 require('../provider/resize-detector');
@@ -15,6 +16,7 @@ var images = require('./images');
 
 
 var mod = angular.module('lovecall/ui/call', [
+    'lovecall/conf',
     'lovecall/engine/audio',
     'lovecall/provider/choreography',
     'lovecall/provider/resize-detector',
@@ -23,7 +25,7 @@ var mod = angular.module('lovecall/ui/call', [
 ]);
 
 
-mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector) {
+mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector) {
   $log = $log.getInstance('CallController');
 
   var events = {};
@@ -70,6 +72,12 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
   $scope.$on('audio:seek', function(e, newPosition) {
+    doUpdate();
+  });
+
+
+  $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
+    callCanvas.setUseRomaji(enabled);
     doUpdate();
   });
 
@@ -123,6 +131,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var textH = 30;
     var textBorderB = 1;
     var textExplodeRatio = 0.15;
+
+    var useRomaji = LCConfig.isRomajiEnabled();
 
     var w = 0;
     var h = 0;
@@ -198,14 +208,31 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
+    this.setUseRomaji = function(enabled) {
+      useRomaji = enabled;
+    };
+
+
     this.refreshTextCache = function(events) {
       textCache = {};
 
-      var uniqueTexts = _(events)
+      var textEvents = _(events)
         .values()
         .map(function(v) { return v[2]; })
         .flatten()
+        .value();
+
+      var messages = _(textEvents)
         .map(function(v) { return v.params.msg; })
+        .value();
+
+      var romajis = _(textEvents)
+        .map(function(v) { return v.params.romaji; })
+        .filter(function(v) { return typeof v !== 'undefined'; })
+        .value();
+
+      var uniqueTexts = _([messages, romajis])
+        .flatten()
         .unique()
         .value();
 
@@ -366,7 +393,17 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
           // text
           for (var i = 0; i < currentEventPack[2].length; i++) {
-            var cachedText = textCache[currentEventPack[2][i].params.msg];
+            var currentParam = currentEventPack[2][i].params;
+            var textKey;
+
+            if (useRomaji) {
+              var romaji = currentParam.romaji;
+              textKey = typeof romaji !== 'undefined' ? romaji : currentParam.msg;
+            } else {
+              textKey = currentParam.msg;
+            }
+
+            var cachedText = textCache[textKey];
 
             if (drawX < judgementLineX) {
               ctx.save();

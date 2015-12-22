@@ -14,9 +14,11 @@ var mod = angular.module('lovecall/ui/config', [
 
 mod.controller('ConfigDialogController', function($scope, $mdDialog, LCConfig) {
   $scope.bufferSizeOrder = LCConfig.getAudioBufferSizeOrder();
+  $scope.useRomaji = LCConfig.isRomajiEnabled();
 
-  $scope.submit = function(sizeOrder) {
-    LCConfig.setAudioBufferSizeOrder(sizeOrder);
+  $scope.submit = function() {
+    LCConfig.setAudioBufferSizeOrder($scope.bufferSizeOrder);
+    LCConfig.setRomajiEnabled($scope.useRomaji);
     $mdDialog.hide();
   }
 
