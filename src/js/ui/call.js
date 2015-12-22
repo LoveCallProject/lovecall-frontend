@@ -78,7 +78,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
   $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
     callCanvas.setUseRomaji(enabled);
-    callCanvas.draw();
+    doUpdate();
   });
 
 
