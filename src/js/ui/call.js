@@ -24,7 +24,7 @@ var mod = angular.module('lovecall/ui/call', [
 
 
 mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector) {
-  $log.debug('$scope=', $scope);
+  $log = $log.getInstance('CallController');
 
   var events = {};
   var eventTimeline = [];
@@ -442,6 +442,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     containerElem.appendChild(bgElem);
     containerElem.appendChild(elem);
   };
+
+  $log.debug('$scope=', $scope);
 });
 /* @license-end */
 
