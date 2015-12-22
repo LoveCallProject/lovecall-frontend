@@ -104,8 +104,9 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var ctx = elem.getContext('2d');
 
     var circleR = 50;
+    var circleSize = (2 * circleR)|0;
     var circleMargin = -40;
-    var circleDistance = 2 * circleR + circleMargin;
+    var circleDistance = circleSize + circleMargin;
     var circleFadeOutDistance = 40;
     var circleExplodeRatio = 0.25;
     var circleExplodeCachedImageR = ((1 + circleExplodeRatio) * circleR)|0;
@@ -158,19 +159,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var tempCanvas = document.createElement('canvas');
         var tempCtx = tempCanvas.getContext('2d');
 
-        DPIManager.scaleCanvas(
-            tempCanvas,
-            tempCtx,
-            circleR * 2,
-            circleR * 2
-            );
-        tempCtx.drawImage(
-            img,
-            0,
-            0,
-            circleR * 2,
-            circleR * 2
-            );
+        DPIManager.scaleCanvas(tempCanvas, tempCtx, circleSize, circleSize);
+        tempCtx.drawImage(img, 0, 0, circleSize, circleSize);
 
         return tempCanvas;
       }).value();
@@ -204,7 +194,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
     this.setTempo = function(tempo) {
-      pixPreSec = +((circleR * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
+      pixPreSec = +((circleSize + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     };
 
 
@@ -407,6 +397,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         // hit object
         var realX;
         var realY;
+        var realSize;
 
         // apply scale
         if (drawX < judgementLineX) {
@@ -416,9 +407,11 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
           realX = -circleExplodeCachedImageR;
           realY = -circleExplodeCachedImageR;
+          realSize = circleExplodeCachedImageSize;
         } else {
           realX = drawX - circleR;
           realY = axisY - circleR;
+          realSize = circleSize;
         }
 
         for (var i = 0; i < currentEventPack[1].length; i++) {
@@ -429,7 +422,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
               cachedTaicallImages[eventType]
               );
 
-          ctx.drawImage(img, realX, realY);
+          ctx.drawImage(img, realX, realY, realSize, realSize);
         }
 
         if (drawX < judgementLineX) {
