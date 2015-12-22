@@ -16,11 +16,24 @@ mod.controller('ConfigDialogController', function($scope, $mdDialog, LCConfig) {
   $scope.bufferSizeOrder = LCConfig.getAudioBufferSizeOrder();
   $scope.useRomaji = LCConfig.isRomajiEnabled();
 
-  $scope.submit = function() {
-    LCConfig.setAudioBufferSizeOrder($scope.bufferSizeOrder);
-    LCConfig.setRomajiEnabled($scope.useRomaji);
-    $mdDialog.hide();
-  }
+
+  $scope.$watch('bufferSizeOrder', function(to, from) {
+    if (to === from) {
+      return;
+    }
+
+    LCConfig.setAudioBufferSizeOrder(to);
+  });
+
+
+  $scope.$watch('useRomaji', function(to, from) {
+    if (to === from) {
+      return;
+    }
+
+    LCConfig.setRomajiEnabled(to);
+  });
+
 
   $scope.close = function() {
     $mdDialog.cancel();
