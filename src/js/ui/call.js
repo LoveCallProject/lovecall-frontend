@@ -153,6 +153,28 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       '跳': taicall.jump,
     };
 
+    var cachedTaicallImages = _(taicallImages)
+      .mapValues(function(img) {
+        var tempCanvas = document.createElement('canvas');
+        var tempCtx = tempCanvas.getContext('2d');
+
+        DPIManager.scaleCanvas(
+            tempCanvas,
+            tempCtx,
+            circleR * 2,
+            circleR * 2
+            );
+        tempCtx.drawImage(
+            img,
+            0,
+            0,
+            circleR * 2,
+            circleR * 2
+            );
+
+        return tempCanvas;
+      }).value();
+
     var cachedExplodingTaicallImages = _(taicallImages)
       .mapValues(function(img) {
         var tempCanvas = document.createElement('canvas');
@@ -404,7 +426,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
           var img = (
               drawX < judgementLineX ?
               cachedExplodingTaicallImages[eventType] :
-              taicallImages[eventType]
+              cachedTaicallImages[eventType]
               );
 
           ctx.drawImage(img, realX, realY);
