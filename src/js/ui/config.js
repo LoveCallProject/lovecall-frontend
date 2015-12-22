@@ -19,4 +19,8 @@ mod.controller('ConfigDialogController', function($scope, $mdDialog, LCConfig) {
     LCConfig.setAudioBufferSizeOrder(sizeOrder);
     $mdDialog.hide();
   }
+
+  $scope.close = function() {
+    $mdDialog.cancel();
+  }
 });
