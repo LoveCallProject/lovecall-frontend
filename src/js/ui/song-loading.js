@@ -27,6 +27,12 @@ mod.controller('SongLoadingController', function($scope, $timeout, $mdDialog) {
   });
 
 
+  $scope.$on('audio:loadFailed', function(e) {
+    $scope.message = '音频解码失败，请刷新重试或更换浏览器';
+    $scope.loadFailed = true;
+  });
+
+
   $scope.$on('song:hideLoadingDialog', function(e, errored) {
     // hide progress indicator
     $scope.progressVisibility = 'hidden';
