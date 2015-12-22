@@ -12,7 +12,7 @@ var mod = angular.module('lovecall/conf', [
 ]);
 
 mod.factory('LCConfig', function($rootScope, localStorageService) {
-  var VERSION = '20151222';
+  var VERSION = '20151222.2';
   var HASH = __webpack_hash__;
 
 
