@@ -17,24 +17,25 @@
   <form>
     <p>音频缓冲区大小量级</p>
     <md-slider
-		data-ng-model="bufferSizeOrder"
-		md-discrete
-		data-step="1"
-		data-min="9"
-		data-max="12"
-		aria-label="音频缓冲区大小量级">
-	</md-slider>
+        data-ng-model="bufferSizeOrder"
+        md-discrete
+        data-step="1"
+        data-min="9"
+        data-max="12"
+        aria-label="音频缓冲区大小量级"
+        >
+    </md-slider>
     <hr />
-	<div class="config__preference--switch">
-	  <p class="config__preference__desc">跟唱部分使用罗马字</p>
-	  <md-switch
-		  class="config__preference__switch"
-		  data-ng-model="useRomaji"
-		  aria-label="跟唱部分使用罗马字"
-		  >
-	  </md-switch>
-	</div>
-	<hr />
+    <div class="config__preference--switch">
+      <p class="config__preference__desc">跟唱部分使用罗马字</p>
+      <md-switch
+          class="config__preference__switch"
+          data-ng-model="useRomaji"
+          aria-label="跟唱部分使用罗马字"
+          >
+      </md-switch>
+    </div>
+    <hr />
     <md-button class="config__submit md-raised md-primary" ng-click="submit(bufferSizeOrder)">
       确定 
     </md-button>
