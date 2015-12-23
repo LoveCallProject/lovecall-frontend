@@ -16,6 +16,7 @@
         id="metadata"
         data-ng-controller="MetadataController"
         data-ng-class="{'sidenav-locked-open': $mdMedia('gt-md')}"
+        lang="{{lang}}"
         >
       <div class="metadata__image-container">
         <div
@@ -26,11 +27,26 @@
       </div>
       <div class="metadata__text">
         <div class="metadata__text__title-container">
-          <h2 class="metadata__text__title">{{title}}</h2>
+          <h2
+              class="metadata__text__title"
+              data-ng-style="{'font-family': fontFamily}"
+              >
+            {{title}}
+          </h2>
         </div>
         <div class="metadata__text__other">
-          <span class="metadata__text__other__artist">{{artist}}</span>
-          <span class="metadata__text__other__album">{{album}}</span>
+          <span
+              class="metadata__text__other__artist"
+              data-ng-style="{'font-family': fontFamily}"
+              >
+            {{artist}}
+          </span>
+          <span
+              class="metadata__text__other__album"
+              data-ng-style="{'font-family': fontFamily}"
+              >
+            {{album}}
+          </span>
         </div>
       </div>
     </section>
