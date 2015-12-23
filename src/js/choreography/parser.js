@@ -41,6 +41,18 @@ var parseJumpAction = function(startStep, params) {
 }
 
 
+var parseAlarmAction = function(startStep, params) {
+  return [
+    [startStep, "Hi!", null],
+    [stepAdd(startStep, {m: 0, s: 8}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 0}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 4}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 8}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 12}), "Hi!", null]
+  ];
+};
+
+
 var parsePeriodicAction = function(startStep, endStep, type, offset, increment, params) {
   params = params || null;
 
@@ -90,18 +102,6 @@ var parseFuwaAction = function(startStep, endStep, params) {
 };
 
 
-var parseAlarmAction = function(startStep, endStep, params) {
-  return [
-    [startStep, "Hi!", null],
-    [stepAdd(startStep, {m: 0, s: 8}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 0}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 4}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 8}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 12}), "Hi!", null]
-  ];
-};
-
-
 var parsePPPHAction = function(startStep, endStep, params) {
   var ppphVariant = params[0];
   var currentStep = startStep;
@@ -148,12 +148,12 @@ var POINT_ACTION_PARSERS = {
   'fu': parseFuAction,
   'fufu': parseFuFuAction,
   '跳': parseJumpAction,
+  '警报': parseAlarmAction,
 };
 
 var LONG_ACTION_PARSERS = {
   '上举': parseSJAction,
   '里打': parseLDAction,
-  '警报': parseAlarmAction,
   'PPPH': parsePPPHAction,
   '里跳': parseLTAction,
   '前挥': parseQHAction,
