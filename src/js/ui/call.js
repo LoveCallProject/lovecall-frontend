@@ -8,6 +8,7 @@ require('angular');
 require('../conf');
 require('../engine/audio');
 require('../provider/choreography');
+require('../provider/font-selector');
 require('../provider/resize-detector');
 require('./frame');
 require('./dpi');
@@ -19,13 +20,14 @@ var mod = angular.module('lovecall/ui/call', [
     'lovecall/conf',
     'lovecall/engine/audio',
     'lovecall/provider/choreography',
+    'lovecall/provider/font-selector',
     'lovecall/provider/resize-detector',
     'lovecall/ui/frame',
     'lovecall/ui/dpi',
 ]);
 
 
-mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector) {
+mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, FontSelector, ResizeDetector) {
   $log = $log.getInstance('CallController');
 
   var events = {};
@@ -213,6 +215,12 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
+    this.setFollowFont = function(ctx) {
+      var lang = useRomaji ? 'en' : Choreography.getLanguage();
+      ctx.font = FontSelector.canvasFontForLanguage(lang, textH);
+    };
+
+
     this.refreshTextCache = function(events) {
       textCache = {};
 
@@ -237,8 +245,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         .value();
 
       ctx.save();
-      // TODO: dedup this code
-      ctx.font = textH + 'px sans-serif';
+      this.setFollowFont(ctx);
       var textWidths = _(uniqueTexts)
         .map(function(v) { return ctx.measureText(v).width; })
         .value();
@@ -260,7 +267,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         var tempCanvas = document.createElement('canvas');
         var tempCtx = tempCanvas.getContext('2d');
         DPIManager.scaleCanvas(tempCanvas, tempCtx, canvasW, canvasH);
-        tempCtx.font = textH + 'px sans-serif';
+        this.setFollowFont(tempCtx);
         tempCtx.textAlign = 'center';
 
         tempCtx.fillText(text, canvasCenterX, textMarginT + textH);

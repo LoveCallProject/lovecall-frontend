@@ -5,6 +5,7 @@ module.exports = {
       "title": "Snow halation",
       "artist": "μ's",
       "album": "Snow halation",
+      "lang": "ja",
       "remoteBasename": "snowhare",
       "sources": {
         "fallback:": {
