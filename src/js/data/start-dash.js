@@ -5,6 +5,7 @@ module.exports = {
       "title": "START:DASH!!",
       "artist": "μ's",
       "album": "ススメ→トゥモロウ/START:DASH!!",
+      "lang": "ja",
       "remoteBasename": "start-dash",
       "sources": {
         "fallback:": {

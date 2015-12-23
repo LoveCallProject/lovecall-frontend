@@ -5,6 +5,7 @@ module.exports = {
       "title": "Wonderful Rush",
       "artist": "μ's",
       "album": "Wonderful Rush",
+      "lang": "ja",
       "remoteBasename": "wr",
       "sources": {
         "fallback:": {
