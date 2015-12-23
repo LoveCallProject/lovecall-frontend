@@ -268,7 +268,8 @@ var parseSongMetadata = function(songMetadata) {
   return {
     ti: songMetadata.title,
     ar: songMetadata.artist,
-    al: songMetadata.album
+    al: songMetadata.album,
+    lang: songMetadata.lang,
   };
 }
 
