@@ -3,18 +3,22 @@
 
 require('angular');
 require('../provider/choreography');
+require('../provider/font-selector');
 
 
 var mod = angular.module('lovecall/ui/metadata', [
-    'lovecall/provider/choreography'
+    'lovecall/provider/choreography',
+    'lovecall/provider/font-selector',
 ]);
 
-mod.controller('MetadataController', function($scope, $window, $log, Choreography) {
+mod.controller('MetadataController', function($scope, $window, $log, Choreography, FontSelector) {
   $log = $log.getInstance('MetadataController');
 
 	$scope.title = '';
   $scope.artist = '';
   $scope.album = '';
+  $scope.lang = '';
+  $scope.fontFamily = 'sans-serif';
   $scope.songImage = 'none';
 
   var metadataImg = document.querySelector('.metadata__image');
@@ -57,6 +61,10 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
     $scope.title = songMetadata.ti;
     $scope.artist = songMetadata.ar;
     $scope.album = songMetadata.al;
+
+    var lang = Choreography.getLanguage();
+    $scope.lang = lang;
+    $scope.fontFamily = FontSelector.fontFamilyForLanguage(lang);
 
     //TODO: change BPM
     var rotateDuration = (tempo.stepToTime(20, 0) - tempo.stepToTime(0, 0)) / 1000;

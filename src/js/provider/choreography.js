@@ -92,6 +92,11 @@ mod.factory('Choreography', function($log) {
   };
 
 
+  var getLanguage = function() {
+    return parsedData.songMetadata.lang;
+  };
+
+
   var getTempo = function() {
     return parsedData.tempo;
   };
@@ -122,6 +127,7 @@ mod.factory('Choreography', function($log) {
     'load': load,
     'loadTable': loadTable,
     'getSongRemoteBasenameByIndex': getSongRemoteBasenameByIndex,
+    'getLanguage': getLanguage,
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,

@@ -28,6 +28,7 @@ LoveCallTableManager.prototype.registerTable = function(table) {
     ti: table.metadata.song.title,
     ar: table.metadata.song.artist,
     al: table.metadata.song.album,
+    lang: table.metadata.song.lang,
     idx: idx
   };
 
