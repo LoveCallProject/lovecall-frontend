@@ -3,21 +3,31 @@
 
 require('angular');
 require('../provider/choreography');
+require('../provider/font-selector');
 
 
 var mod = angular.module('lovecall/ui/metadata', [
-    'lovecall/provider/choreography'
+    'lovecall/provider/choreography',
+    'lovecall/provider/font-selector',
 ]);
 
-mod.controller('MetadataController', function($scope, $window, $log, Choreography) {
+mod.controller('MetadataController', function($scope, $window, $log, Choreography, FontSelector) {
   $log = $log.getInstance('MetadataController');
 
 	$scope.title = '';
   $scope.artist = '';
   $scope.album = '';
+  $scope.lang = '';
+  $scope.fontFamily = 'sans-serif';
   $scope.songImage = 'none';
 
   var metadataImg = document.querySelector('.metadata__image');
+
+
+  var setCoverArtUrl = function(url) {
+    $scope.songImage = 'url(' + url + ')';
+  };
+
 
   var setSongImage = function(imageBlob) {
     if (!imageBlob) {
@@ -26,8 +36,14 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
     }
 
     var url = $window.URL || $window.webkitURL;
-    $scope.songImage = 'url(' + url.createObjectURL(imageBlob) + ')';
+    setCoverArtUrl(url.createObjectURL(imageBlob));
   };
+
+
+  $scope.$on('song:remoteCoverArtRequest', function(e, url) {
+    $log.debug('using remote cover art', url);
+    setCoverArtUrl(url);
+  });
 
 
   $scope.$on('audio:unloaded', function(e) {
@@ -45,6 +61,10 @@ mod.controller('MetadataController', function($scope, $window, $log, Choreograph
     $scope.title = songMetadata.ti;
     $scope.artist = songMetadata.ar;
     $scope.album = songMetadata.al;
+
+    var lang = Choreography.getLanguage();
+    $scope.lang = lang;
+    $scope.fontFamily = FontSelector.fontFamilyForLanguage(lang);
 
     //TODO: change BPM
     var rotateDuration = (tempo.stepToTime(20, 0) - tempo.stepToTime(0, 0)) / 1000;

@@ -4,9 +4,12 @@ module.exports = {
     "song": {
       "title": "ススメ→トゥモロウ",
       "artist": "μ's",
-      "album": "START:DASH!!",
-      "url": "susutomo.mp3",
+      "album": "ススメ→トゥモロウ/START:DASH!!",
+      "remoteBasename": "susutomo",
       "sources": {
+        "fallback:": {
+          "offset": 5134
+        },
         "md5:c58b2892e24d0239a6f31b769c230dac": {
           "offset": 5134
         }

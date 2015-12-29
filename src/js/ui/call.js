@@ -1,24 +1,34 @@
 /* @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later */
 'use strict';
 
+var _ = require('lodash');
+
 require('angular');
 
+require('../conf');
 require('../engine/audio');
 require('../provider/choreography');
+require('../provider/font-selector');
 require('../provider/resize-detector');
 require('./frame');
+require('./dpi');
+
+var images = require('./images');
 
 
 var mod = angular.module('lovecall/ui/call', [
+    'lovecall/conf',
     'lovecall/engine/audio',
     'lovecall/provider/choreography',
+    'lovecall/provider/font-selector',
     'lovecall/provider/resize-detector',
-    'lovecall/ui/frame'
+    'lovecall/ui/frame',
+    'lovecall/ui/dpi',
 ]);
 
 
-mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, ResizeDetector) {
-  $log.debug('$scope=', $scope);
+mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, FontSelector, ResizeDetector) {
+  $log = $log.getInstance('CallController');
 
   var events = {};
   var eventTimeline = [];
@@ -43,6 +53,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
     isPlaying = false;
     pRight = 0;
+    callCanvas.refreshTextCache(events);
     doUpdate();
   });
 
@@ -63,6 +74,12 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
   $scope.$on('audio:seek', function(e, newPosition) {
+    doUpdate();
+  });
+
+
+  $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
+    callCanvas.setUseRomaji(enabled);
     doUpdate();
   });
 
@@ -97,59 +114,172 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var ctx = elem.getContext('2d');
 
     var circleR = 50;
+    var circleSize = (2 * circleR)|0;
     var circleMargin = -40;
-    var circleDistance = 2 * circleR + circleMargin;
+    var circleDistance = circleSize + circleMargin;
     var circleFadeOutDistance = 40;
     var circleExplodeRatio = 0.25;
+    var circleExplodeCachedImageR = ((1 + circleExplodeRatio) * circleR)|0;
+    var circleExplodeCachedImageSize = (2 * circleExplodeCachedImageR)|0;
+    var circleExplodeBaseScale = +(1 / (1 + circleExplodeRatio));
+    var circleExplodeScaleInc = +(1 - circleExplodeBaseScale);
     var conveyorH = 150;
     var conveyorBorderT = 4;
     var conveyorBorderB = 4;
     var judgementLineX = 75;
+    var followMarkerR = 6;
     var textMarginT = 4;
     var textMarginB = 8;
     var textH = 30;
     var textBorderB = 1;
+    var textExplodeRatio = 0.15;
+
+    var useRomaji = LCConfig.isRomajiEnabled();
 
     var w = 0;
     var h = 0;
     var stepLineY1 = 0;
-    var stepLineY2 = 0;
     var axisY = 0;
+    var followMarkerY = 0;
     var textTopY = 0;
-    var textBaselineY = 0;
     var textBorderBottomY = 0;
+    var textExplodeCenterY = 0;
+    var textExplodeDrawRefY = 0;
+    var textCache = {};
     var currentTime = 0;
     var inResizeFallout = true;
 
     var pixPreSec = 0;
 
-    var getTaikoImage = function(action) {
-      var img = new Image();
-      img.src = 'images/' + action + '.png';
+    var taicall = images.taicall;
+    var taicallImages = {
+      '上举': taicall.sj,
+      '里打': taicall.ld,
+      '里跳': taicall.lt,
+      'Fu!': taicall.fu,
+      'Oh~': taicall.oh,
+      'Hi!': taicall.hi,
+      '前挥': taicall.qh,
+      '快挥': taicall.kh,
+      '欢呼': taicall.hh,
+      'fuwa': taicall.fuwa,
+      '跳': taicall.jump,
+      '特殊': taicall.special,
+    };
 
-      return img;
-    }
+    var cachedTaicallImages = _(taicallImages)
+      .mapValues(function(img) {
+        var tempCanvas = document.createElement('canvas');
+        var tempCtx = tempCanvas.getContext('2d');
+
+        DPIManager.scaleCanvas(tempCanvas, tempCtx, circleSize, circleSize);
+        tempCtx.drawImage(img, 0, 0, circleSize, circleSize);
+
+        return tempCanvas;
+      }).value();
+
+    var cachedExplodingTaicallImages = _(taicallImages)
+      .mapValues(function(img) {
+        var tempCanvas = document.createElement('canvas');
+        var tempCtx = tempCanvas.getContext('2d');
+
+        DPIManager.scaleCanvas(
+            tempCanvas,
+            tempCtx,
+            circleExplodeCachedImageSize,
+            circleExplodeCachedImageSize
+            );
+        tempCtx.drawImage(
+            img,
+            0,
+            0,
+            circleExplodeCachedImageSize,
+            circleExplodeCachedImageSize
+            );
+
+        return tempCanvas;
+      }).value();
+
 
     this.getCanvasNodeDuration = function() {
       return w / pixPreSec;
     };
 
-    var taikoImages = {
-      '上举': getTaikoImage('sj'),
-      '里打': getTaikoImage('ld'),
-      '里跳': getTaikoImage('lt'),
-      'Fu!': getTaikoImage('fufu'),
-      'Oh~': getTaikoImage('ppph_oh'),
-      'Hi!': getTaikoImage('ppph_hi'),
-      '前挥': getTaikoImage('qh'),
-      '快挥': getTaikoImage('kh'),
-      '欢呼': getTaikoImage('hh'),
-      'fuwa': getTaikoImage('fw')
+
+    this.setTempo = function(tempo) {
+      pixPreSec = +((circleSize + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     };
 
 
-    this.setTempo = function(tempo) {
-      pixPreSec = +((circleR * 2 + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
+    this.setUseRomaji = function(enabled) {
+      useRomaji = enabled;
+    };
+
+
+    this.setFollowFont = function(ctx) {
+      var lang = useRomaji ? 'en' : Choreography.getLanguage();
+      ctx.font = FontSelector.canvasFontForLanguage(lang, textH);
+    };
+
+
+    this.refreshTextCache = function(events) {
+      textCache = {};
+
+      var textEvents = _(events)
+        .values()
+        .map(function(v) { return v[2]; })
+        .flatten()
+        .value();
+
+      var messages = _(textEvents)
+        .map(function(v) { return v.params.msg; })
+        .value();
+
+      var romajis = _(textEvents)
+        .map(function(v) { return v.params.romaji; })
+        .filter(function(v) { return typeof v !== 'undefined'; })
+        .value();
+
+      var uniqueTexts = _([messages, romajis])
+        .flatten()
+        .unique()
+        .value();
+
+      ctx.save();
+      this.setFollowFont(ctx);
+      var textWidths = _(uniqueTexts)
+        .map(function(v) { return ctx.measureText(v).width; })
+        .value();
+      ctx.restore();
+
+      // build the cache
+      for (var i = 0; i < uniqueTexts.length; i++) {
+        // XXX: Some text like "Jump" seems to be wider than measured, but
+        // without access to advanced text metrics (feature-gated in Chrome and
+        // unavailable in Firefox) we can't really do much about it.
+        // Just allocate some more width for now...
+        // Also make it multiple of 16 for hopefully nicer memory accesses.
+        var textW = textWidths[i];
+        var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
+        var canvasH = textMarginT + textH + textMarginB;
+        var canvasCenterX = canvasW >> 1;
+        var text = uniqueTexts[i];
+
+        var tempCanvas = document.createElement('canvas');
+        var tempCtx = tempCanvas.getContext('2d');
+        DPIManager.scaleCanvas(tempCanvas, tempCtx, canvasW, canvasH);
+        this.setFollowFont(tempCtx);
+        tempCtx.textAlign = 'center';
+
+        tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
+
+        textCache[text] = {
+          src: tempCanvas,
+          sX: canvasCenterX,
+          sW: canvasW,
+          sH: canvasH,
+        };
+      }
     };
 
 
@@ -160,17 +290,16 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var canvasRect = elem.getBoundingClientRect();
         w = canvasRect.width|0;
         h = canvasRect.height|0;
-        elem.width = w;
-        elem.height = h;
-        bgElem.width = w;
-        bgElem.height = h;
+        DPIManager.scaleCanvas(elem, ctx, w, h);
+        DPIManager.scaleCanvas(bgElem, bgCtx, w, h);
 
         stepLineY1 = (conveyorBorderT)|0;
-        stepLineY2 = (conveyorBorderT + conveyorH)|0;
         axisY = (conveyorBorderT + conveyorH / 2)|0;
+        followMarkerY = (stepLineY1 + conveyorH + conveyorBorderB / 2)|0;
         textTopY = (conveyorBorderT + conveyorH + conveyorBorderB)|0;
-        textBaselineY = (textTopY + textMarginT + textH)|0;
-        textBorderBottomY = (textBaselineY + textMarginB)|0;
+        textBorderBottomY = (textTopY + textMarginT + textH + textMarginB)|0;
+        textExplodeCenterY = (textTopY + 2 * textH)|0;
+        textExplodeDrawRefY = (-2 * textH)|0;
 
         // draw background once
         {
@@ -212,30 +341,19 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var currentEventPack = events[ts];
         var remainedTime = ts - currentTime;
         var x = pixPreSec * remainedTime;
-        var drawX = x + judgementLineX;
-        var realX;
-        var realY;
+        var drawX = (x + judgementLineX)|0;
+        var fadeOutValue = 0;
 
         if (!currentEventPack) {
           break;
         }
 
         // draw stepline
-        if (currentEventPack[0]) {
-          ctx.save();
-
-          for (var i = 0; i < currentEventPack[0].length; i++) {
-            var e = currentEventPack[0][i];
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1;
-
-            ctx.beginPath();
-            ctx.moveTo(drawX, stepLineY1);
-            ctx.lineTo(drawX, stepLineY2);
-            ctx.stroke();
-          }
-
-          ctx.restore();
+        // actually there can only ever be 1 stepline per pack so we can
+        // optimize
+        if (currentEventPack[0].length > 0) {
+          ctx.fillStyle = '#ccc';
+          ctx.fillRect(drawX, stepLineY1, 1, conveyorH);
         }
 
         // don't render invisible events
@@ -247,43 +365,113 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         // alpha-only
         if (drawX < judgementLineX) {
           ctx.save();
-          var fadeOutValue = (judgementLineX - drawX) / circleFadeOutDistance;
-          fadeOutValue = 1 - fadeOutValue;
+          fadeOutValue = +((judgementLineX - drawX) / circleFadeOutDistance);
 
           // TODO: exponential mapping or something else?
-          var alpha = fadeOutValue;
-          var scale = 1 + circleExplodeRatio * (1 - fadeOutValue);
+          var alpha = 1 - fadeOutValue;
           ctx.globalAlpha = alpha;
         }
 
-        // text
-        if (currentEventPack[2]) {
-          ctx.font = textH + "px sans-serif";
-          ctx.textAlign = 'center';
+        if (currentEventPack[2].length > 0) {
+          // follow marker
+          ctx.save();
+          ctx.fillStyle = '#eee';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = conveyorBorderB;
+          ctx.beginPath();
+          ctx.arc(
+              drawX < judgementLineX ? judgementLineX : drawX,
+              followMarkerY,
+              followMarkerR,
+              0,
+              2 * Math.PI
+              );
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          var realTextX;
+          var realTextY;
+          var fadeOutValue;
+          var scale;
+
+          if (drawX < judgementLineX) {
+            scale = 1 + textExplodeRatio * fadeOutValue;
+          }
+
+          // text
           for (var i = 0; i < currentEventPack[2].length; i++) {
-            var msg = currentEventPack[2][i].params.msg;
-            ctx.fillText(msg, drawX, textBaselineY);
+            var currentParam = currentEventPack[2][i].params;
+            var textKey;
+
+            if (useRomaji) {
+              var romaji = currentParam.romaji;
+              textKey = typeof romaji !== 'undefined' ? romaji : currentParam.msg;
+            } else {
+              textKey = currentParam.msg;
+            }
+
+            var cachedText = textCache[textKey];
+
+            if (drawX < judgementLineX) {
+              ctx.save();
+              ctx.translate(judgementLineX, textExplodeCenterY);
+              ctx.scale(scale, scale);
+
+              realTextX = -cachedText.sX;
+              realTextY = textExplodeDrawRefY;
+            } else {
+              realTextX = drawX - cachedText.sX;
+              realTextY = textTopY;
+            }
+
+            ctx.drawImage(
+                cachedText.src,
+                realTextX,
+                realTextY,
+                cachedText.sW,
+                cachedText.sH
+                );
+
+            if (drawX < judgementLineX) {
+              ctx.restore();
+            }
           }
         }
 
+        // hit object
+        var realX;
+        var realY;
+        var realSize;
+
         // apply scale
         if (drawX < judgementLineX) {
+          var scale = +(circleExplodeBaseScale + circleExplodeScaleInc * fadeOutValue);
           ctx.translate(judgementLineX, axisY);
           ctx.scale(scale, scale);
 
-          realX = -circleR;
-          realY = -circleR;
+          realX = -circleExplodeCachedImageR;
+          realY = -circleExplodeCachedImageR;
+          realSize = circleExplodeCachedImageSize;
         } else {
           realX = drawX - circleR;
           realY = axisY - circleR;
+          realSize = circleSize;
         }
 
         for (var i = 0; i < currentEventPack[1].length; i++) {
-          var event = currentEventPack[1][i];
-          ctx.drawImage(taikoImages[event.type], realX, realY);
+          var eventType = currentEventPack[1][i].type;
+          var img = (
+              drawX < judgementLineX ?
+              cachedExplodingTaicallImages[eventType] :
+              cachedTaicallImages[eventType]
+              );
+
+          ctx.drawImage(img, realX, realY, realSize, realSize);
         }
 
         if (drawX < judgementLineX) {
+          // NOTE: corresponding save() is done when setting globalAlpha
           ctx.restore();
         }
       }
@@ -299,6 +487,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     containerElem.appendChild(bgElem);
     containerElem.appendChild(elem);
   };
+
+  $log.debug('$scope=', $scope);
 });
 /* @license-end */
 

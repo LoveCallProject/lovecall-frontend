@@ -81,14 +81,19 @@ mod.factory('Choreography', function($log) {
   };
 
 
-  var getSongUrlByIndex = function(idx) {
+  var getSongRemoteBasenameByIndex = function(idx) {
     // FIXME: refactor this
-    return tableManager.lookupTable(idx, "fallback:").metadata.song.url;
+    return tableManager.lookupTable(idx, "fallback:").metadata.song.remoteBasename;
   };
 
 
   var getAvailableSongs = function() {
     return tableManager.getAvailableSongs();
+  };
+
+
+  var getLanguage = function() {
+    return parsedData.songMetadata.lang;
   };
 
 
@@ -121,7 +126,8 @@ mod.factory('Choreography', function($log) {
     'generateStepLineEvents': generateStepLineEvents,
     'load': load,
     'loadTable': loadTable,
-    'getSongUrlByIndex': getSongUrlByIndex,
+    'getSongRemoteBasenameByIndex': getSongRemoteBasenameByIndex,
+    'getLanguage': getLanguage,
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,

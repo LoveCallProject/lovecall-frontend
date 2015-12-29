@@ -4,16 +4,22 @@
 require('angular');
 var metronomeMod = require('../choreography/metronome');
 
+require('../conf');
 require('../provider/choreography');
 require('../ui/frame');
 
+var dataHelper = require('../util/data-helper');
+
+var emptyOpusFileUri = require('../../misc/empty.opus');
+
 
 var mod = angular.module('lovecall/engine/audio', [
+    'lovecall/conf',
     'lovecall/provider/choreography',
     'lovecall/ui/frame'
 ]);
 
-mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, FrameManager) {
+mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreography, FrameManager) {
   var contextClass = (window.AudioContext ||
       window.webkitAudioContext ||
       window.mozAudioContext ||
@@ -29,10 +35,11 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var sourceBuffer = null;
   var sourceNode = null;
   var gainNode = audioCtx.createGain();
-  var timingNode = audioCtx.createScriptProcessor(4096);
+  var timingNode = null;
+  var bufferSize = 0;
 
   var isPlaying = false;
-  var seekPosMs = null;
+  var inSeeking = false;
   var isPlayingBeforeSeek = false;
   var ctxLastReferenceMs = 0;
   var playbackReferenceMs = 0;
@@ -40,20 +47,81 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
   var currentVolume = 1;
   var isMuted = false;
 
+  // formats
+  var haveMP3 = false;
+  var haveOpus = false;
+  var haveUsableOpus = false;
+  var preferredFormat = '';
+
   var currentMetronome = null;
 
   var $metronomeLog = $log.getInstance('Metronome');
   $log = $log.getInstance('AudioEngine');
 
 
+  var probeFormats = function() {
+    var elem = document.createElement('audio');
+    haveMP3 = elem.canPlayType('audio/mp3') !== '';
+    haveOpus = elem.canPlayType('audio/ogg; codecs="opus"') !== '';
+
+    $log.info('formats: opus', haveOpus, 'mp3', haveMP3);
+    updatePreferredFormat();
+    checkOpusUsability();
+  };
+
+
+  var updatePreferredFormat = function() {
+    preferredFormat = haveOpus && haveUsableOpus ? 'opus' : 'mp3';
+  };
+
+
+  var checkOpusUsability = function() {
+    var emptyOpusArray = dataHelper.dataUriToArray(emptyOpusFileUri);
+
+    audioCtx.decodeAudioData(
+        emptyOpusArray.buffer,
+        function(buf) {
+          $log.info('this Opus impl is actually usable');
+          haveUsableOpus = true;
+          updatePreferredFormat();
+        },
+        function(err) {
+          $log.warn('this Opus impl is borked, falling back to MP3; err', err);
+          haveUsableOpus = false;
+          updatePreferredFormat();
+        }
+        );
+  };
+
+
+  var initTimingNode = function() {
+    pause();
+
+    bufferSize = LCConfig.getAudioBufferSize();
+    $log.info('creating timing node with buffer size', bufferSize);
+    timingNode = audioCtx.createScriptProcessor(bufferSize);
+    timingNode.onaudioprocess = audioCallback;
+  };
+
+
+  $rootScope.$on('config:audioBufferSizeChanged', function(e) {
+    initTimingNode();
+  });
+
+
   var onEndedCallback = function(e) {
-    if (seekPosMs !== null) {
-      $log.debug('onEndedCallback: seeking to', seekPosMs);
-      doSeek();
-    } else {
-      $log.debug('onEndedCallback: pausing');
-      pause();
+    // Firefox Nightly fires ended events for all stopping, so don't let that
+    // disturb seeking.
+    if (inSeeking) {
+      $log.debug('onEndedCallback: NOT executing pause due to seek in progress');
+
+      // reset the seeking flag
+      inSeeking = false;
+      return;
     }
+
+    $log.debug('onEndedCallback: pausing');
+    pause();
   };
 
 
@@ -124,9 +192,6 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
 
 
   var doSeek = function(newPositionMs) {
-    // in case of coming from onEndedCallback
-    newPositionMs = typeof(newPositionMs) !== 'undefined' ? newPositionMs : seekPosMs;
-
     $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
     playbackPosMs = newPositionMs;
     currentMetronome.tick(newPositionMs);
@@ -135,27 +200,18 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     // reset playing status
     isPlaying = isPlayingBeforeSeek;
     isPlaying && doResume();
-
-    // clear seeking information
-    seekPosMs = null;
   };
 
 
   var seek = function(newPositionMs) {
-    if (seekPosMs !== null) {
-      $log.warn('seek: another seek already in progress! pos', seekPosMs);
-      return;
-    }
-
     if (isPlaying) {
-      // record seek information and pause, waiting for onEndedCallback to continue
-      // seeking
-      seekPosMs = newPositionMs;
+      // record status, pause and workaround Nightly
+      inSeeking = true;
       isPlayingBeforeSeek = isPlaying;
       doPause();
-    } else {
-      doSeek(newPositionMs);
     }
+
+    doSeek(newPositionMs);
   };
 
 
@@ -214,7 +270,8 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     playbackPosMs = 0;
     currentMetronome = null;
     $rootScope.$broadcast('audio:unloaded');
-    audioCtx.decodeAudioData(data, finishSetSourceData);
+    audioCtx.decodeAudioData(data, finishSetSourceData, erroredSetSourceData);
+    $rootScope.$broadcast('audio:decoding');
   };
 
 
@@ -230,6 +287,18 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     doSeek(0);
 
     $rootScope.$broadcast('audio:loaded');
+
+    // it seems the $broadcast is not enough to refresh all angular states,
+    // so
+    $rootScope.$digest();
+  };
+
+
+  var erroredSetSourceData = function(err) {
+    $log.error('erroredSetSourceData:', err);
+
+    $rootScope.$broadcast('audio:loadFailed');
+    $rootScope.$digest();
   };
 
 
@@ -264,9 +333,17 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
         $metronomeLog,
         false
         );
-
-    timingNode.onaudioprocess = audioCallback;
   };
+
+
+  var getPreferredFormat = function() {
+    return preferredFormat;
+  };
+
+
+  // initialize
+  probeFormats();
+  initTimingNode();
 
 
   return {
@@ -279,6 +356,7 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, Choreography, Fra
     'setMuted': setMuted,
     'setSourceData': setSourceData,
     'initEvents': initEvents,
+    'getPreferredFormat': getPreferredFormat,
     'resume': resume,
     'pause': pause,
     'seek': seek

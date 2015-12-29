@@ -17,10 +17,38 @@ var makeEngineEvent = function(a, tempo) {
 };
 
 
+var parseFuAction = function(startStep, params) {
+  return [
+    [startStep, "Fu!", null]
+  ];
+};
+
+
 var parseFuFuAction = function(startStep, params) {
   return [
     [startStep, "Fu!", null],
     [stepAdd(startStep, {m: 0, s: 2}), "Fu!", null]
+  ];
+};
+
+
+var parseJumpAction = function(startStep, params) {
+  var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var actionParams = withHi ? {msg: 'Hi!'} : null;
+  return [
+    [startStep, "跳", actionParams]
+  ];
+}
+
+
+var parseAlarmAction = function(startStep, params) {
+  return [
+    [startStep, "Hi!", null],
+    [stepAdd(startStep, {m: 0, s: 8}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 0}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 4}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 8}), "Hi!", null],
+    [stepAdd(startStep, {m: 1, s: 12}), "Hi!", null]
   ];
 };
 
@@ -74,18 +102,6 @@ var parseFuwaAction = function(startStep, endStep, params) {
 };
 
 
-var parseAlarmAction = function(startStep, endStep, params) {
-  return [
-    [startStep, "Hi!", null],
-    [stepAdd(startStep, {m: 0, s: 8}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 0}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 4}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 8}), "Hi!", null],
-    [stepAdd(startStep, {m: 1, s: 12}), "Hi!", null]
-  ];
-};
-
-
 var parsePPPHAction = function(startStep, endStep, params) {
   var ppphVariant = params[0];
   var currentStep = startStep;
@@ -112,9 +128,10 @@ var parsePPPHAction = function(startStep, endStep, params) {
 
 var parseFollowAction = function(startStep, endStep, params) {
   var content = params[0];
+  var romajiContent = typeof params[1] !== 'undefined' ? params[1] : content;
 
   return [
-    [startStep, "跟唱", {msg: content}]
+    [startStep, "跟唱", {msg: content, romaji: romajiContent}]
   ];
 };
 
@@ -128,13 +145,15 @@ var parseCelebrateAction = function(startStep, endStep, params) {
 
 // action type lookup maps
 var POINT_ACTION_PARSERS = {
-  'fufu': parseFuFuAction
+  'fu': parseFuAction,
+  'fufu': parseFuFuAction,
+  '跳': parseJumpAction,
+  '警报': parseAlarmAction,
 };
 
 var LONG_ACTION_PARSERS = {
   '上举': parseSJAction,
   '里打': parseLDAction,
-  '警报': parseAlarmAction,
   'PPPH': parsePPPHAction,
   '里跳': parseLTAction,
   '前挥': parseQHAction,
@@ -249,7 +268,8 @@ var parseSongMetadata = function(songMetadata) {
   return {
     ti: songMetadata.title,
     ar: songMetadata.artist,
-    al: songMetadata.album
+    al: songMetadata.album,
+    lang: songMetadata.lang,
   };
 }
 

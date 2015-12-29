@@ -1,0 +1,40 @@
+<md-dialog class="config">
+  <md-toolbar class="config__toolbar" layout="row" layout-align="start center">
+  <md-icon
+      md-font-library="material-icons"
+      class="config__toolbar__icon"
+      >
+    settings
+  </md-icon>
+  <h2>设置</h2>
+  <span flex></span>
+  <md-button class="md-icon-button" ng-click="close()">
+    <md-icon md-font-library>close</md-icon>
+  </md-button>
+  </md-toolbar>
+
+  <md-dialog-content class="config__content">
+  <form>
+    <p>音频缓冲区大小量级</p>
+    <md-slider
+        data-ng-model="bufferSizeOrder"
+        md-discrete
+        data-step="1"
+        data-min="9"
+        data-max="12"
+        aria-label="音频缓冲区大小量级"
+        >
+    </md-slider>
+    <md-divider></md-divider>
+    <div class="config__preference--switch">
+      <p class="config__preference__desc">跟唱部分使用罗马字</p>
+      <md-switch
+          class="config__preference__switch"
+          data-ng-model="useRomaji"
+          aria-label="跟唱部分使用罗马字"
+          >
+      </md-switch>
+    </div>
+  </form>
+  </md-dialog-content>
+</md-dialog>
