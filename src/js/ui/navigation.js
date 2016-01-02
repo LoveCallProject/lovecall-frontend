@@ -73,6 +73,18 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
     }).then(function() {}, function(){});
   }
 
+  $scope.canGetApp = function() {
+    var userAgent = window.navigator.userAgent;
+    var re = /Android (\d+(?:\.\d+)+);/;
+
+    var version = re.exec(userAgent);
+    if (version && version[1] > '5.0') {
+      return true;
+    }
+
+    return false;
+  }
+
   // close navigation drawer when song loading ends
   $scope.$on('song:hideLoadingDialog', function(e, errored) {
     $scope.closeSide();
