@@ -232,11 +232,11 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         .value();
 
       var messages = _(textEvents)
-        .map(function(v) { return v.params.msg; })
+        .map(function(v) { return { content: v.params.msg, type: v.type };})
         .value();
 
       var romajis = _(textEvents)
-        .map(function(v) { return v.params.romaji; })
+        .map(function(v) { return { content: v.params.romaji };})
         .filter(function(v) { return typeof v !== 'undefined'; })
         .value();
 
@@ -252,6 +252,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         .value();
       ctx.restore();
 
+      console.log(uniqueTexts);
       // build the cache
       for (var i = 0; i < uniqueTexts.length; i++) {
         // XXX: Some text like "Jump" seems to be wider than measured, but
@@ -263,13 +264,17 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
         var canvasH = textMarginT + textH + textMarginB;
         var canvasCenterX = canvasW >> 1;
-        var text = uniqueTexts[i];
+        var text = uniqueTexts[i].content;
 
         var tempCanvas = document.createElement('canvas');
         var tempCtx = tempCanvas.getContext('2d');
         DPIManager.scaleCanvas(tempCanvas, tempCtx, canvasW, canvasH);
         this.setFollowFont(tempCtx);
         tempCtx.textAlign = 'center';
+
+        if (uniqueTexts[i].type == '特殊') {
+          tempCtx.fillStyle = 'red';
+        }
 
         tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
 
