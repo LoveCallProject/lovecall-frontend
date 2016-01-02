@@ -78,7 +78,7 @@ mod.controller('NavigationController', function($scope, $mdSidenav, $mdMedia, $m
     var re = /Android (\d+(?:\.\d+)+);/;
 
     var version = re.exec(userAgent);
-    if (version && version[1] > '5.0') {
+    if (window.cordova === undefined && version && version[1] > '5.0') {
       return true;
     }
 
