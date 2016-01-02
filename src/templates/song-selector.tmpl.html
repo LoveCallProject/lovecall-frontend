@@ -25,6 +25,8 @@
           target="_blank"
           ng-repeat="song in songs"
           ng-click="answer(song.idx)"
+          ng-init="lang = song.lang"
+          lang="{{lang}}"
           >
         <md-list-item
             class="md-3-line"
@@ -36,9 +38,9 @@
                 music_note
             </md-icon>
             <div class="md-list-item-text">
-              <h3>{{ song.ti }}</h3>
-              <h4>{{ song.ar }}</h4>
-              <p>{{ song.al }}</p>
+              <h3 data-ng-style="{'font-family': fontFamilies[lang]}">{{ song.ti }}</h3>
+              <h4 data-ng-style="{'font-family': fontFamilies[lang]}">{{ song.ar }}</h4>
+              <p data-ng-style="{'font-family': fontFamilies[lang]}">{{ song.al }}</p>
             </div>
         </md-list-item>
       </md-button>

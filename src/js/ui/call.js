@@ -5,8 +5,10 @@ var _ = require('lodash');
 
 require('angular');
 
+require('../conf');
 require('../engine/audio');
 require('../provider/choreography');
+require('../provider/font-selector');
 require('../provider/resize-detector');
 require('./frame');
 require('./dpi');
@@ -15,15 +17,17 @@ var images = require('./images');
 
 
 var mod = angular.module('lovecall/ui/call', [
+    'lovecall/conf',
     'lovecall/engine/audio',
     'lovecall/provider/choreography',
+    'lovecall/provider/font-selector',
     'lovecall/provider/resize-detector',
     'lovecall/ui/frame',
     'lovecall/ui/dpi',
 ]);
 
 
-mod.controller('CallController', function($scope, $window, $log, AudioEngine, Choreography, FrameManager, DPIManager, ResizeDetector) {
+mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, FontSelector, ResizeDetector) {
   $log = $log.getInstance('CallController');
 
   var events = {};
@@ -70,6 +74,12 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
 
   $scope.$on('audio:seek', function(e, newPosition) {
+    doUpdate();
+  });
+
+
+  $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
+    callCanvas.setUseRomaji(enabled);
     doUpdate();
   });
 
@@ -124,6 +134,8 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     var textBorderB = 1;
     var textExplodeRatio = 0.15;
 
+    var useRomaji = LCConfig.isRomajiEnabled();
+
     var w = 0;
     var h = 0;
     var stepLineY1 = 0;
@@ -152,6 +164,7 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
       '欢呼': taicall.hh,
       'fuwa': taicall.fuwa,
       '跳': taicall.jump,
+      '特殊': taicall.special,
     };
 
     var cachedTaicallImages = _(taicallImages)
@@ -198,25 +211,48 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
     };
 
 
+    this.setUseRomaji = function(enabled) {
+      useRomaji = enabled;
+    };
+
+
+    this.setFollowFont = function(ctx) {
+      var lang = useRomaji ? 'en' : Choreography.getLanguage();
+      ctx.font = FontSelector.canvasFontForLanguage(lang, textH);
+    };
+
+
     this.refreshTextCache = function(events) {
       textCache = {};
 
-      var uniqueTexts = _(events)
+      var textEvents = _(events)
         .values()
         .map(function(v) { return v[2]; })
         .flatten()
-        .map(function(v) { return v.params.msg; })
+        .value();
+
+      var messages = _(textEvents)
+        .map(function(v) { return { content: v.params.msg, type: v.type };})
+        .value();
+
+      var romajis = _(textEvents)
+        .map(function(v) { return { content: v.params.romaji };})
+        .filter(function(v) { return typeof v !== 'undefined'; })
+        .value();
+
+      var uniqueTexts = _([messages, romajis])
+        .flatten()
         .unique()
         .value();
 
       ctx.save();
-      // TODO: dedup this code
-      ctx.font = textH + 'px sans-serif';
+      this.setFollowFont(ctx);
       var textWidths = _(uniqueTexts)
         .map(function(v) { return ctx.measureText(v).width; })
         .value();
       ctx.restore();
 
+      console.log(uniqueTexts);
       // build the cache
       for (var i = 0; i < uniqueTexts.length; i++) {
         // XXX: Some text like "Jump" seems to be wider than measured, but
@@ -228,13 +264,17 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
         var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
         var canvasH = textMarginT + textH + textMarginB;
         var canvasCenterX = canvasW >> 1;
-        var text = uniqueTexts[i];
+        var text = uniqueTexts[i].content;
 
         var tempCanvas = document.createElement('canvas');
         var tempCtx = tempCanvas.getContext('2d');
         DPIManager.scaleCanvas(tempCanvas, tempCtx, canvasW, canvasH);
-        tempCtx.font = textH + 'px sans-serif';
+        this.setFollowFont(tempCtx);
         tempCtx.textAlign = 'center';
+
+        if (uniqueTexts[i].type == '特殊') {
+          tempCtx.fillStyle = 'red';
+        }
 
         tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
 
@@ -366,7 +406,17 @@ mod.controller('CallController', function($scope, $window, $log, AudioEngine, Ch
 
           // text
           for (var i = 0; i < currentEventPack[2].length; i++) {
-            var cachedText = textCache[currentEventPack[2][i].params.msg];
+            var currentParam = currentEventPack[2][i].params;
+            var textKey;
+
+            if (useRomaji) {
+              var romaji = currentParam.romaji;
+              textKey = typeof romaji !== 'undefined' ? romaji : currentParam.msg;
+            } else {
+              textKey = currentParam.msg;
+            }
+
+            var cachedText = textCache[textKey];
 
             if (drawX < judgementLineX) {
               ctx.save();

@@ -5,13 +5,14 @@ var path = require('path');
 var webpack = require('webpack');
 var ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 var htmlWebpackPlugin = require('html-webpack-plugin');
+var CordovaPlugin = require('webpack-cordova-plugin');
 
 
 module.exports = {
   resolve: {
     root: [
       path.join(__dirname, 'node_modules'),
-      path.join(__dirname, "bower_components")
+      path.join(__dirname, "bower_components"),
     ]
   },
   plugins: [
@@ -32,6 +33,12 @@ module.exports = {
         caseSensitive: true,
       },
     }),
+    new CordovaPlugin({
+      config: 'config.xml',
+      src: 'index.html',
+      platform: 'android',
+      version: true,
+    }),
   ],
 
   devServer: {
@@ -47,10 +54,10 @@ module.exports = {
     loaders: [
       { test: /\.scss$/, loader: "style!css!sass" },
       { test: /\.css$/, loader: "style!css" },
-      { test: /\.tmpl\.html$/, loader: "ng-cache" },
-      { test: /\.(svg|opus)$/, loader: "url-loader?limit=100000" },
+      { test: /\.tmpl\.html$/, loader: "ng-cache?-conservativeCollapse&-preserveLineBreaks" },
+      { test: /\.(jpg|png|woff|woff2|eot|ttf|svg|opus)$/, loader: 'url-loader?limit=100000' },
     ]
-  }
+  },
 };
 /* @license-end */
 
