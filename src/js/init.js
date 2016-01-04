@@ -10,7 +10,7 @@ var snowhare = require('./data/snowhare');
 var wr = require('./data/wr');
 // var susutomo = require('./data/susutomo');
 var startDash = require('./data/start-dash');
-// var nbg = require('./data/nbg');
+var nbg = require('./data/nbg');
 var kiseki = require('./data/kiseki');
 
 
@@ -26,7 +26,7 @@ mod.run(function($window, Choreography, FrameManager) {
   Choreography.loadTable(kiseki);
   // Choreography.loadTable(susutomo);
   Choreography.loadTable(startDash);
-  // Choreography.loadTable(nbg);
+  Choreography.loadTable(nbg);
 
   // frame loop
   FrameManager.startFrameLoop($window);
