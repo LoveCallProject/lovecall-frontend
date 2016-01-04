@@ -19,7 +19,7 @@ mod.factory('LCConfig', function($rootScope, localStorageService) {
   var getAudioBufferSizeOrder = function() {
     var storedSizeOrder = parseInt(localStorageService.get('audioBufferSizeOrder'));
     if (isNaN(storedSizeOrder) || storedSizeOrder < 8 || storedSizeOrder > 14) {
-      storedSizeOrder = 11;
+      storedSizeOrder = 12;
       doSetAudioBufferSizeOrder(storedSizeOrder, false);
     }
 
