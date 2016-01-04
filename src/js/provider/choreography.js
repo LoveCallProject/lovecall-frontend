@@ -107,6 +107,11 @@ mod.factory('Choreography', function($log) {
   };
 
 
+  var getCircleMargin = function() {
+    return parsedData.circleMargin;
+  };
+
+
   var getEvents = function() {
     return mergedEvents;
   };
@@ -128,6 +133,7 @@ mod.factory('Choreography', function($log) {
     'loadTable': loadTable,
     'getSongRemoteBasenameByIndex': getSongRemoteBasenameByIndex,
     'getLanguage': getLanguage,
+    'getCircleMargin': getCircleMargin,
     'getTempo': getTempo,
     'getForm': getForm,
     'getColors': getColors,

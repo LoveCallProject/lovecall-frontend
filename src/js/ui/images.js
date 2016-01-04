@@ -10,6 +10,8 @@ var oh = require('../../images/oh.svg');
 var qh = require('../../images/qh.svg');
 var sj = require('../../images/sj.svg');
 var special = require('../../images/special.svg');
+var d = require('../../images/d.svg');
+var k = require('../../images/k.svg');
 
 
 var makeImageObj = function(uri) {
@@ -34,5 +36,7 @@ module.exports = {
     qh: makeImageObj(qh),
     sj: makeImageObj(sj),
     special: makeImageObj(special),
+    d: makeImageObj(d),
+    k: makeImageObj(k),
   },
 };
