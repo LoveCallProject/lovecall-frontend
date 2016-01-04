@@ -376,7 +376,8 @@ var parseCall = function(data, hash) {
     'tempo': tempo,
     'form': form,
     'events': events,
-    'colors': colors
+    'colors': colors,
+    'circleMargin': metadata.circleMargin,
   };
 };
 
