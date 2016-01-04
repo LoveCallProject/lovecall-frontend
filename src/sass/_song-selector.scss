@@ -3,6 +3,10 @@
   max-height: 80rem;
 }
 
+.md-dialog-fullscreen {
+  max-height: 100vh;
+}
+
 .toolbar__icon {
   margin: 1rem;
 }
@@ -12,8 +16,7 @@
 }
 
 .song-selector__content {
-  overflow-x: hidden;
-  overflow-y: auto;
+  max-height: 600px;
 }
 
 .song-selector__content__button {

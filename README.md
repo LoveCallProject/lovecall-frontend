@@ -27,4 +27,7 @@ webpack   # -p for production build
 
 # to fire up the dev server
 webpack-dev-server --inline --compress --content-base=public/
+
+# invoke webpack with webpack-cordova-plugin enabled (instructions TODO)
+BUILD_CORDOVA=1 webpack
 ```

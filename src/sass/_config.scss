@@ -8,13 +8,24 @@
 
 .config__content {
   padding: 10px;
-  hr {
-    opacity: 0.3;
-  }
+  overflow: hidden;
 }
 
 .config__content__value {
   font-weight: bold;
+}
+
+.config__preference--switch {
+  display: flex;
+  align-items: center;
+}
+
+.config__preference__desc {
+  flex: 1 0 auto;
+}
+
+.config__preference__switch {
+  flex: 0 0;
 }
 
 .config__submit {
