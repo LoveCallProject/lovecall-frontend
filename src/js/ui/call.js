@@ -30,31 +30,17 @@ var mod = angular.module('lovecall/ui/call', [
 mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, FontSelector, ResizeDetector) {
   $log = $log.getInstance('CallController');
 
-  var events = {};
-  var eventTimeline = [];
-  var preCallDrawTime = 0;
-
-  var pRight = 0;
-
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
   var isPlaying = false;
 
-  callCanvas.draw({}, [], 0);
+  callCanvas.draw();
 
 
   $scope.$on('audio:loaded', function(e) {
-    callCanvas.setTempo(Choreography.getTempo());
-    FrameManager.addFrameCallback(callFrameCallback);
-    events = Choreography.getEvents();
-    eventTimeline = Object.keys(events).sort(function(a, b) {
-      return a - b;
-    });
-
     isPlaying = false;
-    pRight = 0;
-    callCanvas.refreshTextCache(events);
-    doUpdate();
+    callCanvas.reset();
+    FrameManager.addFrameCallback(callFrameCallback);
   });
 
 
@@ -74,13 +60,13 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
 
   $scope.$on('audio:seek', function(e, newPosition) {
-    doUpdate();
+    callCanvas.doUpdate();
   });
 
 
   $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
     callCanvas.setUseRomaji(enabled);
-    doUpdate();
+    callCanvas.doUpdate();
   });
 
 
@@ -89,21 +75,8 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
       return;
     }
 
-    doUpdate();
+    callCanvas.doUpdate();
   }
-
-  var doUpdate = function() {
-    //update pointer
-    var rightmostPos = AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration();
-
-    if (pRight < eventTimeline.length - 1) {
-      while (rightmostPos > eventTimeline[pRight]) {
-        pRight++;
-      }
-    }
-
-    callCanvas.draw(events, eventTimeline, pRight);
-  };
 
 
   /* canvas */
@@ -113,6 +86,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     var bgCtx = bgElem.getContext('2d');
     var ctx = elem.getContext('2d');
 
+    // draw parameters
     var circleR = 50;
     var circleSize = (2 * circleR)|0;
     var circleMargin = -40;
@@ -134,8 +108,15 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     var textBorderB = 1;
     var textExplodeRatio = 0.15;
 
+    // ui configs
     var useRomaji = LCConfig.isRomajiEnabled();
 
+    // ui states
+    var events = {};
+    var eventTimeline = [];
+    var limit = 0;
+
+    // draw states
     var w = 0;
     var h = 0;
     var stepLineY1 = 0;
@@ -222,7 +203,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
-    this.refreshTextCache = function(events) {
+    this.refreshTextCache = function() {
       textCache = {};
 
       var textEvents = _(events)
@@ -283,7 +264,34 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
-    this.draw = function(events, eventTimeline, limit) {
+    this.reset = function() {
+      this.setTempo(Choreography.getTempo());
+      events = Choreography.getEvents();
+      eventTimeline = Object.keys(events).sort(function(a, b) {
+        return a - b;
+      });
+
+      limit = 0;
+      this.refreshTextCache();
+      this.doUpdate();
+    };
+
+
+    this.doUpdate = function() {
+      //update pointer
+      var rightmostPos = AudioEngine.getPlaybackPosition() + this.getCanvasNodeDuration();
+
+      if (limit < eventTimeline.length - 1) {
+        while (rightmostPos > eventTimeline[limit]) {
+          limit++;
+        }
+      }
+
+      this.draw();
+    };
+
+
+    this.draw = function() {
       if (inResizeFallout) {
         inResizeFallout = false;
 
