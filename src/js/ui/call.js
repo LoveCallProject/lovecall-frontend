@@ -139,6 +139,8 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
       'fuwa': taicall.fuwa,
       '跳': taicall.jump,
       '特殊': taicall.special,
+      'd': taicall.d,
+      'k': taicall.k,
     };
 
     var cachedTaicallImages = _(taicallImages)
