@@ -57,13 +57,13 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
 
   $scope.$on('audio:seek', function(e, newPosition) {
-    callCanvas.doUpdate();
+    callCanvas.update();
   });
 
 
   $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
     callCanvas.setUseRomaji(enabled);
-    callCanvas.doUpdate();
+    callCanvas.update();
   });
 
 
@@ -106,6 +106,8 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     var eventTimeline = [];
     var limit = 0;
     var isPlaying = false;
+    var prevAudioPosMs = 0;
+    var prevFrameTimestampMs = 0;
 
     // draw states
     var w = 0;
@@ -275,22 +277,54 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
       isPlaying = false;
       limit = 0;
       this.refreshTextCache();
-      this.doUpdate();
+      this.update();
     };
 
 
     this.frameCallback = function(ts) {
-      if (!isPlaying) {
-        return;
+      self.updateTime(ts);
+
+      if (isPlaying) {
+        self.doUpdate();
+      }
+    };
+
+
+    this.updateTime = function(ts) {
+      // update playback position
+      var audioPosMs = AudioEngine.getPlaybackPosition();
+      if (typeof ts === 'undefined') {
+        // not called from rAF
+        currentTime = audioPosMs;
+      } else {
+        // frame timestamp available
+        if (
+          !isPlaying ||  // not playing
+          audioPosMs !== prevAudioPosMs  // audio position just updated
+          ) {
+          currentTime = audioPosMs;
+        } else {
+          // update current position by frame timestamp
+          currentTime += ts - prevFrameTimestampMs;
+        }
+
+        prevFrameTimestampMs = ts;
       }
 
-      self.doUpdate();
+      prevAudioPosMs = audioPosMs;
+    };
+
+
+    this.update = function() {
+      // frame timestamp is unavailable if we're coming from outside rAF callback
+      this.updateTime();
+      this.doUpdate();
     };
 
 
     this.doUpdate = function() {
-      //update pointer
-      var rightmostPos = AudioEngine.getPlaybackPosition() + this.getCanvasNodeDuration();
+      // update pointer
+      var rightmostPos = currentTime + this.getCanvasNodeDuration();
 
       if (limit < eventTimeline.length - 1) {
         while (rightmostPos > eventTimeline[limit]) {
@@ -352,7 +386,6 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
       // draw
       ctx.clearRect(0, 0, w, h);
-      currentTime = AudioEngine.getPlaybackPosition();
 
       var index = limit;
       for (; index != -1; index--) {
