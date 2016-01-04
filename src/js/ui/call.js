@@ -79,8 +79,6 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     // draw parameters
     var circleR = 50;
     var circleSize = (2 * circleR)|0;
-    var circleMargin = -40;
-    var circleDistance = circleSize + circleMargin;
     var circleFadeOutDistance = 40;
     var circleExplodeRatio = 0.25;
     var circleExplodeCachedImageR = ((1 + circleExplodeRatio) * circleR)|0;
@@ -102,6 +100,8 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     var useRomaji = LCConfig.isRomajiEnabled();
 
     // ui states
+    var circleMargin = 0;
+    var circleDistance = 0;
     var events = {};
     var eventTimeline = [];
     var limit = 0;
@@ -180,7 +180,9 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
-    this.setTempo = function(tempo) {
+    this.setCircleParams = function(tempo, margin) {
+      circleMargin = (typeof margin !== 'undefined' ? margin : -40)|0;
+      circleDistance = (circleSize + circleMargin)|0;
       pixPreSec = +((circleSize + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     };
 
@@ -273,7 +275,8 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
 
     this.reset = function() {
-      this.setTempo(Choreography.getTempo());
+      this.setCircleParams(Choreography.getTempo(), Choreography.getCircleMargin());
+
       events = Choreography.getEvents();
       eventTimeline = Object.keys(events).sort(function(a, b) {
         return a - b;
