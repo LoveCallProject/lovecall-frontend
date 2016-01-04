@@ -32,30 +32,27 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
-  var isPlaying = false;
-
   callCanvas.draw();
 
 
   $scope.$on('audio:loaded', function(e) {
-    isPlaying = false;
     callCanvas.reset();
-    FrameManager.addFrameCallback(callFrameCallback);
+    FrameManager.addFrameCallback(callCanvas.frameCallback);
   });
 
 
   $scope.$on('audio:unloaded', function(e) {
-    FrameManager.removeFrameCallback(callFrameCallback);
+    FrameManager.removeFrameCallback(callCanvas.frameCallback);
   });
 
 
   $scope.$on('audio:resume', function(e) {
-    isPlaying = true;
+    callCanvas.onResume();
   });
 
 
   $scope.$on('audio:pause', function(e) {
-    isPlaying = false;
+    callCanvas.onPause();
   });
 
 
@@ -70,17 +67,10 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
   });
 
 
-  var callFrameCallback = function(ts) {
-    if (!isPlaying) {
-      return;
-    }
-
-    callCanvas.doUpdate();
-  }
-
-
   /* canvas */
   function CallCanvasState(containerElem) {
+    var self = this;
+
     var bgElem = document.createElement('canvas');
     var elem = document.createElement('canvas');
     var bgCtx = bgElem.getContext('2d');
@@ -115,6 +105,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     var events = {};
     var eventTimeline = [];
     var limit = 0;
+    var isPlaying = false;
 
     // draw states
     var w = 0;
@@ -264,6 +255,16 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
+    this.onResume = function() {
+      isPlaying = true;
+    };
+
+
+    this.onPause = function() {
+      isPlaying = false;
+    };
+
+
     this.reset = function() {
       this.setTempo(Choreography.getTempo());
       events = Choreography.getEvents();
@@ -271,9 +272,19 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         return a - b;
       });
 
+      isPlaying = false;
       limit = 0;
       this.refreshTextCache();
       this.doUpdate();
+    };
+
+
+    this.frameCallback = function(ts) {
+      if (!isPlaying) {
+        return;
+      }
+
+      self.doUpdate();
     };
 
 
