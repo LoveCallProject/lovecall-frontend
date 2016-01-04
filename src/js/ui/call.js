@@ -251,7 +251,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         tempCtx.textAlign = 'center';
 
         if (uniqueTexts[i].type == '特殊') {
-          tempCtx.fillStyle = 'red';
+          tempCtx.fillStyle = '#eee';
         }
 
         tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
