@@ -136,6 +136,15 @@ var parseFollowAction = function(startStep, endStep, params) {
 };
 
 
+var parseSpecialAction = function(startStep, endStep, params) {
+  var content = params[0];
+
+  return [
+    [startStep, "特殊", {msg: content}]
+  ];
+};
+
+
 var parseCelebrateAction = function(startStep, endStep, params) {
   return [
     [startStep, "欢呼", null]
@@ -160,6 +169,7 @@ var LONG_ACTION_PARSERS = {
   '快挥': parseKHAction,
   'fuwa': parseFuwaAction,
   '跟唱': parseFollowAction,
+  '特殊': parseSpecialAction,
   '欢呼': parseCelebrateAction
 };
 

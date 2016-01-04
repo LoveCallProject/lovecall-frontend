@@ -12,7 +12,7 @@ var mod = angular.module('lovecall/conf', [
 ]);
 
 mod.factory('LCConfig', function($rootScope, localStorageService) {
-  var VERSION = '20151223-dev';
+  var VERSION = '20151203.9999';
   var HASH = __webpack_hash__;
 
 
@@ -86,6 +86,7 @@ mod.factory('LCConfig', function($rootScope, localStorageService) {
     HASH: HASH,
     REMOTE_MUSIC_PREFIX: siteConf.remoteMusicPrefix,
     REMOTE_COVER_ART_PREFIX: siteConf.remoteCoverArtPrefix,
+    REMOTE_APK_PREFIX: siteConf.remoteApkPrefix,
     getAudioBufferSize: getAudioBufferSize,
     getAudioBufferSizeOrder: getAudioBufferSizeOrder,
     setAudioBufferSizeOrder: setAudioBufferSizeOrder,
