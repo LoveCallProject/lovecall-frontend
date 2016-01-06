@@ -30,93 +30,55 @@ var mod = angular.module('lovecall/ui/call', [
 mod.controller('CallController', function($scope, $window, $log, LCConfig, AudioEngine, Choreography, FrameManager, DPIManager, FontSelector, ResizeDetector) {
   $log = $log.getInstance('CallController');
 
-  var events = {};
-  var eventTimeline = [];
-  var preCallDrawTime = 0;
-
-  var pRight = 0;
-
   var callCanvas = new CallCanvasState(document.querySelectorAll('.call__canvas-container')[0]);
 
-  var isPlaying = false;
-
-  callCanvas.draw({}, [], 0);
+  callCanvas.draw();
 
 
   $scope.$on('audio:loaded', function(e) {
-    callCanvas.setTempo(Choreography.getTempo());
-    FrameManager.addFrameCallback(callFrameCallback);
-    events = Choreography.getEvents();
-    eventTimeline = Object.keys(events).sort(function(a, b) {
-      return a - b;
-    });
-
-    isPlaying = false;
-    pRight = 0;
-    callCanvas.refreshTextCache(events);
-    doUpdate();
+    callCanvas.reset();
+    FrameManager.addFrameCallback(callCanvas.frameCallback);
   });
 
 
   $scope.$on('audio:unloaded', function(e) {
-    FrameManager.removeFrameCallback(callFrameCallback);
+    FrameManager.removeFrameCallback(callCanvas.frameCallback);
   });
 
 
   $scope.$on('audio:resume', function(e) {
-    isPlaying = true;
+    callCanvas.onResume();
   });
 
 
   $scope.$on('audio:pause', function(e) {
-    isPlaying = false;
+    callCanvas.onPause();
   });
 
 
   $scope.$on('audio:seek', function(e, newPosition) {
-    doUpdate();
+    callCanvas.update();
   });
 
 
   $scope.$on('config:romajiEnabledChanged', function(e, enabled) {
     callCanvas.setUseRomaji(enabled);
-    doUpdate();
+    callCanvas.update();
   });
-
-
-  var callFrameCallback = function(ts) {
-    if (!isPlaying) {
-      return;
-    }
-
-    doUpdate();
-  }
-
-  var doUpdate = function() {
-    //update pointer
-    var rightmostPos = AudioEngine.getPlaybackPosition() + callCanvas.getCanvasNodeDuration();
-
-    if (pRight < eventTimeline.length - 1) {
-      while (rightmostPos > eventTimeline[pRight]) {
-        pRight++;
-      }
-    }
-
-    callCanvas.draw(events, eventTimeline, pRight);
-  };
 
 
   /* canvas */
   function CallCanvasState(containerElem) {
+    var self = this;
+
     var bgElem = document.createElement('canvas');
     var elem = document.createElement('canvas');
     var bgCtx = bgElem.getContext('2d');
     var ctx = elem.getContext('2d');
 
+    // draw parameters
     var circleR = 50;
     var circleSize = (2 * circleR)|0;
-    var circleMargin = -40;
-    var circleDistance = circleSize + circleMargin;
     var circleFadeOutDistance = 40;
     var circleExplodeRatio = 0.25;
     var circleExplodeCachedImageR = ((1 + circleExplodeRatio) * circleR)|0;
@@ -134,8 +96,20 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     var textBorderB = 1;
     var textExplodeRatio = 0.15;
 
+    // ui configs
     var useRomaji = LCConfig.isRomajiEnabled();
 
+    // ui states
+    var circleMargin = 0;
+    var circleDistance = 0;
+    var events = {};
+    var eventTimeline = [];
+    var limit = 0;
+    var isPlaying = false;
+    var prevAudioPosMs = 0;
+    var prevFrameTimestampMs = 0;
+
+    // draw states
     var w = 0;
     var h = 0;
     var stepLineY1 = 0;
@@ -165,6 +139,8 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
       'fuwa': taicall.fuwa,
       '跳': taicall.jump,
       '特殊': taicall.special,
+      'd': taicall.d,
+      'k': taicall.k,
     };
 
     var cachedTaicallImages = _(taicallImages)
@@ -206,7 +182,9 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
-    this.setTempo = function(tempo) {
+    this.setCircleParams = function(tempo, margin) {
+      circleMargin = (typeof margin !== 'undefined' ? margin : -40)|0;
+      circleDistance = (circleSize + circleMargin)|0;
       pixPreSec = +((circleSize + circleMargin) / (tempo.stepToTime(0, 4) - tempo.stepToTime(0, 2)));
     };
 
@@ -222,7 +200,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
-    this.refreshTextCache = function(events) {
+    this.refreshTextCache = function() {
       textCache = {};
 
       var textEvents = _(events)
@@ -232,11 +210,11 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         .value();
 
       var messages = _(textEvents)
-        .map(function(v) { return v.params.msg; })
+        .map(function(v) { return { content: v.params.msg, type: v.type };})
         .value();
 
       var romajis = _(textEvents)
-        .map(function(v) { return v.params.romaji; })
+        .map(function(v) { return { content: v.params.romaji };})
         .filter(function(v) { return typeof v !== 'undefined'; })
         .value();
 
@@ -252,6 +230,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         .value();
       ctx.restore();
 
+      console.log(uniqueTexts);
       // build the cache
       for (var i = 0; i < uniqueTexts.length; i++) {
         // XXX: Some text like "Jump" seems to be wider than measured, but
@@ -263,13 +242,17 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         var canvasW = (((textWidths[i] + 8) >> 4) + 1) << 4;
         var canvasH = textMarginT + textH + textMarginB;
         var canvasCenterX = canvasW >> 1;
-        var text = uniqueTexts[i];
+        var text = uniqueTexts[i].content;
 
         var tempCanvas = document.createElement('canvas');
         var tempCtx = tempCanvas.getContext('2d');
         DPIManager.scaleCanvas(tempCanvas, tempCtx, canvasW, canvasH);
         this.setFollowFont(tempCtx);
         tempCtx.textAlign = 'center';
+
+        if (uniqueTexts[i].type == '特殊') {
+          tempCtx.fillStyle = '#eee';
+        }
 
         tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
 
@@ -283,7 +266,87 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
     };
 
 
-    this.draw = function(events, eventTimeline, limit) {
+    this.onResume = function() {
+      isPlaying = true;
+    };
+
+
+    this.onPause = function() {
+      isPlaying = false;
+    };
+
+
+    this.reset = function() {
+      this.setCircleParams(Choreography.getTempo(), Choreography.getCircleMargin());
+
+      events = Choreography.getEvents();
+      eventTimeline = Object.keys(events).sort(function(a, b) {
+        return a - b;
+      });
+
+      isPlaying = false;
+      limit = 0;
+      this.refreshTextCache();
+      this.update();
+    };
+
+
+    this.frameCallback = function(ts) {
+      self.updateTime(ts);
+
+      if (isPlaying) {
+        self.doUpdate();
+      }
+    };
+
+
+    this.updateTime = function(ts) {
+      // update playback position
+      var audioPosMs = AudioEngine.getPlaybackPosition();
+      if (typeof ts === 'undefined') {
+        // not called from rAF
+        currentTime = audioPosMs;
+      } else {
+        // frame timestamp available
+        if (
+          !isPlaying ||  // not playing
+          audioPosMs !== prevAudioPosMs  // audio position just updated
+          ) {
+          currentTime = audioPosMs;
+        } else {
+          // update current position by frame timestamp
+          currentTime += ts - prevFrameTimestampMs;
+        }
+
+        prevFrameTimestampMs = ts;
+      }
+
+      prevAudioPosMs = audioPosMs;
+    };
+
+
+    this.update = function() {
+      // frame timestamp is unavailable if we're coming from outside rAF callback
+      this.updateTime();
+      this.doUpdate();
+    };
+
+
+    this.doUpdate = function() {
+      // update pointer
+      var rightmostPos = currentTime + this.getCanvasNodeDuration();
+
+      if (limit < eventTimeline.length - 1) {
+        while (rightmostPos > eventTimeline[limit]) {
+          limit++;
+        }
+      }
+
+      this.draw();
+    };
+
+
+    this.draw = function() {
       if (inResizeFallout) {
         inResizeFallout = false;
 
@@ -333,7 +396,6 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
       // draw
       ctx.clearRect(0, 0, w, h);
-      currentTime = AudioEngine.getPlaybackPosition();
 
       var index = limit;
       for (; index != -1; index--) {

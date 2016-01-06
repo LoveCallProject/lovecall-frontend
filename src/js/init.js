@@ -14,6 +14,9 @@ var nbg = require('./data/nbg');
 var bokuima = require('./data/bokuima');
 var kiseki = require('./data/kiseki');
 
+// easter egg
+var fdInnerOni = require('./data/fd-inner-oni');
+
 
 var mod = angular.module('lovecall/init', [
     'lovecall/provider/choreography',
@@ -29,6 +32,11 @@ mod.run(function($window, Choreography, FrameManager) {
   Choreography.loadTable(susutomo);
   Choreography.loadTable(startDash);
   Choreography.loadTable(nbg);
+
+  // easter egg
+  if (Math.random() < 0.1) {
+    Choreography.loadTable(fdInnerOni);
+  }
 
   // frame loop
   FrameManager.startFrameLoop($window);

@@ -96,6 +96,14 @@
           <span>设置</span>
         </md-button>
       </md-list-item>
+      <md-list-item data-ng-class="{'hidden-android': !canGetApp()}">
+        <md-button class="line-button" href="http://lovecall.moe/static/apk/lovecall.apk">
+          <md-icon class="inline" md-font-library="material-icons">
+            android
+          </md-icon>
+          <span>获取安卓版</span>
+        </md-button>
+      </md-list-item>
       <md-list-item>
         <md-button class="line-button" href="" ng-click="showAboutDialog()">
           <md-icon class="inline" md-font-library="material-icons">

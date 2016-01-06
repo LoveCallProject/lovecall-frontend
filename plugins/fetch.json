@@ -1,0 +1,18 @@
+{
+    "cordova-plugin-whitelist": {
+        "source": {
+            "type": "registry",
+            "id": "cordova-plugin-whitelist"
+        },
+        "is_top_level": true,
+        "variables": {}
+    },
+    "cordova-plugin-fileopener": {
+        "source": {
+            "type": "registry",
+            "id": "cordova-plugin-fileopener"
+        },
+        "is_top_level": true,
+        "variables": {}
+    }
+}

@@ -12,14 +12,14 @@ var mod = angular.module('lovecall/conf', [
 ]);
 
 mod.factory('LCConfig', function($rootScope, localStorageService) {
-  var VERSION = '20151223-dev';
+  var VERSION = '20160106-dev';
   var HASH = __webpack_hash__;
 
 
   var getAudioBufferSizeOrder = function() {
     var storedSizeOrder = parseInt(localStorageService.get('audioBufferSizeOrder'));
     if (isNaN(storedSizeOrder) || storedSizeOrder < 8 || storedSizeOrder > 14) {
-      storedSizeOrder = 11;
+      storedSizeOrder = 12;
       doSetAudioBufferSizeOrder(storedSizeOrder, false);
     }
 
@@ -86,6 +86,7 @@ mod.factory('LCConfig', function($rootScope, localStorageService) {
     HASH: HASH,
     REMOTE_MUSIC_PREFIX: siteConf.remoteMusicPrefix,
     REMOTE_COVER_ART_PREFIX: siteConf.remoteCoverArtPrefix,
+    REMOTE_APK_PREFIX: siteConf.remoteApkPrefix,
     getAudioBufferSize: getAudioBufferSize,
     getAudioBufferSizeOrder: getAudioBufferSizeOrder,
     setAudioBufferSizeOrder: setAudioBufferSizeOrder,

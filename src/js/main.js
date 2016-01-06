@@ -10,12 +10,14 @@ require('angular-local-storage');
 
 require('./ui/index');
 require('./init');
+require('./update.js');
 
 require('../../node_modules/angular-material/angular-material.css');
 require('../sass/index.scss');
 
 var mod = angular.module('lovecall/main', [
     'lovecall/init',
+    'lovecall/update',
     'lovecall/ui/index',
     'log.ex.uo',
     'LocalStorageModule',
