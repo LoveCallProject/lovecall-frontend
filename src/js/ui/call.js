@@ -125,37 +125,44 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
     var pixPreSec = 0;
 
-    var taicall = images.taicall;
-    var taicallImages = {
-      '上举': taicall.sj,
-      '里打': taicall.ld,
-      '里跳': taicall.lt,
-      'Fu!': taicall.fu,
-      'Oh~': taicall.oh,
-      'Hi!': taicall.hi,
-      '前挥': taicall.qh,
-      '快挥': taicall.kh,
-      '欢呼': taicall.hh,
-      'fuwa': taicall.fuwa,
-      '跳': taicall.jump,
-      '特殊': taicall.special,
-      'd': taicall.d,
-      'k': taicall.k,
+    var taicallImages = images.taicall;
+    var taicallImageMap = {
+      '上举': 'sj',
+      '里打': 'ld',
+      '里跳': 'lt',
+      'Fu!': 'fu',
+      'Oh~': 'oh',
+      'Hi!': 'hi',
+      '前挥': 'qh',
+      '快挥': 'kh',
+      '欢呼': 'hh',
+      'fuwa': 'fuwa',
+      '跳': 'jump',
+      '特殊': 'special',
+      'd': 'd',
+      'k': 'k',
     };
 
-    var cachedTaicallImages = _(taicallImages)
-      .mapValues(function(img) {
-        var tempCanvas = document.createElement('canvas');
-        var tempCtx = tempCanvas.getContext('2d');
+    var cachedExplodingTaicallImages = {};
+    var isExplodingTaicallImagesCacheFinished = false;
 
-        DPIManager.scaleCanvas(tempCanvas, tempCtx, circleSize, circleSize);
-        tempCtx.drawImage(img, 0, 0, circleSize, circleSize);
 
-        return tempCanvas;
-      }).value();
+    this.refreshExplodingTaicallImages = function() {
+      if (Object.keys(cachedExplodingTaicallImages).length === images.taicallImagesCount) {
+        $log.debug('exploding taicall images fully cached');
+        isExplodingTaicallImagesCacheFinished = true;
+        return;
+      }
 
-    var cachedExplodingTaicallImages = _(taicallImages)
-      .mapValues(function(img) {
+      var keys = Object.keys(taicallImages);
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (cachedExplodingTaicallImages.hasOwnProperty(key)) {
+          continue;
+        }
+
+        $log.debug('caching exploding taicall images', key);
+        var img = taicallImages[key];
         var tempCanvas = document.createElement('canvas');
         var tempCtx = tempCanvas.getContext('2d');
 
@@ -173,8 +180,9 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
             circleExplodeCachedImageSize
             );
 
-        return tempCanvas;
-      }).value();
+        cachedExplodingTaicallImages[key] = tempCanvas;
+      }
+    };
 
 
     this.getCanvasNodeDuration = function() {
@@ -394,6 +402,10 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
         }
       }
 
+      if (!isExplodingTaicallImagesCacheFinished) {
+        this.refreshExplodingTaicallImages();
+      }
+
       // draw
       ctx.clearRect(0, 0, w, h);
 
@@ -525,11 +537,11 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
           var eventType = currentEventPack[1][i].type;
           var img = (
               drawX < judgementLineX ?
-              cachedExplodingTaicallImages[eventType] :
-              cachedTaicallImages[eventType]
+              cachedExplodingTaicallImages[taicallImageMap[eventType]] :
+              taicallImages[taicallImageMap[eventType]]
               );
 
-          ctx.drawImage(img, realX, realY, realSize, realSize);
+          img && ctx.drawImage(img, realX, realY, realSize, realSize);
         }
 
         if (drawX < judgementLineX) {
