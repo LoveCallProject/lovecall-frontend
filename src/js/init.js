@@ -6,6 +6,7 @@ require('angular');
 require('./provider/choreography');
 require('./ui/frame');
 
+var mimimi = require('./data/mimimi');
 var snowhare = require('./data/snowhare');
 var wr = require('./data/wr');
 //var susutomo = require('./data/susutomo');
@@ -25,6 +26,7 @@ var mod = angular.module('lovecall/init', [
 
 mod.run(function($window, Choreography, FrameManager) {
   // load bundled call tables
+  Choreography.loadTable(mimimi);
   Choreography.loadTable(snowhare);
   Choreography.loadTable(wr);
   Choreography.loadTable(bokuima);
