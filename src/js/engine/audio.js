@@ -136,10 +136,12 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
 
 
   var seek = function(newPositionMs) {
+    // record playing status at all times to prevent stale true values
+    // interfering with seeking while paused
+    isPlayingBeforeSeek = getIsPlaying();
     if (getIsPlaying()) {
-      // record status, pause and workaround Nightly
+      // pause and workaround Nightly
       inSeeking = true;
-      isPlayingBeforeSeek = getIsPlaying();
       doPause();
     }
 
