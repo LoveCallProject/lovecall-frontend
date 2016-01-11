@@ -3,14 +3,12 @@
 
 require('angular');
 var metronomeMod = require('../choreography/metronome');
+var AudioCtxAudioEngineImpl = require('./audio-audiocontext');
+var CompatAudioEngineImpl = require('./audio-compat');
 
 require('../conf');
 require('../provider/choreography');
 require('../ui/frame');
-
-var dataHelper = require('../util/data-helper');
-
-var emptyOpusFileUri = require('../../misc/empty.opus');
 
 
 var mod = angular.module('lovecall/engine/audio', [
@@ -20,32 +18,13 @@ var mod = angular.module('lovecall/engine/audio', [
 ]);
 
 mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreography, FrameManager) {
-  var contextClass = (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.mozAudioContext ||
-      window.oAudioContext ||
-      window.msAudioContext);
+  var engineImpl = null;
 
-  if (contextClass) {
-    var audioCtx = new contextClass();
-  } else {
-    console.log("You Device Can't Support AudioContext!!");
-  }
-
-  var sourceBuffer = null;
-  var sourceNode = null;
-  var gainNode = audioCtx.createGain();
-  var timingNode = null;
   var bufferSize = 0;
 
   var isPlaying = false;
   var inSeeking = false;
   var isPlayingBeforeSeek = false;
-  var ctxLastReferenceMs = 0;
-  var playbackReferenceMs = 0;
-  var playbackPosMs = 0;
-  var currentVolume = 1;
-  var isMuted = false;
 
   // formats
   var haveMP3 = false;
@@ -53,124 +32,86 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
   var haveUsableOpus = false;
   var preferredFormat = '';
 
-  var currentMetronome = null;
-
   var $metronomeLog = $log.getInstance('Metronome');
+  var $implLog = $log.getInstance('AudioEngineImpl');
   $log = $log.getInstance('AudioEngine');
 
 
-  var probeFormats = function() {
-    var elem = document.createElement('audio');
-    haveMP3 = elem.canPlayType('audio/mp3') !== '';
-    haveOpus = elem.canPlayType('audio/ogg; codecs="opus"') !== '';
-
-    $log.info('formats: opus', haveOpus, 'mp3', haveMP3);
-    updatePreferredFormat();
-    checkOpusUsability();
+  // impl bridge
+  var implBridge = {
+    isInSeeking: function() {
+      return inSeeking;
+    },
+    setInSeeking: function(v) {
+      inSeeking = v;
+    },
+    pause: function() {
+      // late-binding
+      return pause();
+    },
   };
 
 
-  var updatePreferredFormat = function() {
-    preferredFormat = haveOpus && haveUsableOpus ? 'opus' : 'mp3';
+  var init = function() {
+    initEngineImpl();
+    refreshBufferSize();
   };
 
 
-  var checkOpusUsability = function() {
-    var emptyOpusArray = dataHelper.dataUriToArray(emptyOpusFileUri);
+  var initEngineImpl = function() {
+    var audioCtxEngineImpl = new AudioCtxAudioEngineImpl(implBridge, $implLog);
+    if (audioCtxEngineImpl.isSupported) {
+      engineImpl = audioCtxEngineImpl;
+      return;
+    }
 
-    audioCtx.decodeAudioData(
-        emptyOpusArray.buffer,
-        function(buf) {
-          $log.info('this Opus impl is actually usable');
-          haveUsableOpus = true;
-          updatePreferredFormat();
-        },
-        function(err) {
-          $log.warn('this Opus impl is borked, falling back to MP3; err', err);
-          haveUsableOpus = false;
-          updatePreferredFormat();
-        }
-        );
+    engineImpl = new CompatAudioEngineImpl(implBridge, FrameManager, $implLog);
+
+    // compat is supposed to be infallible on every supported platform, so
+    // no more error messages here.
+    // $log.error('No audio engine implementation usable!');
   };
 
 
-  var initTimingNode = function() {
+  var refreshBufferSize = function() {
     pause();
 
     bufferSize = LCConfig.getAudioBufferSize();
-    $log.info('creating timing node with buffer size', bufferSize);
-    timingNode = audioCtx.createScriptProcessor(bufferSize);
-    timingNode.onaudioprocess = audioCallback;
+    engineImpl.setBufferSize(bufferSize);
   };
 
 
   $rootScope.$on('config:audioBufferSizeChanged', function(e) {
-    initTimingNode();
+    refreshBufferSize();
   });
-
-
-  var onEndedCallback = function(e) {
-    // Firefox Nightly fires ended events for all stopping, so don't let that
-    // disturb seeking.
-    if (inSeeking) {
-      $log.debug('onEndedCallback: NOT executing pause due to seek in progress');
-
-      // reset the seeking flag
-      inSeeking = false;
-      return;
-    }
-
-    $log.debug('onEndedCallback: pausing');
-    pause();
-  };
 
 
   // interface
   var resume = function() {
-    if (isPlaying) {
+    if (getIsPlaying()) {
       return;
     }
 
-    isPlaying = true;
     return doResume();
   };
 
 
   var doResume = function() {
-    if (playbackPosMs >= getDuration()) {
+    if (getPlaybackPosition() >= getDuration()) {
       // rewind
-      playbackPosMs = 0;
+      engineImpl.setPlaybackPosition(0);
     }
 
-    ctxLastReferenceMs = audioCtx.currentTime * 1000;
-    playbackReferenceMs = playbackPosMs;
-
-    $log.info(
-        'resume: ctxLastReferenceMs=',
-        ctxLastReferenceMs,
-        'playbackPosMs=',
-        playbackPosMs
-        );
+    engineImpl.doResume();
     $rootScope.$broadcast('audio:resume');
-
-    sourceNode = audioCtx.createBufferSource();
-    sourceNode.buffer = sourceBuffer;
-    sourceNode.onended = onEndedCallback;
-
-    sourceNode.connect(gainNode);
-    gainNode.connect(timingNode);
-    timingNode.connect(audioCtx.destination);
-
-    sourceNode.start(0, playbackPosMs / 1000);
   };
 
 
   var pause = function() {
-    if (!isPlaying) {
+    if (!getIsPlaying()) {
       return;
     }
 
-    isPlaying = false;
     return doPause();
   };
 
@@ -178,36 +119,29 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
   var doPause = function() {
     $log.info('pause');
     $rootScope.$broadcast('audio:pause');
-
-    if (sourceNode) {
-      sourceNode.stop();
-
-      sourceNode.disconnect(gainNode);
-      gainNode.disconnect(timingNode);
-      timingNode.disconnect(audioCtx.destination);
-
-      sourceNode = null;
-    }
+    engineImpl.doPause();
   };
 
 
   var doSeek = function(newPositionMs) {
-    $log.info('seeking to', newPositionMs, 'from', playbackPosMs);
-    playbackPosMs = newPositionMs;
-    currentMetronome.tick(newPositionMs);
+    $log.info('seeking to', newPositionMs, 'from', getPlaybackPosition());
     $rootScope.$broadcast('audio:seek', newPositionMs);
 
+    engineImpl.setPlaybackPosition(newPositionMs);
+
     // reset playing status
-    isPlaying = isPlayingBeforeSeek;
-    isPlaying && doResume();
+    engineImpl.setIsPlaying(isPlayingBeforeSeek);
+    isPlayingBeforeSeek && doResume();
   };
 
 
   var seek = function(newPositionMs) {
-    if (isPlaying) {
-      // record status, pause and workaround Nightly
+    // record playing status at all times to prevent stale true values
+    // interfering with seeking while paused
+    isPlayingBeforeSeek = getIsPlaying();
+    if (getIsPlaying()) {
+      // pause and workaround Nightly
       inSeeking = true;
-      isPlayingBeforeSeek = isPlaying;
       doPause();
     }
 
@@ -216,69 +150,53 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
 
 
   var getIsPlaying = function() {
-    return isPlaying;
+    return engineImpl.getIsPlaying();
   };
 
 
   var getDuration = function() {
-    if (sourceBuffer) {
-      return sourceBuffer.duration * 1000|0;
-    } else {
-      return 0;
-    }
+    return engineImpl.getDuration();
   };
 
 
   var getPlaybackPosition = function() {
-    return playbackPosMs;
-  };
-
-
-  var updateGainNode = function() {
-    gainNode.gain.value = isMuted ? 0 : currentVolume;
+    return engineImpl.getPlaybackPosition();
   };
 
 
   var getVolume = function() {
-    return currentVolume;
+    return engineImpl.getVolume();
   };
 
 
   var setVolume = function(volume) {
-    currentVolume = volume > 1 ? 1 : volume < 0 ? 0 : volume;
-    updateGainNode();
+    engineImpl.setVolume(volume > 1 ? 1 : volume < 0 ? 0 : volume);
   };
 
 
   var getMuted = function() {
-    return isMuted;
+    return engineImpl.getMuted();
   };
 
 
   var setMuted = function(mute) {
-    isMuted = mute;
-    updateGainNode();
+    engineImpl.setMuted(mute);
   };
 
 
   var setSourceData = function(data) {
     $log.debug('setSourceData: data=', data);
 
-    // audioCtx.decodeAudioData(data).then(finishSetSourceData);
-    sourceBuffer = null;
     doPause();
-    playbackPosMs = 0;
-    currentMetronome = null;
+    engineImpl.setMetronome(null);
     $rootScope.$broadcast('audio:unloaded');
-    audioCtx.decodeAudioData(data, finishSetSourceData, erroredSetSourceData);
+    engineImpl.setSourceData(data, finishSetSourceData, erroredSetSourceData);
     $rootScope.$broadcast('audio:decoding');
   };
 
 
-  var finishSetSourceData = function(buffer) {
-    $log.debug('finishSetSourceData: buffer=', buffer);
-
-    sourceBuffer = buffer;
+  var finishSetSourceData = function() {
+    $log.debug('finishSetSourceData');
 
     // generate step line events and merge into event stream
     Choreography.generateStepLineEvents(getDuration());
@@ -302,49 +220,25 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
   };
 
 
-  var audioCallback = function(e) {
-    var ctxMs = e.playbackTime * 1000;
-    var posMs = (playbackReferenceMs + ctxMs - ctxLastReferenceMs)|0;
-    playbackPosMs = posMs;
-
-    currentMetronome && currentMetronome.tick(posMs);
-
-    // just pass through
-    var inBuf = e.inputBuffer;
-    var outBuf = e.outputBuffer;
-    var ch;
-    for (ch = 0; ch < inBuf.numberOfChannels; ch++) {
-      var data = inBuf.getChannelData(ch);
-      if (outBuf.copyToChannel) {
-        outBuf.copyToChannel(data, ch);
-      } else {
-        outBuf.getChannelData(ch).set(data);
-      }
-    }
-  };
-
-
   var initEvents = function(tempo) {
     $log.debug('initEvents: tempo', tempo);
 
-    currentMetronome = metronomeMod.metronomeFactory(
+    engineImpl.setMetronome(metronomeMod.metronomeFactory(
         tempo,
         FrameManager.tickCallback,
         $metronomeLog,
         false
-        );
+        ));
   };
 
 
   var getPreferredFormat = function() {
-    return preferredFormat;
+    return engineImpl.getPreferredFormat();
   };
 
 
   // initialize
-  probeFormats();
-  initTimingNode();
-
+  init();
 
   return {
     'getIsPlaying': getIsPlaying,

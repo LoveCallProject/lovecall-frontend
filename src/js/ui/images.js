@@ -13,30 +13,40 @@ var special = require('../../images/special.svg');
 var d = require('../../images/d.svg');
 var k = require('../../images/k.svg');
 
+var taicallImages = {};
 
-var makeImageObj = function(uri) {
-  // TODO: hi-dpi
+
+var makeImageObj = function(key, uri) {
   var result = new Image(100, 100);
   result.src = uri;
+  result.onload = function() {
+    console.log('builtin image onload');
+    taicallImages[key] = result;
+  };
   return result;
 };
 
 
+var objects = [
+  makeImageObj('fu', fu),
+  makeImageObj('fuwa', fuwa),
+  makeImageObj('hh', hh),
+  makeImageObj('hi', hi),
+  makeImageObj('jump', jump),
+  makeImageObj('kh', kh),
+  makeImageObj('ld', ld),
+  makeImageObj('lt', lt),
+  makeImageObj('oh', oh),
+  makeImageObj('qh', qh),
+  makeImageObj('sj', sj),
+  makeImageObj('special', special),
+  makeImageObj('d', d),
+  makeImageObj('k', k),
+];
+
+var taicallImagesCount = objects.length;
+
 module.exports = {
-  taicall: {
-    fu: makeImageObj(fu),
-    fuwa: makeImageObj(fuwa),
-    hh: makeImageObj(hh),
-    hi: makeImageObj(hi),
-    jump: makeImageObj(jump),
-    kh: makeImageObj(kh),
-    ld: makeImageObj(ld),
-    lt: makeImageObj(lt),
-    oh: makeImageObj(oh),
-    qh: makeImageObj(qh),
-    sj: makeImageObj(sj),
-    special: makeImageObj(special),
-    d: makeImageObj(d),
-    k: makeImageObj(k),
-  },
+  taicall: taicallImages,
+  taicallImagesCount: taicallImagesCount,
 };
