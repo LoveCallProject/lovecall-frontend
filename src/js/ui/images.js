@@ -20,7 +20,7 @@ var makeImageObj = function(key, uri) {
   var result = new Image(100, 100);
   result.src = uri;
   result.onload = function() {
-    console.log('builtin image onload:', uri);
+    console.log('builtin image onload');
     taicallImages[key] = result;
   };
   return result;
