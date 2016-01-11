@@ -141,6 +141,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
       '特殊': 'special',
       'd': 'd',
       'k': 'k',
+      '拍手': 'clap'
     };
 
     var cachedExplodingTaicallImages = {};
