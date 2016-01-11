@@ -4,6 +4,7 @@
 require('angular');
 var metronomeMod = require('../choreography/metronome');
 var AudioCtxAudioEngineImpl = require('./audio-audiocontext');
+var CompatAudioEngineImpl = require('./audio-compat');
 
 require('../conf');
 require('../provider/choreography');
@@ -64,10 +65,11 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
       return;
     }
 
-    // TODO: rAF and <audio>-based engine impl
+    engineImpl = new CompatAudioEngineImpl(implBridge, FrameManager, $implLog);
 
-    // TODO: broadcast error event to ui
-    $log.error('No audio engine implementation usable!');
+    // compat is supposed to be infallible on every supported platform, so
+    // no more error messages here.
+    // $log.error('No audio engine implementation usable!');
   };
 
 
