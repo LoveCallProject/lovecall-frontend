@@ -33,8 +33,7 @@ mod.factory('DPIManager', function($window, $log) {
     canvas.height = h * ratio;
 
     if (devicePixelRatio !== canvasBackingStoreRatio) {
-      ctx.resetTransform();
-      ctx.scale(ratio, ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     }
   };
 

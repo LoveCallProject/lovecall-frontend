@@ -33,12 +33,14 @@
     "html-webpack-plugin": "^1.7.0",
     "lodash": "^3.10.1",
     "ng-annotate-webpack-plugin": "^0.1.2",
-    "ng-cache-loader": "0.0.14",
+    "ng-cache-loader": "0.0.15",
     "node-sass": "^3.4.2",
     "sass-loader": "^3.1.2",
+    "script-loader": "^0.6.1",
     "spark-md5": "^2.0.0",
     "style-loader": "^0.13.0",
     "url-loader": "^0.5.7",
-    "webpack": "^1.12.9"
+    "webpack": "^1.12.9",
+    "webpack-cordova-plugin": "^0.1.5"
   }
 }
