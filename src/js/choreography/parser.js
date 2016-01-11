@@ -17,6 +17,20 @@ var makeEngineEvent = function(a, tempo) {
 };
 
 
+var parseDonAction = function(startStep, params) {
+  return [
+    [startStep, "d", null]
+  ];
+};
+
+
+var parseKaAction = function(startStep, params) {
+  return [
+    [startStep, "k", null]
+  ];
+};
+
+
 var parseFuAction = function(startStep, params) {
   return [
     [startStep, "Fu!", null]
@@ -136,6 +150,15 @@ var parseFollowAction = function(startStep, endStep, params) {
 };
 
 
+var parseSpecialAction = function(startStep, endStep, params) {
+  var content = params[0];
+
+  return [
+    [startStep, "特殊", {msg: content}]
+  ];
+};
+
+
 var parseCelebrateAction = function(startStep, endStep, params) {
   return [
     [startStep, "欢呼", null]
@@ -145,6 +168,8 @@ var parseCelebrateAction = function(startStep, endStep, params) {
 
 // action type lookup maps
 var POINT_ACTION_PARSERS = {
+  'd': parseDonAction,
+  'k': parseKaAction,
   'fu': parseFuAction,
   'fufu': parseFuFuAction,
   '跳': parseJumpAction,
@@ -160,6 +185,7 @@ var LONG_ACTION_PARSERS = {
   '快挥': parseKHAction,
   'fuwa': parseFuwaAction,
   '跟唱': parseFollowAction,
+  '特殊': parseSpecialAction,
   '欢呼': parseCelebrateAction
 };
 
@@ -350,7 +376,8 @@ var parseCall = function(data, hash) {
     'tempo': tempo,
     'form': form,
     'events': events,
-    'colors': colors
+    'colors': colors,
+    'circleMargin': metadata.circleMargin,
   };
 };
 

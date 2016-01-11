@@ -21,6 +21,9 @@ mod.controller('AboutDialogController', function($scope, $mdDialog, LCConfig) {
     },
     {
       name: 'disoul'
+    },
+    {
+      name: 'fakedestinyck'
     }
   ]
 

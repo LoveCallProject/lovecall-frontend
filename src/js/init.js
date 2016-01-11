@@ -6,13 +6,17 @@ require('angular');
 require('./provider/choreography');
 require('./ui/frame');
 
+var mimimi = require('./data/mimimi');
 var snowhare = require('./data/snowhare');
 var wr = require('./data/wr');
-var susutomo = require('./data/susutomo');
+//var susutomo = require('./data/susutomo');
 var startDash = require('./data/start-dash');
 var nbg = require('./data/nbg');
 var bokuima = require('./data/bokuima');
 var kiseki = require('./data/kiseki');
+
+// easter egg
+var fdInnerOni = require('./data/fd-inner-oni');
 
 
 var mod = angular.module('lovecall/init', [
@@ -22,13 +26,19 @@ var mod = angular.module('lovecall/init', [
 
 mod.run(function($window, Choreography, FrameManager) {
   // load bundled call tables
+  Choreography.loadTable(mimimi);
   Choreography.loadTable(snowhare);
   Choreography.loadTable(wr);
   Choreography.loadTable(bokuima);
   Choreography.loadTable(kiseki);
-  Choreography.loadTable(susutomo);
+  //Choreography.loadTable(susutomo);
   Choreography.loadTable(startDash);
   Choreography.loadTable(nbg);
+
+  // easter egg
+  if (Math.random() < 0.1) {
+    Choreography.loadTable(fdInnerOni);
+  }
 
   // frame loop
   FrameManager.startFrameLoop($window);

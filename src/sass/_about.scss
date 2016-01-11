@@ -10,4 +10,12 @@
 .about {
   width: 50rem;
   height: 60rem;
+  display: flex;
+}
+
+.about__content {
+  flex: 1;
+  md-tabs {
+    height: 100%;
+  }
 }
