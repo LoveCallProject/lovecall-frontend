@@ -38,6 +38,7 @@ LoveCall 使用 JSON 格式的 call 表驱动, 目前所有 call 表都以 Commo
       "title": "それは僕たちの奇跡",  // 歌曲标题
       "artist": "μ's",  // 演唱者
       "album": "それは僕たちの奇跡",  // 专辑
+	  "lang": "ja",  // 歌曲语言，用于设置各种界面字体; 目前支持英语 (en), 汉语普通话 (cmn), 日语 (ja)
 
 	  // 远程获取歌曲文件及专辑封面时的文件基准名, 由服务器管理人员维护
       "remoteBasename": "kiseki",
