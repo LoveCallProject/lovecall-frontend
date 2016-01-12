@@ -55,6 +55,15 @@ var parseJumpAction = function(startStep, params) {
 }
 
 
+var parseClapAction = function(startStep, params) {
+  var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var actionParams = withHi ? {msg: 'Hi!'} : null;
+  return [
+    [startStep, "拍手", actionParams]
+  ];
+}
+
+
 var parseAlarmAction = function(startStep, params) {
   return [
     [startStep, "Hi!", null],
@@ -174,6 +183,7 @@ var POINT_ACTION_PARSERS = {
   'fufu': parseFuFuAction,
   '跳': parseJumpAction,
   '警报': parseAlarmAction,
+  '拍手': parseClapAction,
 };
 
 var LONG_ACTION_PARSERS = {

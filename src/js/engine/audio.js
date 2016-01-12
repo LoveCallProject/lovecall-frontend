@@ -125,9 +125,9 @@ mod.factory('AudioEngine', function($rootScope, $window, $log, LCConfig, Choreog
 
   var doSeek = function(newPositionMs) {
     $log.info('seeking to', newPositionMs, 'from', getPlaybackPosition());
-    $rootScope.$broadcast('audio:seek', newPositionMs);
 
     engineImpl.setPlaybackPosition(newPositionMs);
+    $rootScope.$broadcast('audio:seek', newPositionMs);
 
     // reset playing status
     engineImpl.setIsPlaying(isPlayingBeforeSeek);

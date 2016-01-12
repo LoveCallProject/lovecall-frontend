@@ -141,6 +141,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
       '特殊': 'special',
       'd': 'd',
       'k': 'k',
+      '拍手': 'clap'
     };
 
     var cachedExplodingTaicallImages = {};
@@ -260,6 +261,9 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
         if (uniqueTexts[i].type == '特殊') {
           tempCtx.fillStyle = '#eee';
+          // XXX: hardcoded font for special directives to Mandarin
+          // TODO: allow l10n for special directives?
+          tempCtx.font = FontSelector.canvasFontForLanguage('cmn', textH);
         }
 
         tempCtx.fillText(text, canvasCenterX, textMarginT + textH);
