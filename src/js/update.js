@@ -37,7 +37,7 @@ mod.run(function($http, $mdDialog, LCConfig) {
 
         $mdDialog.show(confirm).then(function() {
           window.cordova.plugins.FileOpener.openFile(
-              LCConfig.REMOTE_APK_PREFIX + 'lovecall' + '.apk',
+              LCConfig.REMOTE_APK_PREFIX + 'lovecall' + versionInfo.version  +'.apk',
               function() {
                 // success
               }
