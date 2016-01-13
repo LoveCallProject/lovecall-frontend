@@ -31,7 +31,7 @@
     "element-resize-detector": "^1.0.3",
     "file-loader": "^0.8.5",
     "html-webpack-plugin": "^1.7.0",
-    "lodash": "^3.10.1",
+    "lodash": "^4.0.0",
     "ng-annotate-webpack-plugin": "^0.1.2",
     "ng-cache-loader": "0.0.15",
     "node-sass": "^3.4.2",
