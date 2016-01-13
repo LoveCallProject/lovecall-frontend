@@ -5,6 +5,7 @@ module.exports = {
       "title": "ミはμ’sicのミ",
       "artist": "μ's",
       "album": "ミはμ’sicのミ",
+      "lang": "ja",
       "remoteBasename": "mimimi",
       "sources": {
         "fallback:": {

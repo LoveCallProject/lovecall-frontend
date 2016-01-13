@@ -5,6 +5,7 @@ module.exports = {
       "title": "No brand girls",
       "artist": "μ's",
       "album": "No brand girls/START:DASH!!",
+      "lang": "ja",
       "remoteBasename": "nbg",
       "sources": {
         "fallback:": {
