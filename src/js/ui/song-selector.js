@@ -20,8 +20,8 @@ mod.controller('SongSelectorController', function($scope, $mdDialog, Choreograph
   var init = function() {
     var songs = Choreography.getAvailableSongs();
     var fontFamilies = _(songs)
-      .pluck('lang')
-      .unique()
+      .map('lang')
+      .uniq()
       .transform(function(result, v) {
         result[v] = FontSelector.fontFamilyForLanguage(v);
       }, {})

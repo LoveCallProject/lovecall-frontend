@@ -229,7 +229,7 @@ mod.controller('CallController', function($scope, $window, $log, LCConfig, Audio
 
       var uniqueTexts = _([messages, romajis])
         .flatten()
-        .unique()
+        .uniq()
         .value();
 
       ctx.save();
