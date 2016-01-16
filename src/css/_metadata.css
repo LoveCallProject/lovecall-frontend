@@ -30,7 +30,7 @@
 .metadata__image {
   background-size: 100%;
 
-  // very weird bug of Chromium
+  /* very weird bug of Chromium */
   border-radius: 50%;
 
   animation-name: rotate;
@@ -79,9 +79,6 @@
 .metadata__text__other__artist {
   &:after {
     content: ' /';
-
-    // display: inline-block;
-    // margin: 0 0.5rem;
   }
 
   &:empty:after {

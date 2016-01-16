@@ -13,7 +13,7 @@ require('./init');
 require('./update.js');
 
 require('../../node_modules/angular-material/angular-material.css');
-require('../sass/index.scss');
+require('../css/index.css');
 
 var mod = angular.module('lovecall/main', [
     'lovecall/init',

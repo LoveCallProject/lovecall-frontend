@@ -14,6 +14,6 @@
 }
 
 .song-loading__actions {
-  // XXX: why the f**k is this necessary
+  /* XXX: why the f**k is this necessary */
   order: 2;
 }
