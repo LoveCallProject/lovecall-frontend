@@ -51,7 +51,6 @@ module.exports = {
   },
   module: {
     loaders: [
-      { test: /\.scss$/, loader: "style!css!sass" },
       { test: /\.css$/, loader: "style!css" },
       { test: /\.tmpl\.html$/, loader: "ng-cache?-conservativeCollapse&-preserveLineBreaks" },
       { test: /\.(jpg|png|woff|woff2|eot|ttf|svg|opus)$/, loader: 'url-loader?limit=100000' },
