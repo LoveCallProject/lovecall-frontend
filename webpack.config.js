@@ -6,6 +6,8 @@ var webpack = require('webpack');
 var ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 var htmlWebpackPlugin = require('html-webpack-plugin');
 var CordovaPlugin = require('webpack-cordova-plugin');
+var autoprefixer = require('autoprefixer');
+var precss = require('precss');
 
 var useCordova = (function() {
   var tmp = parseInt(process.env.BUILD_CORDOVA);
@@ -51,11 +53,14 @@ module.exports = {
   },
   module: {
     loaders: [
-      { test: /\.css$/, loader: "style!css" },
+      { test: /\.css$/, loader: "style!css!postcss" },
       { test: /\.tmpl\.html$/, loader: "ng-cache?-conservativeCollapse&-preserveLineBreaks" },
       { test: /\.(jpg|png|woff|woff2|eot|ttf|svg|opus)$/, loader: 'url-loader?limit=100000' },
     ]
   },
+  postcss: function() {
+    return [autoprefixer, precss];
+  }
 };
 
 
