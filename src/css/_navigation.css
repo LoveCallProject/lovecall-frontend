@@ -33,7 +33,7 @@ md-icon.inline {
 .toolbar-container {
   height: $toolbar-height;
   position: relative;
-  // TODO
+  /* TODO */
   background: #333;
   overflow-y: visible;
 }
@@ -41,7 +41,7 @@ md-icon.inline {
 #toolbar {
   background: none;
 
-  @include sidenav-locked-open-aware {
+  @mixin sidenav-locked-open-aware {
     display: none;
   }
 }

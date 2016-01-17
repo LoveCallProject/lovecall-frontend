@@ -5,7 +5,7 @@ body {
 }
 
 .content-container {
-  @include reserve-space-for-locked-sidenav;
+  @mixin reserve-space-for-locked-sidenav;
 
   flex: 1;
   padding-top: $metadata-height / 2;
