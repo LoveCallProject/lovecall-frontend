@@ -97,7 +97,9 @@ var parseSJAction = function(startStep, endStep, params) {
 
 
 var parseLDAction = function(startStep, endStep, params) {
-  return parsePeriodicAction(startStep, endStep, "里打", {m: 0, s: 4}, {m: 0, s: 8});
+  var interval = params[0] ? params[0]|0 : 8;
+  var startStep = (interval / 2)|0;
+  return parsePeriodicAction(startStep, endStep, "里打", {m: 0, s: startStep}, {m: 0, s: interval});
 };
 
 
