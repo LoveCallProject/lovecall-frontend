@@ -98,15 +98,17 @@ var parseSJAction = function(startStep, endStep, params) {
 
 var parseLDAction = function(startStep, endStep, params) {
   var interval = params[0] ? params[0]|0 : 8;
-  var startStep = (interval / 2)|0;
-  return parsePeriodicAction(startStep, endStep, "里打", {m: 0, s: startStep}, {m: 0, s: interval});
+  var startStepOffset = (interval / 2)|0;
+  return parsePeriodicAction(startStep, endStep, "里打", {m: 0, s: startStepOffset}, {m: 0, s: interval});
 };
 
 
 var parseLTAction = function(startStep, endStep, params) {
   var withHi = typeof(params[0]) !== 'undefined' ? !!params[0] : false;
+  var interval = params[1] ? params[1]|0 : 8;
+  var startStepOffset = (interval / 2)|0;
   var actionParams = withHi ? {msg: 'Hi!'} : null;
-  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: 4}, {m: 0, s: 8}, actionParams);
+  return parsePeriodicAction(startStep, endStep, "里跳", {m: 0, s: startStepOffset}, {m: 0, s: interval}, actionParams);
 };
 
 
